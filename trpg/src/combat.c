@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "combat.h"
-#include "utils.h"
+#include "../include/combat.h"
 
 // TODO: 학생 스스로 전투 로직을 구현해보세요!
 // 힌트: 난수를 활용해 적의 공격력을 정하고, 플레이어와 적이 번갈아 공격하는 while 루프를 만드세요.

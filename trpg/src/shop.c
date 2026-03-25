@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "shop.h"
+#include "../include/shop.h"
 
 // TODO: 학생 스스로 상점 기능을 구현해보세요!
 // 힌트: switch-case 문을 사용하여 물약을 사거나 장비를 강화하는 로직을 추가하세요.

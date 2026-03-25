@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "character.h"
-#include "utils.h"
-#include "combat.h"
-#include "shop.h"
+#include "../include/character.h"
+#include "../include/combat.h"
+#include "../include/shop.h"
 
 // TODO: 학생 스스로 combat.c와 shop.c를 구현해보도록 안내
 void dummy_combat(Player* p) {
@@ -16,6 +15,9 @@ void dummy_shop(Player* p) {
 }
 
 int main() {
+    // Windows 터미널 한글 깨짐 방지: 코드 페이지를 UTF-8(65001)로 변경
+    system("chcp 65001 > nul");
+
     srand((unsigned int)time(NULL));
     
     Player player;

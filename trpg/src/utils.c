@@ -1,6 +1,5 @@
 #include <stdlib.h>
-#include <time.h>
-#include "utils.h"
+#include "../include/utils.h"
 
 int get_random_range(int min, int max) {
     // Seed는 보통 main에서 한 번만 호출하는 것이 좋지만, 
