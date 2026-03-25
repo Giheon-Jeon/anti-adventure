@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <string.h>
-#include "character.h"
+#include <stdio.h>
+#include "../include/character.h"
 
 void init_player(Player* p) {
     printf("--- 캐릭터 생성 ---\n");
