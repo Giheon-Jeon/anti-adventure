@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Iinclude -Wall
-SRC = src/main.c src/character.c src/combat.c src/shop.c src/utils.c
+SRC = src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c
 OBJ = $(SRC:.c=.o)
 TARGET = trpg_game
 
