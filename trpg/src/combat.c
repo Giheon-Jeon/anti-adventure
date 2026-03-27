@@ -143,6 +143,7 @@ void start_combat(Player* p) {
             p->exp += (enemy_type + 1) * 50;
             p->gold += (enemy_type + 1) * 100;
             printf("EXP +%d, Gold +%d 획득!\n", (enemy_type + 1) * 50, (enemy_type + 1) * 100);
+            check_level_up(p);
             break;
         }
 

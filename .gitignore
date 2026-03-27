@@ -1,0 +1,12 @@
+# Build Binaries
+trpg/trpg_game.exe
+trpg/trpg_game
+*.o
+*.obj
+*.exe
+
+# IDE Settings
+.vscode/
+
+# Build Directory
+trpg/build/

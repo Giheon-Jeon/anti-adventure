@@ -30,6 +30,7 @@ void trigger_event(Player* p) {
                 printf("오래된 비석을 조사하다가 지혜를 얻었습니다.\n");
                 printf("EXP +10 획득!\n");
                 p->exp += 10;
+                check_level_up(p);
                 break;
         }
     }
