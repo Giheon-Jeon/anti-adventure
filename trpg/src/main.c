@@ -4,9 +4,10 @@
 #include "../include/character.h"
 #include "../include/event.h"
 #include "../include/shop.h"
+#include "../include/utils.h"
 
 int main() {
-    // Windows 터미널 한글 깨짐 방지: 코드 페이지를 UTF-8(65001)로 변경
+    // Windows 터미널 한글 깨짐 방지
     system("chcp 65001 > nul");
 
     srand((unsigned int)time(NULL));
@@ -16,8 +17,9 @@ int main() {
     
     int choice;
     while (1) {
-        show_status(&player);
-        printf("\n1. 모험하기 (전투 및 이벤트)\n2. 상점 방문\n3. 종료\n선택: ");
+        clear_screen();
+        show_compact_status(&player);
+        printf("\n1. 모험하기 (전투 및 이벤트)\n2. 상점 방문\n3. 캐릭터 상세정보\n4. 종료\n선택: ");
         scanf("%d", &choice);
         
         switch (choice) {
@@ -25,9 +27,15 @@ int main() {
                 trigger_event(&player); // (전투 또는 이벤트 발생)
                 break;
             case 2:
-                open_shop(&player);    // (학생이 채워넣을 부분)
+                open_shop(&player);
                 break;
             case 3:
+                clear_screen();
+                show_status(&player);
+                printf("\n엔터를 누르면 돌아갑니다...");
+                while (getchar() != '\n'); getchar();
+                break;
+            case 4:
                 printf("게임을 종료합니다. 안녕히 가세요!\n");
                 return 0;
             default:

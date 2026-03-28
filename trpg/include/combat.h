@@ -7,6 +7,8 @@ typedef struct {
     char name[50];
     int hp;
     int max_hp;
+    int def;    // 방어율
+    int is_boss; // 보스 여부 (0: 일반, 1: 보스)
 } Enemy;
 
 // 주사위 굴리기 (n개)

@@ -1,28 +1,30 @@
-#include <stdio.h>
 #include "../include/shop.h"
+#include "../include/utils.h"
+#include <stdio.h>
 
 void open_shop(Player* p) {
     int choice;
     while (1) {
-        printf("\n========= [마을 상점 - 프리미엄] =========\n");
-        printf("현재 보유 골드: %d G\n", p->gold);
+        clear_screen();
+        show_compact_status(p);
+        printf("\n========= [마을 상점 - 리부트] =========\n");
         
         // 1. 무기 슬롯
-        if (p->weapon_tier == 0) printf("1. [무기] 낡은 검 (+2 데미지) - 50 G\n");
-        else if (p->weapon_tier == 1) printf("1. [무기] 철제 장검 (+10 데미지) - 300 G\n");
-        else if (p->weapon_tier == 2) printf("1. [무기] 용의 검 (+30 데미지, +0.2x 주사위) - 1000 G\n");
+        if (p->weapon_tier == 0) printf("1. [무기] 훈련용 목검 (STR +5, DEX +2) - 100 G\n");
+        else if (p->weapon_tier == 1) printf("1. [무기] 강철 세이버 (STR +20, DEX +10) - 500 G\n");
+        else if (p->weapon_tier == 2) printf("1. [무기] 앱솔랩스 소드 (STR +60, DEX +30, 보뎀 +20%%) - 2500 G\n");
         else printf("1. [무기] 품절\n");
 
         // 2. 방어구 슬롯
-        if (p->armor_tier == 0) printf("2. [방어구] 판금 갑옷 (+5 방어력) - 200 G\n");
-        else if (p->armor_tier == 1) printf("2. [방어구] 강화 판금 (+15 방어력) - 500 G\n");
-        else if (p->armor_tier == 2) printf("2. [방어구] 드워프 갑옷 (+40 방어력) - 1200 G\n");
+        if (p->armor_tier == 0) printf("2. [방어구] 수습 도복 (HP +100, MP +50) - 150 G\n");
+        else if (p->armor_tier == 1) printf("2. [방어구] 네크로 아머 (HP +500, MP +200) - 800 G\n");
+        else if (p->armor_tier == 2) printf("2. [방어구] 카루타 상하의 (HP +2000, MP +1000, 뎀퍼 +5%%) - 3000 G\n");
         else printf("2. [방어구] 품절\n");
 
-        // 3. 장신구/주사위 슬롯
-        if (p->accessory_tier == 0) printf("3. [장신구] 강화된 주사위 (+0.1x 배수) - 150 G\n");
-        else if (p->accessory_tier == 1) printf("3. [장신구] 전설의 주사위 (+0.3x 배수) - 600 G\n");
-        else if (p->accessory_tier == 2) printf("3. [장신구] 신의 주사위 (+0.6x 배수) - 1500 G\n");
+        // 3. 장신구 슬롯
+        if (p->accessory_tier == 0) printf("3. [장신구] 실버블라썸 링 (DEX +5, 방무 +5%%) - 300 G\n");
+        else if (p->accessory_tier == 1) printf("3. [장신구] 보스 장신구 세트 (DEX +20, 방무 +15%%) - 1200 G\n");
+        else if (p->accessory_tier == 2) printf("3. [장신구] 마이스터링 (AllStat +50, 방무 +30%%) - 5000 G\n");
         else printf("3. [장신구] 품절\n");
 
         printf("0. 나가기\n");
@@ -33,15 +35,15 @@ void open_shop(Player* p) {
 
         switch (choice) {
             case 1:
-                if (p->weapon_tier == 0 && p->gold >= 50) {
-                    p->gold -= 50; p->base_dmg += 2; p->weapon_tier++;
-                    printf("[구매] 낡은 검을 구매했습니다!\n");
-                } else if (p->weapon_tier == 1 && p->gold >= 300) {
-                    p->gold -= 300; p->base_dmg += 10; p->weapon_tier++;
-                    printf("[구매] 철제 장검을 구매했습니다!\n");
-                } else if (p->weapon_tier == 2 && p->gold >= 1000) {
-                    p->gold -= 1000; p->base_dmg += 30; p->dice_multiplier += 0.2f; p->weapon_tier++;
-                    printf("[구매] 용의 검을 구매했습니다!\n");
+                if (p->weapon_tier == 0 && p->gold >= 100) {
+                    p->gold -= 100; p->str += 5; p->dex += 2; p->weapon_tier++;
+                    printf("[구매] 훈련용 목검을 구매했습니다!\n");
+                } else if (p->weapon_tier == 1 && p->gold >= 500) {
+                    p->gold -= 500; p->str += 20; p->dex += 10; p->weapon_tier++;
+                    printf("[구매] 강철 세이버를 구매했습니다!\n");
+                } else if (p->weapon_tier == 2 && p->gold >= 2500) {
+                    p->gold -= 2500; p->str += 60; p->dex += 30; p->boss_dmg += 0.2f; p->weapon_tier++;
+                    printf("[구매] 앱솔랩스 소드를 구매했습니다!\n");
                 } else if (p->weapon_tier >= 3) {
                     printf("[알림] 더 이상 업그레이드할 수 없습니다.\n");
                 } else {
@@ -49,15 +51,15 @@ void open_shop(Player* p) {
                 }
                 break;
             case 2:
-                if (p->armor_tier == 0 && p->gold >= 200) {
-                    p->gold -= 200; p->def += 5; p->armor_tier++;
-                    printf("[구매] 판금 갑옷을 구매했습니다!\n");
-                } else if (p->armor_tier == 1 && p->gold >= 500) {
-                    p->gold -= 500; p->def += 15; p->armor_tier++;
-                    printf("[구매] 강화 판금을 구매했습니다!\n");
-                } else if (p->armor_tier == 2 && p->gold >= 1200) {
-                    p->gold -= 1200; p->def += 40; p->armor_tier++;
-                    printf("[구매] 드워프 갑옷을 구매했습니다!\n");
+                if (p->armor_tier == 0 && p->gold >= 150) {
+                    p->gold -= 150; p->max_hp += 100; p->max_mp += 50; p->armor_tier++;
+                    printf("[구매] 수습 도복을 구매했습니다!\n");
+                } else if (p->armor_tier == 1 && p->gold >= 800) {
+                    p->gold -= 800; p->max_hp += 500; p->max_mp += 200; p->armor_tier++;
+                    printf("[구매] 네크로 아머를 구매했습니다!\n");
+                } else if (p->armor_tier == 2 && p->gold >= 3000) {
+                    p->gold -= 3000; p->max_hp += 2000; p->max_mp += 1000; p->dmg_percent += 0.05f; p->armor_tier++;
+                    printf("[구매] 카루타 상하의를 구매했습니다!\n");
                 } else if (p->armor_tier >= 3) {
                     printf("[알림] 더 이상 업그레이드할 수 없습니다.\n");
                 } else {
@@ -65,15 +67,15 @@ void open_shop(Player* p) {
                 }
                 break;
             case 3:
-                if (p->accessory_tier == 0 && p->gold >= 150) {
-                    p->gold -= 150; p->dice_multiplier += 0.1f; p->accessory_tier++;
-                    printf("[구매] 강화된 주사위를 구매했습니다!\n");
-                } else if (p->accessory_tier == 1 && p->gold >= 600) {
-                    p->gold -= 600; p->dice_multiplier += 0.3f; p->accessory_tier++;
-                    printf("[구매] 전설의 주사위를 구매했습니다!\n");
-                } else if (p->accessory_tier == 2 && p->gold >= 1500) {
-                    p->gold -= 1500; p->dice_multiplier += 0.6f; p->accessory_tier++;
-                    printf("[구매] 신의 주사위를 구매했습니다!\n");
+                if (p->accessory_tier == 0 && p->gold >= 300) {
+                    p->gold -= 300; p->dex += 5; p->ied += 0.05f; p->accessory_tier++;
+                    printf("[구매] 실버블라썸 링을 구매했습니다!\n");
+                } else if (p->accessory_tier == 1 && p->gold >= 1200) {
+                    p->gold -= 1200; p->dex += 20; p->ied += 0.15f; p->accessory_tier++;
+                    printf("[구매] 보스 장신구 세트를 구매했습니다!\n");
+                } else if (p->accessory_tier == 2 && p->gold >= 5000) {
+                    p->gold -= 5000; p->str += 50; p->dex += 50; p->intel += 50; p->luk += 50; p->ied += 0.30f; p->accessory_tier++;
+                    printf("[구매] 마이스터링을 구매했습니다!\n");
                 } else if (p->accessory_tier >= 3) {
                     printf("[알림] 더 이상 업그레이드할 수 없습니다.\n");
                 } else {
@@ -83,6 +85,12 @@ void open_shop(Player* p) {
             default:
                 printf("[알림] 잘못된 선택이거나 품절된 상품입니다.\n");
                 break;
+        }
+        
+        if (choice != 0) {
+            printf("\n엔터를 누르면 계속합니다...");
+            while (getchar() != '\n'); 
+            getchar();
         }
     }
     printf("상점을 나갑니다.\n");
