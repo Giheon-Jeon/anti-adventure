@@ -12,6 +12,7 @@ static void event_mysterious_chest(Player* p) {
     
     int choice;
     scanf("%d", &choice);
+    clear_input_buffer();
     
     if (choice == 1) {
         printf("\n주사위 5개를 던집니다...\n");
@@ -108,6 +109,5 @@ void trigger_event(Player* p) {
         }
     }
     
-    printf("\n엔터를 누르면 계속합니다...");
-    while (getchar() != '\n'); getchar();
+    wait_for_enter();
 }

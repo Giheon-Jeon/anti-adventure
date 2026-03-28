@@ -175,7 +175,7 @@ void start_combat(Player* p) {
         show_compact_status(p);
         printf("\n[%s HP: %d / %d]\n", enemy.name, enemy.hp, enemy.max_hp);
         printf("\n[플레이어 턴] Enter를 누르면 주사위를 던집니다...\n");
-        while (getchar() != '\n'); 
+        clear_input_buffer(); 
 
         int p_dice[5];
         roll_dice(p_dice, 5);
@@ -221,8 +221,6 @@ void start_combat(Player* p) {
             break;
         }
 
-        printf("\n엔터를 누르면 계속합니다...");
-        while (getchar() != '\n'); 
-        getchar();
+        wait_for_enter();
     }
 }

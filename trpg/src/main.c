@@ -20,7 +20,11 @@ int main() {
         clear_screen();
         show_compact_status(&player);
         printf("\n1. 모험하기 (전투 및 이벤트)\n2. 상점 방문\n3. 캐릭터 상세정보\n4. 종료\n선택: ");
-        scanf("%d", &choice);
+        if (scanf("%d", &choice) != 1) {
+            clear_input_buffer();
+            continue;
+        }
+        clear_input_buffer();
         
         switch (choice) {
             case 1:
@@ -32,8 +36,7 @@ int main() {
             case 3:
                 clear_screen();
                 show_status(&player);
-                printf("\n엔터를 누르면 돌아갑니다...");
-                while (getchar() != '\n'); getchar();
+                wait_for_enter();
                 break;
             case 4:
                 printf("게임을 종료합니다. 안녕히 가세요!\n");

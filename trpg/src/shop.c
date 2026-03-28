@@ -27,9 +27,14 @@ void open_shop(Player* p) {
         else if (p->accessory_tier == 2) printf("3. [장신구] 마이스터링 (AllStat +50, 방무 +30%%) - 5000 G\n");
         else printf("3. [장신구] 품절\n");
 
+        // 4, 5. 소비 아이템
+        printf("4. [포션] 빨간 포션 (HP 50%% 회복) - 30 G\n");
+        printf("5. [포션] 파란 포션 (MP 50%% 회복) - 30 G\n");
+
         printf("0. 나가기\n");
         printf("선택: ");
         scanf("%d", &choice);
+        clear_input_buffer(); // 여기서 버퍼를 비워줌
 
         if (choice == 0) break;
 
@@ -82,15 +87,33 @@ void open_shop(Player* p) {
                     printf("[알림] 골드가 부족합니다!\n");
                 }
                 break;
+            case 4:
+                if (p->gold >= 30) {
+                    p->gold -= 30;
+                    p->hp += p->max_hp / 2;
+                    if (p->hp > p->max_hp) p->hp = p->max_hp;
+                    printf("[구매] 빨간 포션을 사용했습니다. HP가 회복되었습니다.\n");
+                } else {
+                    printf("[알림] 골드가 부족합니다!\n");
+                }
+                break;
+            case 5:
+                if (p->gold >= 30) {
+                    p->gold -= 30;
+                    p->mp += p->max_mp / 2;
+                    if (p->mp > p->max_mp) p->mp = p->max_mp;
+                    printf("[구매] 파란 포션을 사용했습니다. MP가 회복되었습니다.\n");
+                } else {
+                    printf("[알림] 골드가 부족합니다!\n");
+                }
+                break;
             default:
                 printf("[알림] 잘못된 선택이거나 품절된 상품입니다.\n");
                 break;
         }
         
         if (choice != 0) {
-            printf("\n엔터를 누르면 계속합니다...");
-            while (getchar() != '\n'); 
-            getchar();
+            wait_for_enter();
         }
     }
     printf("상점을 나갑니다.\n");
