@@ -135,7 +135,12 @@ int calculate_final_damage(Player* p, Enemy* e, int yacht_result) {
 
 void start_combat(Player* p) {
     Enemy enemy;
-    int enemy_type = rand() % 4; // 보스 확률 추가
+    int enemy_type = rand() % 4; // 보스 확률 포함 (0, 1, 2 = 일반, 3 = 보스)
+    
+    // [Balanced] 레벨 5 미만인 경우 보스 대신 일반 몬스터 등장
+    if (enemy_type == 3 && p->level < 5) {
+        enemy_type = rand() % 3;
+    }
     
     clear_screen();
     show_compact_status(p);
