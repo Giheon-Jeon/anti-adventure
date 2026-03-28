@@ -6,6 +6,8 @@
 #include "../include/shop.h"
 #include "../include/utils.h"
 
+#include "../include/village.h"
+
 int main() {
     // Windows 터미널 한글 깨짐 방지
     system("chcp 65001 > nul");
@@ -19,7 +21,7 @@ int main() {
     while (1) {
         clear_screen();
         show_compact_status(&player);
-        printf("\n1. 모험하기 (전투 및 이벤트)\n2. 상점 방문\n3. 캐릭터 상세정보\n4. 종료\n선택: ");
+        printf("\n1. 모험하기 (전투 및 이벤트)\n2. 상점 방문\n3. 마을 활동 (알바/도박)\n4. 캐릭터 상세정보\n5. 종료\n선택: ");
         if (scanf("%d", &choice) != 1) {
             clear_input_buffer();
             continue;
@@ -34,11 +36,14 @@ int main() {
                 open_shop(&player);
                 break;
             case 3:
+                open_village_menu(&player);
+                break;
+            case 4:
                 clear_screen();
                 show_status(&player);
                 wait_for_enter();
                 break;
-            case 4:
+            case 5:
                 printf("게임을 종료합니다. 안녕히 가세요!\n");
                 return 0;
             default:
