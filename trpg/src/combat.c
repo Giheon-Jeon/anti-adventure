@@ -224,35 +224,66 @@ void start_combat(Player* p) {
         clear_screen();
         show_compact_status(p);
         printf("\n[%s HP: %d / %d]\n", enemy.name, enemy.hp, enemy.max_hp);
-        printf("\n[플레이어 턴] Enter를 누르면 주사위를 던집니다...\n");
-        clear_input_buffer(); 
+        
+        int choice;
+        printf("\n[플레이어 턴]\n1. 공격하기\n2. 도망가기\n선택: ");
+        if (scanf("%d", &choice) != 1) {
+            clear_input_buffer();
+            continue;
+        }
+        clear_input_buffer();
 
-        int p_dice[5];
-        roll_dice(p_dice, 5);
-        printf("> 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice[0], p_dice[1], p_dice[2], p_dice[3], p_dice[4]);
-        
-        int yacht_score = calculate_yacht_damage(p_dice);
-        int final_dmg = calculate_final_damage(p, &enemy, yacht_score);
-        
-        printf("> 데미지 계산: (스탯 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
-               (int)(p->str * 4 + p->dex), yacht_score / 100.0f, (int)(enemy.def * (1.0f - p->ied)), final_dmg);
-        
-        enemy.hp -= final_dmg;
-        if (enemy.hp < 0) enemy.hp = 0;
-        printf("> %s의 HP: %d / %d\n", enemy.name, enemy.hp, enemy.max_hp);
-
-        if (enemy.hp <= 0) {
-            int exp_gain = (enemy_rank + 1) * 100;
-            int gold_gain = (enemy_rank + 1) * 200;
-            if (enemy.is_boss) {
-                exp_gain *= 5; gold_gain *= 10;
-                printf("🏆 보스 처치 특별 보상! 🏆\n");
+        int skip_attack = 0;
+        if (choice == 2) {
+            int escape_dice[5];
+            roll_dice(escape_dice, 5);
+            int sum = 0;
+            printf("> 도망 주사위 결과: [");
+            for (int i = 0; i < 5; i++) {
+                sum += escape_dice[i];
+                printf("%d%s", escape_dice[i], (i == 4) ? "" : ", ");
             }
-            p->exp += exp_gain;
-            p->gold += gold_gain;
-            printf("EXP +%d, Gold +%d 획득!\n", exp_gain, gold_gain);
-            check_level_up(p);
-            break;
+            printf("] (합계: %d)\n", sum);
+
+            if (sum >= 15) {
+                printf("✨ 무사히 도망쳤습니다! ✨\n");
+                wait_for_enter();
+                return;
+            } else {
+                printf("💀 도망에 실패했습니다! 공격 기회를 잃었습니다... 💀\n");
+                skip_attack = 1;
+            }
+        }
+
+        if (!skip_attack) {
+            int p_dice[5];
+            roll_dice(p_dice, 5);
+            printf("> 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice[0], p_dice[1], p_dice[2], p_dice[3], p_dice[4]);
+            
+            int yacht_score = calculate_yacht_damage(p_dice);
+            int final_dmg = calculate_final_damage(p, &enemy, yacht_score);
+            
+            printf("> 데미지 계산: (스탯 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
+                   (int)(p->str * 4 + p->dex), yacht_score / 100.0f, (int)(enemy.def * (1.0f - p->ied)), final_dmg);
+            
+            enemy.hp -= final_dmg;
+            if (enemy.hp < 0) enemy.hp = 0;
+            printf("> %s의 HP: %d / %d\n", enemy.name, enemy.hp, enemy.max_hp);
+
+            if (enemy.hp <= 0) {
+                int exp_gain = (enemy_rank + 1) * 100;
+                int gold_gain = (enemy_rank + 1) * 200;
+                if (enemy.is_boss) {
+                    exp_gain *= 5; gold_gain *= 10;
+                    printf("🏆 보스 처치 특별 보상! 🏆\n");
+                }
+                p->exp += exp_gain;
+                p->gold += gold_gain;
+                printf("EXP +%d, Gold +%d 획득!\n", exp_gain, gold_gain);
+                check_level_up(p);
+                wait_for_enter();
+                break;
+            }
         }
 
         // 적 턴 (단순화 유지)
@@ -268,6 +299,7 @@ void start_combat(Player* p) {
 
         if (p->hp <= 0) {
             apply_death_penalty(p);
+            wait_for_enter();
             break;
         }
 
