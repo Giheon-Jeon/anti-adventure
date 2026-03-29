@@ -135,40 +135,90 @@ int calculate_final_damage(Player* p, Enemy* e, int yacht_result) {
 
 void start_combat(Player* p) {
     Enemy enemy;
-    int enemy_type = rand() % 4; // 보스 확률 포함 (0, 1, 2 = 일반, 3 = 보스)
-    
-    // [Balanced] 레벨 5 미만인 경우 보스 대신 일반 몬스터 등장
-    if (enemy_type == 3 && p->level < 5) {
-        enemy_type = rand() % 3;
-    }
-    
+    int is_boss = (rand() % 4 == 3); // 25% chance for boss
+    int type = rand() % 3; // 0, 1, 2 sub-types
+    int enemy_rank = 0; // For reward calculation
+
     clear_screen();
     show_compact_status(p);
-    
-    if (enemy_type == 0) {
-        strcpy(enemy.name, "슬라임");
-        enemy.max_hp = 500;
-        enemy.def = 10;
+
+    if (p->level < 5) {
+        // Level 1-4: Basic
+        is_boss = 0; // No boss below level 5
+        enemy_rank = 0;
+        if (type == 0) {
+            strcpy(enemy.name, "파란 달팽이");
+            enemy.max_hp = 300; enemy.def = 5;
+        } else if (type == 1) {
+            strcpy(enemy.name, "슬라임");
+            enemy.max_hp = 600; enemy.def = 10;
+        } else {
+            strcpy(enemy.name, "주황버섯");
+            enemy.max_hp = 1000; enemy.def = 20;
+        }
         enemy.is_boss = 0;
-    } else if (enemy_type == 1) {
-        strcpy(enemy.name, "고블린");
-        enemy.max_hp = 1200;
-        enemy.def = 30;
-        enemy.is_boss = 0;
-    } else if (enemy_type == 2) {
-        strcpy(enemy.name, "오크");
-        enemy.max_hp = 4000;
-        enemy.def = 80;
-        enemy.is_boss = 0;
+    } else if (p->level < 10) {
+        // Level 5-9: Intermediate
+        enemy_rank = 1;
+        if (is_boss) {
+            strcpy(enemy.name, "🔥 자쿰의 팔 (BOSS) 🔥");
+            enemy.max_hp = 25000; enemy.def = 150; enemy.is_boss = 1;
+        } else {
+            if (type == 0) {
+                strcpy(enemy.name, "고블린");
+                enemy.max_hp = 3000; enemy.def = 40;
+            } else if (type == 1) {
+                strcpy(enemy.name, "오크");
+                enemy.max_hp = 6000; enemy.def = 80;
+            } else {
+                strcpy(enemy.name, "와일드카고");
+                enemy.max_hp = 10000; enemy.def = 120;
+            }
+            enemy.is_boss = 0;
+        }
+    } else if (p->level < 15) {
+        // Level 10-14: Advanced
+        enemy_rank = 2;
+        if (is_boss) {
+            strcpy(enemy.name, "🕒 시계탑의 파풀라투스 (BOSS) 🕒");
+            enemy.max_hp = 150000; enemy.def = 400; enemy.is_boss = 1;
+        } else {
+            if (type == 0) {
+                strcpy(enemy.name, "스켈레톤");
+                enemy.max_hp = 25000; enemy.def = 200;
+            } else if (type == 1) {
+                strcpy(enemy.name, "다크 레인저");
+                enemy.max_hp = 45000; enemy.def = 300;
+            } else {
+                strcpy(enemy.name, "듀얼 파이렛");
+                enemy.max_hp = 70000; enemy.def = 350;
+            }
+            enemy.is_boss = 0;
+        }
     } else {
-        strcpy(enemy.name, "🔥 자쿰의 팔 (BOSS) 🔥");
-        enemy.max_hp = 15000;
-        enemy.def = 200; // 높은 방어력
-        enemy.is_boss = 1;
+        // Level 15+: Elite
+        enemy_rank = 3;
+        if (is_boss) {
+            strcpy(enemy.name, "🌸 군단장 핑크빈 (BOSS) 🌸");
+            enemy.max_hp = 800000; enemy.def = 1000; enemy.is_boss = 1;
+        } else {
+            if (type == 0) {
+                strcpy(enemy.name, "블루 와이번");
+                enemy.max_hp = 150000; enemy.def = 500;
+            } else if (type == 1) {
+                strcpy(enemy.name, "다크 코르니안");
+                enemy.max_hp = 300000; enemy.def = 700;
+            } else {
+                strcpy(enemy.name, "스켈레곤");
+                enemy.max_hp = 500000; enemy.def = 900;
+            }
+            enemy.is_boss = 0;
+        }
     }
     enemy.hp = enemy.max_hp;
 
     printf("\n--- %s(이)가 나타났다! (HP: %d, 방어율: %d) ---\n", enemy.name, enemy.hp, enemy.def);
+
 
     while (p->hp > 0 && enemy.hp > 0) {
         clear_screen();
@@ -192,11 +242,10 @@ void start_combat(Player* p) {
         printf("> %s의 HP: %d / %d\n", enemy.name, enemy.hp, enemy.max_hp);
 
         if (enemy.hp <= 0) {
-            printf("\n%s를 처치했습니다!\n", enemy.name);
-            int exp_gain = (enemy_type + 1) * 70;
-            int gold_gain = (enemy_type + 1) * 150;
+            int exp_gain = (enemy_rank + 1) * 100;
+            int gold_gain = (enemy_rank + 1) * 200;
             if (enemy.is_boss) {
-                exp_gain *= 2; gold_gain *= 5;
+                exp_gain *= 5; gold_gain *= 10;
                 printf("🏆 보스 처치 특별 보상! 🏆\n");
             }
             p->exp += exp_gain;
@@ -210,7 +259,8 @@ void start_combat(Player* p) {
         printf("\n[%s의 턴] 공격합니다!\n", enemy.name);
         int e_dice[3];
         roll_dice(e_dice, 3);
-        int e_dmg = (e_dice[0] + e_dice[1] + e_dice[2]) * (enemy_type + 1);
+        int e_dmg = (e_dice[0] + e_dice[1] + e_dice[2]) * (enemy_rank + 1) * 2;
+        if (enemy.is_boss) e_dmg *= 3;
         printf("> %d의 데미지를 입었습니다!\n", e_dmg);
         p->hp -= e_dmg;
         if (p->hp < 0) p->hp = 0;
