@@ -25,7 +25,7 @@ void roll_dice(int* dice, int count) {
 }
 
 // 야추 규칙 데미지 계산
-int calculate_yacht_damage(int dice[5]) {
+int calculate_yacht_damage(Player* p, int dice[5]) {
     int counts[7] = {0}; // 1~6 눈금 개수
     int sum = 0;
     for (int i = 0; i < 5; i++) {
@@ -38,8 +38,14 @@ int calculate_yacht_damage(int dice[5]) {
     // 1. Yacht (5개 동일)
     for (int i = 1; i <= 6; i++) {
         if (counts[i] == 5) {
-            printf("[조합: Yacht! (30배)]\n");
-            return sum * 10 * 30;
+            int mult = 30;
+            if (p->job == JOB_THIEF) {
+                printf("[직업 스킬: 데들리 럭! (Yacht 1000배)]\n");
+                mult = 1000;
+            } else {
+                printf("[조합: Yacht! (30배)]\n");
+            }
+            return sum * 10 * mult;
         }
     }
 
@@ -52,8 +58,14 @@ int calculate_yacht_damage(int dice[5]) {
         }
     }
     if (is_large_straight) {
-        printf("[조합: Large Straight! (25배)]\n");
-        return sum * 10 * 25;
+        int mult = 25;
+        if (p->job == JOB_MAGE) {
+            printf("[직업 스킬: 메테오 스트라이크! (L.Straight 150배)]\n");
+            mult = 150;
+        } else {
+            printf("[조합: Large Straight! (25배)]\n");
+        }
+        return sum * 10 * mult;
     }
 
     // 3. Full House (3개 + 2개)
@@ -75,8 +87,14 @@ int calculate_yacht_damage(int dice[5]) {
         if (consecutive > max_consecutive) max_consecutive = consecutive;
     }
     if (max_consecutive >= 4) {
-        printf("[조합: Small Straight! (15배)]\n");
-        return sum * 10 * 15;
+        int mult = 15;
+        if (p->job == JOB_ARCHER) {
+            printf("[직업 스킬: 샤프 아이즈! (S.Straight 45배)]\n");
+            mult = 45;
+        } else {
+            printf("[조합: Small Straight! (15배)]\n");
+        }
+        return sum * 10 * mult;
     }
 
     // 5. Quad (4개 동일)
@@ -90,8 +108,14 @@ int calculate_yacht_damage(int dice[5]) {
     // 6. Triple (3개 동일)
     for (int i = 1; i <= 6; i++) {
         if (counts[i] == 3) {
-            printf("[조합: Triple! (5배)]\n");
-            return (i * 3 * 10 * 5) + ((sum - i * 3) * 10);
+            int mult = 5;
+            if (p->job == JOB_WARRIOR) {
+                printf("[직업 스킬: 파이널 어택! (Triple 12배)]\n");
+                mult = 12;
+            } else {
+                printf("[조합: Triple! (5배)]\n");
+            }
+            return (i * 3 * 10 * mult) + ((sum - i * 3) * 10);
         }
     }
 
@@ -109,8 +133,15 @@ int calculate_yacht_damage(int dice[5]) {
 }
 
 int calculate_final_damage(Player* p, Enemy* e, int yacht_result) {
-    // 1. 기본 공격력 연산 (STR 주스탯, DEX 부스탯 가정)
-    float base_stat_power = (p->str * 4.0f + p->dex);
+    // 1. 주스탯 위주의 공격력 연산
+    float base_stat_power = 0;
+    switch (p->job) {
+        case JOB_WARRIOR: base_stat_power = (p->str * 5.0f); break;
+        case JOB_ARCHER:  base_stat_power = (p->dex * 5.0f); break;
+        case JOB_MAGE:    base_stat_power = (p->intel * 5.0f); break;
+        case JOB_THIEF:   base_stat_power = (p->luk * 5.0f); break;
+        default:          base_stat_power = (p->str * 4.0f + p->dex); break;
+    }
     
     // 2. 야추 조합 배율 (yacht_result는 이미 점수화됨, 이를 %로 간주)
     float skill_mult = yacht_result / 100.0f; 
@@ -260,11 +291,20 @@ void start_combat(Player* p) {
             roll_dice(p_dice, 5);
             printf("> 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice[0], p_dice[1], p_dice[2], p_dice[3], p_dice[4]);
             
-            int yacht_score = calculate_yacht_damage(p_dice);
+            int yacht_score = calculate_yacht_damage(p, p_dice);
             int final_dmg = calculate_final_damage(p, &enemy, yacht_score);
             
-            printf("> 데미지 계산: (스탯 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
-                   (int)(p->str * 4 + p->dex), yacht_score / 100.0f, (int)(enemy.def * (1.0f - p->ied)), final_dmg);
+            float base_power = 0;
+            switch(p->job) {
+                case JOB_WARRIOR: base_power = p->str * 5.0f; break;
+                case JOB_ARCHER:  base_power = p->dex * 5.0f; break;
+                case JOB_MAGE:    base_power = p->intel * 5.0f; break;
+                case JOB_THIEF:   base_power = p->luk * 5.0f; break;
+                default:          base_power = p->str * 4.0f + p->dex; break;
+            }
+
+            printf("> 데미지 계산: (투자스탯 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
+                   (int)base_power, yacht_score / 100.0f, (int)(enemy.def * (1.0f - p->ied)), final_dmg);
             
             enemy.hp -= final_dmg;
             if (enemy.hp < 0) enemy.hp = 0;

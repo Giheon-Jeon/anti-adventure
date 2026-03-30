@@ -1,8 +1,19 @@
 #ifndef CHARACTER_H
 #define CHARACTER_H
 
+typedef enum {
+    JOB_NONE = 0,
+    JOB_WARRIOR,    // STR 기반
+    JOB_ARCHER,     // DEX 기반
+    JOB_MAGE,       // INT 기반
+    JOB_THIEF       // LUK 기반
+} JobType;
+
+#define JOB_ADVANCEMENT_LEVEL 10
+
 typedef struct {
     char name[50];
+    JobType job;       // 캐릭터 직업
     int level;
     int hp;
     int max_hp;

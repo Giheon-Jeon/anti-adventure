@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "../include/character.h"
 
 void init_player(Player* p) {
@@ -8,6 +7,7 @@ void init_player(Player* p) {
     printf("이름을 입력하세요: ");
     scanf("%s", p->name);
     
+    p->job = JOB_NONE;
     p->level = 1;
     p->hp = 100;
     p->max_hp = 100;
@@ -74,7 +74,7 @@ void check_level_up(Player* p) {
         p->level++;
         p->exp -= required_exp;
         
-        // 자동 스탯 상승
+        // 자동 스탯 상승 (HP/MP)
         p->max_hp += 20;
         p->hp = p->max_hp;
         p->max_mp += 10;
@@ -84,16 +84,49 @@ void check_level_up(Player* p) {
         p->stat_points += 5;
         
         printf("\n🎉 레벨 업! [Level %d]가 되었습니다! 🎉\n", p->level);
-        printf("체력과 마나가 회복되었고, 스탯 포인트 5를 획득했습니다.\n");
-        
-        distribute_stats(p);
+        printf("체력과 마나가 회복되었습니다.\n");
+
+        // 1. 전직 체크 (JOB_ADVANCEMENT_LEVEL 도달 시)
+        if (p->job == JOB_NONE && p->level >= JOB_ADVANCEMENT_LEVEL) {
+            printf("\n✨ 새로운 힘에 눈을 뜰 때가 되었습니다... ✨\n");
+            
+            // 가장 높은 스탯 확인
+            int max_val = p->str;
+            p->job = JOB_WARRIOR;
+            
+            if (p->dex > max_val) { max_val = p->dex; p->job = JOB_ARCHER; }
+            if (p->intel > max_val) { max_val = p->intel; p->job = JOB_MAGE; }
+            if (p->luk > max_val) { max_val = p->luk; p->job = JOB_THIEF; }
+
+            const char* job_names[] = {"없음", "전사", "궁수", "마법사", "도적"};
+            printf("가장 높은 스탯에 따라 [ %s ](으)로 전직하였습니다!\n", job_names[p->job]);
+            printf("이제부터 레벨업 시 포인트가 해당 주스탯에 자동 투자됩니다.\n");
+        }
+
+        // 2. 스탯 투자
+        if (p->job == JOB_NONE) {
+            printf("스탯 포인트 5를 획득했습니다.\n");
+            distribute_stats(p);
+        } else {
+            // 자동 투자
+            int mount = p->stat_points;
+            switch (p->job) {
+                case JOB_WARRIOR: p->str += mount; printf("STR이 자동으로 %d 상승했습니다!\n", mount); break;
+                case JOB_ARCHER: p->dex += mount; printf("DEX가 자동으로 %d 상승했습니다!\n", mount); break;
+                case JOB_MAGE: p->intel += mount; printf("INT가 자동으로 %d 상승했습니다!\n", mount); break;
+                case JOB_THIEF: p->luk += mount; printf("LUK이 자동으로 %d 상승했습니다!\n", mount); break;
+                default: break;
+            }
+            p->stat_points = 0;
+        }
         
         check_level_up(p); 
     }
 }
 
 void show_status(const Player* p) {
-    printf("\n====== [%s] 상태 (Level %d) ======\n", p->name, p->level);
+    const char* job_names[] = {"초보자", "전사", "궁수", "마법사", "도적"};
+    printf("\n====== [%s] 상태 (Level %d / %s) ======\n", p->name, p->level, job_names[p->job]);
     printf("HP: %d / %d | MP: %d / %d\n", p->hp, p->max_hp, p->mp, p->max_mp);
     printf("--------------------------\n");
     printf("STR: %d | DEX: %d\n", p->str, p->dex);
@@ -108,8 +141,9 @@ void show_status(const Player* p) {
 }
 
 void show_compact_status(const Player* p) {
-    printf("\n[ %s | LV %d | HP: %d/%d | MP: %d/%d | Gold: %d G ]\n", 
-           p->name, p->level, p->hp, p->max_hp, p->mp, p->max_mp, p->gold);
+    const char* job_names[] = {"초보자", "전사", "궁수", "마법사", "도적"};
+    printf("\n[ %s | %s LV %d | HP: %d/%d | MP: %d/%d | Gold: %d G ]\n", 
+           p->name, job_names[p->job], p->level, p->hp, p->max_hp, p->mp, p->max_mp, p->gold);
     printf("[ STR:%d DEX:%d INT:%d LUK:%d | 방무:%.0f%% 보뎀:%.0f%% ]\n", 
            p->str, p->dex, p->intel, p->luk, p->ied * 100.0f, p->boss_dmg * 100.0f);
     printf("------------------------------------------------------------\n");
