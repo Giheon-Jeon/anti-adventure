@@ -65,26 +65,91 @@ static void event_trap(Player* p) {
     if (p->hp < 1) p->hp = 1;
 }
 
+static void event_training_ground(Player* p) {
+    printf("\n[활동] 마을 근처의 훈련장을 발견했습니다.\n");
+    printf("어떤 훈련을 하시겠습니까?\n");
+    printf("1. 목검 휘두르기 (STR +1)\n2. 과녁 맞추기 (DEX +1)\n");
+    printf("선택: ");
+    int choice;
+    if (scanf("%d", &choice) != 1) { clear_input_buffer(); return; }
+    clear_input_buffer();
+    if (choice == 1) { printf("땀을 흘리며 근력을 키웠습니다! (STR +1)\n"); p->str++; }
+    else { printf("집중력을 발휘하여 명중률을 높였습니다! (DEX +1)\n"); p->dex++; }
+}
+
+static void event_library(Player* p) {
+    printf("\n[활동] 오래된 도서관에서 고서를 읽습니다.\n");
+    printf("심오한 지식을 습득하여 머리가 맑아집니다. (INT +1, EXP +50)\n");
+    p->intel++;
+    p->exp += 50;
+    check_level_up(p);
+}
+
+static void event_alley_gamble(Player* p) {
+    printf("\n[이벤트] 뒷골목에서 수상한 도박판을 발견했습니다.\n");
+    printf("한 판 벌여보시겠습니까? (50%% 확률로 LUK +2 또는 Gold -100)\n");
+    printf("1. 한다\n2. 지나친다\n");
+    printf("선택: ");
+    int choice;
+    if (scanf("%d", &choice) != 1) { clear_input_buffer(); return; }
+    clear_input_buffer();
+    if (choice == 1) {
+        if (rand() % 2 == 0) {
+            printf("심리전에서 승리했습니다! 운이 상승합니다. (LUK +2)\n");
+            p->luk += 2;
+        } else {
+            printf("보기 좋게 탈탈 털렸습니다... (Gold -100)\n");
+            p->gold -= 100;
+            if (p->gold < 0) p->gold = 0;
+        }
+    }
+}
+
+static void event_mysterious_potion(Player* p) {
+    printf("\n[이벤트] 길에 떨어진 정체불명의 약병을 발견했습니다.\n");
+    printf("마셔보시겠습니까? (무작위 능력치 변동)\n");
+    printf("1. 마신다\n2. 버린다\n");
+    printf("선택: ");
+    int choice;
+    if (scanf("%d", &choice) != 1) { clear_input_buffer(); return; }
+    clear_input_buffer();
+    if (choice == 1) {
+        int r = rand() % 4;
+        int amt = (rand() % 3) + 1;
+        const char* s_names[] = {"STR", "DEX", "INT", "LUK"};
+        printf("몸에서 이상한 반응이 옵니다! (%s +%d)\n", s_names[r], amt);
+        if(r==0) p->str += amt;
+        else if(r==1) p->dex += amt;
+        else if(r==2) p->intel += amt;
+        else p->luk += amt;
+    }
+}
+
 void trigger_event(Player* p) {
     clear_screen();
     show_compact_status(p);
     
     int event_chance = rand() % 100;
 
-    if (event_chance < 50) {
-        // 50% 확률로 전투 발생
+    if (event_chance < 40) {
+        // 40% 확률로 전투 발생
         start_combat(p);
-    } else if (event_chance < 70) {
-        // 20% 확률로 신비한 상자
+    } else if (event_chance < 50) {
         event_mysterious_chest(p);
-    } else if (event_chance < 80) {
-        // 10% 확률로 오아시스
+    } else if (event_chance < 55) {
         event_oasis(p);
-    } else if (event_chance < 90) {
-        // 10% 확률로 함정
+    } else if (event_chance < 60) {
         event_trap(p);
+    } else if (event_chance < 70) {
+        event_training_ground(p);
+    } else if (event_chance < 80) {
+        event_library(p);
+    } else if (event_chance < 90) {
+        event_alley_gamble(p);
+    } else if (event_chance < 95) {
+        event_mysterious_potion(p);
     } else {
-        // 10% 확률로 기존 일반 텍스트 이벤트 발생
+        // 나머지 일반 텍스트 이벤트
         printf("\n--- 길거리 발견 이벤트 ---\n");
         int sub_event = rand() % 3;
         
