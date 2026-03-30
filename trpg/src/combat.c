@@ -39,12 +39,17 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     for (int i = 1; i <= 6; i++) {
         if (counts[i] == 5) {
             int mult = 30;
-            if (p->job == JOB_THIEF) {
-                printf("[직업 스킬: 데들리 럭! (Yacht 1000배)]\n");
-                mult = 1000;
-            } else {
-                printf("[조합: Yacht! (30배)]\n");
-            }
+            const char* skill_name = "Yacht!";
+            
+            if (p->job == JOB_THIEF) { mult = 1000; skill_name = "데들리 럭!"; }
+            else if (p->job == JOB_BERSERKER) { mult = 200; skill_name = "광란의 일격!"; }
+            else if (p->job == JOB_ASSASSIN) { mult = 300; skill_name = "일격필살!"; }
+            else if (p->job == JOB_JUDGE) { mult = 400; skill_name = "최후의 심판!"; }
+            else if (p->job == JOB_AVATAR) { mult = 500; skill_name = "신성한 심판!"; }
+            
+            if (mult > 30) printf("[직업 스킬: %s (Yacht %d배)]\n", skill_name, mult);
+            else printf("[조합: Yacht! (30배)]\n");
+            
             return sum * 10 * mult;
         }
     }
@@ -59,12 +64,16 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     }
     if (is_large_straight) {
         int mult = 25;
-        if (p->job == JOB_MAGE) {
-            printf("[직업 스킬: 메테오 스트라이크! (L.Straight 150배)]\n");
-            mult = 150;
-        } else {
-            printf("[조합: Large Straight! (25배)]\n");
-        }
+        const char* skill_name = "Large Straight!";
+        
+        if (p->job == JOB_MAGE) { mult = 150; skill_name = "메테오 스트라이크!"; }
+        else if (p->job == JOB_RANGER) { mult = 80; skill_name = "화살 폭격!"; }
+        else if (p->job == JOB_GRANDMAGE) { mult = 200; skill_name = "궁극의 지혜!"; }
+        else if (p->job == JOB_CHAMPION) { mult = 100; skill_name = "영광의 길!"; }
+        else if (p->job == JOB_AVATAR) { mult = 120; skill_name = "세상의 끝!"; }
+        
+        if (mult > 25) printf("[직업 스킬: %s (L.Straight %d배)]\n", skill_name, mult);
+        else printf("[조합: Large Straight! (25배)]\n");
         return sum * 10 * mult;
     }
 
@@ -75,8 +84,15 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
         if (counts[i] == 2) has_2 = i;
     }
     if (has_3 && has_2) {
-        printf("[조합: Full House! (20배)]\n");
-        return sum * 10 * 20;
+        int mult = 20;
+        const char* skill_name = "Full House!";
+        
+        if (p->job == JOB_CRUSADER) { mult = 100; skill_name = "강화된 신성력!"; }
+        else if (p->job == JOB_PALADIN) { mult = 150; skill_name = "성궤의 심판!"; }
+        
+        if (mult > 20) printf("[직업 스킬: %s (Full House %d배)]\n", skill_name, mult);
+        else printf("[조합: Full House! (20배)]\n");
+        return sum * 10 * mult;
     }
 
     // 4. Small Straight (4개 연속)
@@ -88,20 +104,32 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     }
     if (max_consecutive >= 4) {
         int mult = 15;
-        if (p->job == JOB_ARCHER) {
-            printf("[직업 스킬: 샤프 아이즈! (S.Straight 45배)]\n");
-            mult = 45;
-        } else {
-            printf("[조합: Small Straight! (15배)]\n");
-        }
+        const char* skill_name = "Small Straight!";
+        
+        if (p->job == JOB_ARCHER) { mult = 45; skill_name = "샤프 아이즈!"; }
+        else if (p->job == JOB_RANGER) { mult = 40; skill_name = "신속의 화살!"; }
+        else if (p->job == JOB_CHAMPION) { mult = 60; skill_name = "용사의 연격!"; }
+        else if (p->job == JOB_GRANDMAGE) { mult = 80; skill_name = "마력의 파동!"; }
+        
+        if (mult > 15) printf("[직업 스킬: %s (S.Straight %d배)]\n", skill_name, mult);
+        else printf("[조합: Small Straight! (15배)]\n");
         return sum * 10 * mult;
     }
 
     // 5. Quad (4개 동일)
     for (int i = 1; i <= 6; i++) {
         if (counts[i] == 4) {
-            printf("[조합: Quad! (10배)]\n");
-            return (i * 4 * 10 * 10) + ((sum - i * 4) * 10);
+            int mult = 10;
+            const char* skill_name = "Quad!";
+            
+            if (p->job == JOB_BERSERKER) { mult = 50; skill_name = "무자비한 타격!"; }
+            else if (p->job == JOB_ASSASSIN) { mult = 60; skill_name = "급소 찌르기!"; }
+            else if (p->job == JOB_JUDGE) { mult = 80; skill_name = "철퇴 하강!"; }
+            else if (p->job == JOB_PALADIN) { mult = 70; skill_name = "홀리 스트라이크!"; }
+            
+            if (mult > 10) printf("[직업 스킬: %s (Quad %d배)]\n", skill_name, mult);
+            else printf("[조합: Quad! (10배)]\n");
+            return (i * 4 * 10 * mult) + ((sum - i * 4) * 10);
         }
     }
 
@@ -109,12 +137,14 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     for (int i = 1; i <= 6; i++) {
         if (counts[i] == 3) {
             int mult = 5;
-            if (p->job == JOB_WARRIOR) {
-                printf("[직업 스킬: 파이널 어택! (Triple 12배)]\n");
-                mult = 12;
-            } else {
-                printf("[조합: Triple! (5배)]\n");
-            }
+            const char* skill_name = "Triple!";
+            
+            if (p->job == JOB_WARRIOR) { mult = 12; skill_name = "파이널 어택!"; }
+            else if (p->job == JOB_GLADIATOR) { mult = 15; skill_name = "쌍검 난무!"; }
+            else if (p->job == JOB_SAGE) { mult = 20; skill_name = "지혜의 일격!"; }
+            
+            if (mult > 5) printf("[직업 스킬: %s (Triple %d배)]\n", skill_name, mult);
+            else printf("[조합: Triple! (5배)]\n");
             return (i * 3 * 10 * mult) + ((sum - i * 3) * 10);
         }
     }
@@ -122,8 +152,14 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     // 7. Pair (2개 동일)
     for (int i = 6; i >= 1; i--) {
         if (counts[i] == 2) {
-            printf("[조합: One Pair! (2배)]\n");
-            return (i * 2 * 10 * 2) + ((sum - i * 2) * 10);
+            int mult = 2;
+            if (p->job == JOB_GLADIATOR || p->job == JOB_SAGE) {
+                printf("[직업 스킬: 연쇄 반응! (Pair 6배)]\n");
+                mult = 6;
+            } else {
+                printf("[조합: One Pair! (2배)]\n");
+            }
+            return (i * 2 * 10 * mult) + ((sum - i * 2) * 10);
         }
     }
 
@@ -140,6 +176,21 @@ int calculate_final_damage(Player* p, Enemy* e, int yacht_result) {
         case JOB_ARCHER:  base_stat_power = (p->dex * 5.0f); break;
         case JOB_MAGE:    base_stat_power = (p->intel * 5.0f); break;
         case JOB_THIEF:   base_stat_power = (p->luk * 5.0f); break;
+        
+        case JOB_GLADIATOR: base_stat_power = (p->str * 3.0f + p->dex * 3.0f); break;
+        case JOB_CRUSADER:  base_stat_power = (p->str * 3.0f + p->intel * 3.0f); break;
+        case JOB_BERSERKER: base_stat_power = (p->str * 3.0f + p->luk * 3.0f); break;
+        case JOB_RANGER:    base_stat_power = (p->dex * 3.0f + p->intel * 3.0f); break;
+        case JOB_ASSASSIN:  base_stat_power = (p->dex * 3.0f + p->luk * 3.0f); break;
+        case JOB_SAGE:      base_stat_power = (p->intel * 3.0f + p->luk * 3.0f); break;
+        
+        case JOB_CHAMPION:  base_stat_power = (p->str * 2.5f + p->dex * 2.5f + p->intel * 2.5f); break;
+        case JOB_JUDGE:     base_stat_power = (p->str * 2.5f + p->dex * 2.5f + p->luk * 2.5f); break;
+        case JOB_PALADIN:   base_stat_power = (p->str * 2.5f + p->intel * 2.5f + p->luk * 2.5f); break;
+        case JOB_GRANDMAGE: base_stat_power = (p->dex * 2.5f + p->intel * 2.5f + p->luk * 2.5f); break;
+        
+        case JOB_AVATAR:    base_stat_power = (p->str + p->dex + p->intel + p->luk) * 2.0f; break;
+        
         default:          base_stat_power = (p->str * 4.0f + p->dex); break;
     }
     
@@ -300,10 +351,21 @@ void start_combat(Player* p) {
                 case JOB_ARCHER:  base_power = p->dex * 5.0f; break;
                 case JOB_MAGE:    base_power = p->intel * 5.0f; break;
                 case JOB_THIEF:   base_power = p->luk * 5.0f; break;
+                case JOB_GLADIATOR: base_power = (p->str + p->dex) * 3.0f; break;
+                case JOB_CRUSADER:  base_power = (p->str + p->intel) * 3.0f; break;
+                case JOB_BERSERKER: base_power = (p->str + p->luk) * 3.0f; break;
+                case JOB_RANGER:    base_power = (p->dex + p->intel) * 3.0f; break;
+                case JOB_ASSASSIN:  base_power = (p->dex + p->luk) * 3.0f; break;
+                case JOB_SAGE:      base_power = (p->intel + p->luk) * 3.0f; break;
+                case JOB_CHAMPION:  base_power = (p->str + p->dex + p->intel) * 2.5f; break;
+                case JOB_JUDGE:     base_power = (p->str + p->dex + p->luk) * 2.5f; break;
+                case JOB_PALADIN:   base_power = (p->str + p->intel + p->luk) * 2.5f; break;
+                case JOB_GRANDMAGE: base_power = (p->dex + p->intel + p->luk) * 2.5f; break;
+                case JOB_AVATAR:    base_power = (p->str + p->dex + p->intel + p->luk) * 2.0f; break;
                 default:          base_power = p->str * 4.0f + p->dex; break;
             }
 
-            printf("> 데미지 계산: (투자스탯 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
+            printf("> 데미지 계산: (투자효율 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
                    (int)base_power, yacht_score / 100.0f, (int)(enemy.def * (1.0f - p->ied)), final_dmg);
             
             enemy.hp -= final_dmg;
