@@ -26,11 +26,9 @@ void init_player(Player* p) {
     
     p->exp = 0;
     p->gold = 100;
-    p->stat_points = 0;
-    
-    p->weapon_tier = 0;
-    p->armor_tier = 0;
     p->accessory_tier = 0;
+    
+    p->inventory.count = 0;
     
     printf("\n'%s'님, 모험을 시작합니다!\n", p->name);
 }
@@ -184,6 +182,22 @@ void show_compact_status(const Player* p) {
            p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->gold);
     printf("[ STR:%d DEX:%d INT:%d LUK:%d ]\n", p->str, p->dex, p->intel, p->luk);
     printf("------------------------------------------------------------\n");
+}
+
+void show_inventory(const Player* p) {
+    printf("\n========= [인벤토리] (%d / %d) =========\n", p->inventory.count, MAX_INVENTORY_SIZE);
+    if (p->inventory.count == 0) {
+        printf("비어 있습니다.\n");
+    } else {
+        for (int i = 0; i < p->inventory.count; i++) {
+            printf("%d. [%s] - %s (가치: %d G)\n", 
+                   i + 1, p->inventory.items[i].name, p->inventory.items[i].description, p->inventory.items[i].value);
+        }
+    }
+    printf("========================================\n");
+    printf("엔터를 누르면 돌아갑니다...");
+    while (getchar() != '\n'); // 이전 입력 버퍼 비우기용 (안정성)
+    getchar(); 
 }
 void apply_death_penalty(Player* p) {
     printf("\n💀 [사망] 전투에서 패배했습니다! 💀\n");

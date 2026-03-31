@@ -1,4 +1,5 @@
 #include "../include/village.h"
+#include "../include/crafting.h"
 #include "../include/utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,7 @@ void open_village_menu(Player* p) {
         printf("전투 외에 안전하게 활동할 수 있습니다.\n");
         printf("1. 파트타임 알바 (마을 광장 청소) - [보상: 30G, 10 HP 회복]\n");
         printf("2. 주사위 도박 (하이/로우) - [최소 배팅: 50G]\n");
+        printf("3. 장비 제작 (대장간) - [몬스터 전리품 재재료]\n");
         printf("0. 뒤로 가기\n");
         printf("선택: ");
         
@@ -65,6 +67,9 @@ void open_village_menu(Player* p) {
                         }
                     }
                 }
+                break;
+            case 3:
+                open_crafting_menu(p);
                 break;
             default:
                 printf("\n[알림] 잘못된 선택입니다.\n");

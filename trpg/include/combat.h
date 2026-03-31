@@ -2,6 +2,7 @@
 #define COMBAT_H
 
 #include "character.h"
+#include "item.h"
 
 typedef struct {
     char name[50];
@@ -9,6 +10,7 @@ typedef struct {
     int max_hp;
     int def;    // 방어율
     int is_boss; // 보스 여부 (0: 일반, 1: 보스)
+    Item loot;  // 전리품
 } Enemy;
 
 // 주사위 굴리기 (n개)
