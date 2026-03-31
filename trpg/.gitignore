@@ -1,0 +1,20 @@
+# Binaries
+*.exe
+*.o
+*.out
+*.app
+
+# Build directories
+build/
+bin/
+obj/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+Thumbs.db
+.DS_Store

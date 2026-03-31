@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "../include/character.h"
 
 void init_player(Player* p) {
@@ -8,6 +7,7 @@ void init_player(Player* p) {
     printf("이름을 입력하세요: ");
     scanf("%s", p->name);
     
+    p->job = JOB_NONE;
     p->level = 1;
     p->hp = 100;
     p->max_hp = 100;
@@ -33,38 +33,7 @@ void init_player(Player* p) {
     printf("\n'%s'님, 모험을 시작합니다!\n", p->name);
 }
 
-void distribute_stats(Player* p) {
-    int choice;
-    while (p->stat_points > 0) {
-        printf("\n====== [능력치 분배] ======\n");
-        printf("남은 포인트: %d\n", p->stat_points);
-        printf("1. STR (+힘): %d\n", p->str);
-        printf("2. DEX (+민첩): %d\n", p->dex);
-        printf("3. INT (+지능): %d\n", p->intel);
-        printf("4. LUK (+운): %d\n", p->luk);
-        printf("0. 나가기\n");
-        printf("선택: ");
-        scanf("%d", &choice);
-        
-        if (choice == 0) break;
-        
-        int mount;
-        printf("투자할 포인트 양 (현재 %d 보유): ", p->stat_points);
-        scanf("%d", &mount);
-        
-        if (mount > p->stat_points) mount = p->stat_points;
-        if (mount < 0) mount = 0;
-        
-        switch (choice) {
-            case 1: p->str += mount; break;
-            case 2: p->dex += mount; break;
-            case 3: p->intel += mount; break;
-            case 4: p->luk += mount; break;
-            default: printf("잘못된 선택입니다.\n"); continue;
-        }
-        p->stat_points -= mount;
-    }
-}
+// distribute_stats 함수는 더 이상 사용되지 않음 (사용자 규칙: 자동/랜덤 성장)
 
 void check_level_up(Player* p) {
     int required_exp = p->level * 100;
@@ -72,26 +41,130 @@ void check_level_up(Player* p) {
         p->level++;
         p->exp -= required_exp;
         
-        // 자동 스탯 상승
+        // 기본 스탯 상승 (HP/MP)
         p->max_hp += 20;
         p->hp = p->max_hp;
         p->max_mp += 10;
         p->mp = p->max_mp;
         
-        // 포인트 부여
         p->stat_points += 5;
         
         printf("\n🎉 레벨 업! [Level %d]가 되었습니다! 🎉\n", p->level);
-        printf("체력과 마나가 회복되었고, 스탯 포인트 5를 획득했습니다.\n");
+
+        // 1. 전직 체크
+        if (p->job == JOB_NONE && p->level >= JOB_ADVANCEMENT_LEVEL) {
+            printf("\n✨ 운명에 따라 당신의 길이 결정됩니다... ✨\n");
+            
+            int s = p->str, d = p->dex, i = p->intel, l = p->luk;
+            int max_v = s;
+            if (d > max_v) max_v = d;
+            if (i > max_v) max_v = i;
+            if (l > max_v) max_v = l;
+
+            int is_s = (s == max_v), is_d = (d == max_v), is_i = (i == max_v), is_l = (l == max_v);
+            int count = is_s + is_d + is_i + is_l;
+
+            if (count == 4) p->job = JOB_AVATAR;
+            else if (count == 3) {
+                if (!is_l) p->job = JOB_CHAMPION;
+                else if (!is_i) p->job = JOB_JUDGE;
+                else if (!is_d) p->job = JOB_PALADIN;
+                else p->job = JOB_GRANDMAGE;
+            } else if (count == 2) {
+                if (is_s && is_d) p->job = JOB_GLADIATOR;
+                else if (is_s && is_i) p->job = JOB_CRUSADER;
+                else if (is_s && is_l) p->job = JOB_BERSERKER;
+                else if (is_d && is_i) p->job = JOB_RANGER;
+                else if (is_d && is_l) p->job = JOB_ASSASSIN;
+                else p->job = JOB_SAGE;
+            } else {
+                if (is_s) p->job = JOB_WARRIOR;
+                else if (is_d) p->job = JOB_ARCHER;
+                else if (is_i) p->job = JOB_MAGE;
+                else p->job = JOB_THIEF;
+            }
+
+            const char* j_names[] = {
+                "초보자", "전사", "궁수", "마법사", "도적",
+                "검투사", "성기사", "광전사", "레인저", "암살자", "현자",
+                "초인", "심판자", "성궤사", "대마법사", "아바타"
+            };
+            printf("가장 높은 능력치에 따른 조율 결과, [ %s ](으)로 결정되었습니다!\n", j_names[p->job]);
+        }
+
+        // 2. 능력치 무작위 분배
+        int pts = p->stat_points;
+        p->stat_points = 0;
         
-        distribute_stats(p);
+        if (p->job == JOB_NONE) {
+            printf("능력치 5포인트가 무작위로 분배됩니다.\n");
+            for(int k=0; k<pts; k++) {
+                int r = rand() % 4;
+                if(r==0) { p->str++; printf("STR +1 "); }
+                else if(r==1) { p->dex++; printf("DEX +1 "); }
+                else if(r==2) { p->intel++; printf("INT +1 "); }
+                else { p->luk++; printf("LUK +1 "); }
+            }
+            printf("\n");
+        } else {
+            // 전직 후: 해당 직업의 주력 스탯들 사이에서 무작위 분배
+            int targets[4] = {0};
+            int t_count = 0;
+            
+            switch(p->job) {
+                case JOB_WARRIOR: targets[0]=1; t_count=1; break;
+                case JOB_ARCHER:  targets[1]=1; t_count=1; break;
+                case JOB_MAGE:    targets[2]=1; t_count=1; break;
+                case JOB_THIEF:   targets[3]=1; t_count=1; break;
+                case JOB_GLADIATOR: targets[0]=targets[1]=1; t_count=2; break;
+                case JOB_CRUSADER:  targets[0]=targets[2]=1; t_count=2; break;
+                case JOB_BERSERKER: targets[0]=targets[3]=1; t_count=2; break;
+                case JOB_RANGER:    targets[1]=targets[2]=1; t_count=2; break;
+                case JOB_ASSASSIN:  targets[1]=targets[3]=1; t_count=2; break;
+                case JOB_SAGE:      targets[2]=targets[3]=1; t_count=2; break;
+                case JOB_CHAMPION:  targets[0]=targets[1]=targets[2]=1; t_count=3; break;
+                case JOB_JUDGE:     targets[0]=targets[1]=targets[3]=1; t_count=3; break;
+                case JOB_PALADIN:   targets[0]=targets[2]=targets[3]=1; t_count=3; break;
+                case JOB_GRANDMAGE: targets[1]=targets[2]=targets[3]=1; t_count=3; break;
+                case JOB_AVATAR:    targets[0]=targets[1]=targets[2]=targets[3]=1; t_count=4; break;
+                default: break;
+            }
+            
+            printf("직업 특성에 따라 주력 능력치가 상승합니다.\n");
+            for(int k=0; k<pts; k++) {
+                int r_idx = rand() % t_count;
+                int current = 0;
+                for(int j=0; j<4; j++) {
+                    if(targets[j]) {
+                        if(current == r_idx) {
+                            if(j==0) { p->str++; printf("STR +1 "); }
+                            else if(j==1) { p->dex++; printf("DEX +1 "); }
+                            else if(j==2) { p->intel++; printf("INT +1 "); }
+                            else { p->luk++; printf("LUK +1 "); }
+                            break;
+                        }
+                        current++;
+                    }
+                }
+            }
+            printf("\n");
+        }
         
         check_level_up(p); 
     }
 }
 
+const char* get_job_name(JobType job) {
+    static const char* names[] = {
+        "초보자", "전사", "궁수", "마법사", "도적",
+        "검투사", "성기사", "광전사", "레인저", "암살자", "현자",
+        "초인", "심판자", "성궤사", "대마법사", "아바타"
+    };
+    return names[job];
+}
+
 void show_status(const Player* p) {
-    printf("\n====== [%s] 상태 (Level %d) ======\n", p->name, p->level);
+    printf("\n====== [%s] 상태 (Level %d / %s) ======\n", p->name, p->level, get_job_name(p->job));
     printf("HP: %d / %d | MP: %d / %d\n", p->hp, p->max_hp, p->mp, p->max_mp);
     printf("--------------------------\n");
     printf("STR: %d | DEX: %d\n", p->str, p->dex);
@@ -101,15 +174,13 @@ void show_status(const Player* p) {
     printf("보뎀: %.1f%% | 뎀퍼: %.1f%%\n", p->boss_dmg * 100.0f, p->dmg_percent * 100.0f);
     printf("--------------------------\n");
     printf("EXP: %d / %d | Gold: %d\n", p->exp, p->level * 100, p->gold);
-    if (p->stat_points > 0) printf(">> 사용 가능한 스탯 포인트: %d\n", p->stat_points);
     printf("========================\n");
 }
 
 void show_compact_status(const Player* p) {
-    printf("\n[ %s | LV %d | HP: %d/%d | MP: %d/%d | Gold: %d G ]\n", 
-           p->name, p->level, p->hp, p->max_hp, p->mp, p->max_mp, p->gold);
-    printf("[ STR:%d DEX:%d INT:%d LUK:%d | 방무:%.0f%% 보뎀:%.0f%% ]\n", 
-           p->str, p->dex, p->intel, p->luk, p->ied * 100.0f, p->boss_dmg * 100.0f);
+    printf("\n[ %s | %s LV %d | HP: %d/%d | Gold: %d G ]\n", 
+           p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->gold);
+    printf("[ STR:%d DEX:%d INT:%d LUK:%d ]\n", p->str, p->dex, p->intel, p->luk);
     printf("------------------------------------------------------------\n");
 }
 
