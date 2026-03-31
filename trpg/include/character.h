@@ -1,6 +1,8 @@
 #ifndef CHARACTER_H
 #define CHARACTER_H
 
+#include "item.h"
+
 typedef struct {
     char name[50];
     int level;
@@ -28,6 +30,8 @@ typedef struct {
     int weapon_tier;
     int armor_tier;
     int accessory_tier;
+    
+    Inventory inventory;
 } Player;
 
 // 플레이어 초기화 함수
@@ -36,6 +40,7 @@ void init_player(Player* p);
 // 플레이어 상태 출력 함수
 void show_status(const Player* p);
 void show_compact_status(const Player* p);
+void show_inventory(const Player* p);
 
 // 레벨업 체크 및 처리 함수
 void check_level_up(Player* p);
