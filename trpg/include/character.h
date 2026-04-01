@@ -2,6 +2,7 @@
 #define CHARACTER_H
 
 #include "item.h"
+#include <time.h>
 
 typedef enum {
     JOB_NONE = 0,
@@ -61,6 +62,11 @@ typedef struct {
     int accessory_tier;
     
     int combat_power;   // 종합 전투력
+    
+    // 알바 관련 데이터
+    time_t last_job_time;
+    int job_count;
+    
     Inventory inventory;
 } Player;
 

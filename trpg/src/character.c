@@ -30,6 +30,8 @@ void init_player(Player* p) {
     p->weapon_tier = 0;
     p->armor_tier = 0;
     p->accessory_tier = 0;
+    p->last_job_time = 0;
+    p->job_count = 0;
     
     p->inventory.count = 0;
     
