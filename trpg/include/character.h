@@ -2,6 +2,7 @@
 #define CHARACTER_H
 
 #include "item.h"
+#include <time.h>
 
 typedef enum {
     JOB_NONE = 0,
@@ -60,6 +61,12 @@ typedef struct {
     int armor_tier;
     int accessory_tier;
     
+    int combat_power;   // 종합 전투력
+    
+    // 알바 관련 데이터
+    time_t last_job_time;
+    int job_count;
+    
     Inventory inventory;
 } Player;
 
@@ -67,8 +74,8 @@ typedef struct {
 void init_player(Player* p);
 
 // 플레이어 상태 출력 함수
-void show_status(const Player* p);
-void show_compact_status(const Player* p);
+void show_status(Player* p);
+void show_compact_status(Player* p);
 void show_inventory(const Player* p);
 
 // 레벨업 체크 및 처리 함수
@@ -76,5 +83,8 @@ void check_level_up(Player* p);
 
 // 사망 패널티 적용 함수
 void apply_death_penalty(Player* p);
+
+// 전투력 업데이트 함수
+void update_combat_power(Player* p);
 
 #endif

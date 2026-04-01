@@ -168,184 +168,62 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     return sum * 10;
 }
 
-int calculate_final_damage(Player* p, Enemy* e, int yacht_result) {
-    // 1. 주스탯 위주의 공격력 연산
+int calculate_final_damage(Player* p, Monster* m, int yacht_result) {
     float base_stat_power = 0;
     switch (p->job) {
         case JOB_WARRIOR: base_stat_power = (p->str * 5.0f); break;
         case JOB_ARCHER:  base_stat_power = (p->dex * 5.0f); break;
         case JOB_MAGE:    base_stat_power = (p->intel * 5.0f); break;
         case JOB_THIEF:   base_stat_power = (p->luk * 5.0f); break;
-        
         case JOB_GLADIATOR: base_stat_power = (p->str * 3.0f + p->dex * 3.0f); break;
         case JOB_CRUSADER:  base_stat_power = (p->str * 3.0f + p->intel * 3.0f); break;
         case JOB_BERSERKER: base_stat_power = (p->str * 3.0f + p->luk * 3.0f); break;
         case JOB_RANGER:    base_stat_power = (p->dex * 3.0f + p->intel * 3.0f); break;
         case JOB_ASSASSIN:  base_stat_power = (p->dex * 3.0f + p->luk * 3.0f); break;
         case JOB_SAGE:      base_stat_power = (p->intel * 3.0f + p->luk * 3.0f); break;
-        
         case JOB_CHAMPION:  base_stat_power = (p->str * 2.5f + p->dex * 2.5f + p->intel * 2.5f); break;
         case JOB_JUDGE:     base_stat_power = (p->str * 2.5f + p->dex * 2.5f + p->luk * 2.5f); break;
         case JOB_PALADIN:   base_stat_power = (p->str * 2.5f + p->intel * 2.5f + p->luk * 2.5f); break;
         case JOB_GRANDMAGE: base_stat_power = (p->dex * 2.5f + p->intel * 2.5f + p->luk * 2.5f); break;
-        
         case JOB_AVATAR:    base_stat_power = (p->str + p->dex + p->intel + p->luk) * 2.0f; break;
-        
         default:          base_stat_power = (p->str * 4.0f + p->dex); break;
     }
     
-    // 2. 야추 조합 배율 (yacht_result는 이미 점수화됨, 이를 %로 간주)
     float skill_mult = yacht_result / 100.0f; 
-    
     float damage = base_stat_power * skill_mult;
-    
-    // 3. 데미지 % 적용
     damage *= (1.0f + p->dmg_percent);
-    
-    // 4. 보스 공격 시 추가 데미지
-    if (e->is_boss) {
-        damage *= (1.0f + p->boss_dmg);
-    }
-    
-    // 5. 방어율 무시 (IED) 적용
-    float effective_def = e->def * (1.0f - p->ied);
+    if (m->is_boss) damage *= (1.0f + p->boss_dmg);
+    float effective_def = m->def * (1.0f - p->ied);
     if (effective_def < 0) effective_def = 0;
-    
     int final_dmg = (int)(damage - effective_def);
     return (final_dmg < 1) ? 1 : final_dmg;
 }
 
-void start_combat(Player* p) {
-    Enemy enemy;
-    int is_boss = (rand() % 4 == 3); // 25% chance for boss
-    int type = rand() % 3; // 0, 1, 2 sub-types
-    int enemy_rank = 0; // For reward calculation
+void start_combat(Player* p, Dungeon* d) {
+    Monster enemy;
+    int roll = rand() % 100;
+    int enemy_rank = 0;
+
+    // 몬스터 정보 결정 (던전에 따라 다름)
+    if (d->has_boss && roll >= 80) { // 20%확률 보스
+        enemy = d->boss;
+    } else {
+        int idx = rand() % d->monster_count;
+        enemy = d->monsters[idx];
+    }
+    
+    // 던전 수준에 따른 랭크 (보상용)
+    if (d->min_cp < 500) enemy_rank = 0;
+    else if (d->min_cp < 2000) enemy_rank = 1;
+    else if (d->min_cp < 5000) enemy_rank = 2;
+    else enemy_rank = 3;
+
+    enemy.hp = enemy.max_hp;
 
     clear_screen();
     show_compact_status(p);
-
-    if (p->level < 5) {
-        // Level 1-4: Basic
-        is_boss = 0; // No boss below level 5
-        enemy_rank = 0;
-        if (type == 0) {
-            strcpy(enemy.name, "파란 달팽이");
-            enemy.max_hp = 300; enemy.def = 5;
-            strcpy(enemy.loot.name, "달팽이 껍질");
-            strcpy(enemy.loot.description, "작고 단단한 파란색 껍질");
-            enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 10;
-        } else if (type == 1) {
-            strcpy(enemy.name, "슬라임");
-            enemy.max_hp = 600; enemy.def = 10;
-            strcpy(enemy.loot.name, "슬라임의 핵");
-            strcpy(enemy.loot.description, "구슬처럼 빛나는 말랑한 핵");
-            enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 20;
-        } else {
-            strcpy(enemy.name, "주황버섯");
-            enemy.max_hp = 1000; enemy.def = 20;
-            strcpy(enemy.loot.name, "버섯 갓");
-            strcpy(enemy.loot.description, "주황색 무늬가 있는 버섯 갓");
-            enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 30;
-        }
-        enemy.is_boss = 0;
-    } else if (p->level < 10) {
-        // Level 5-9: Intermediate
-        enemy_rank = 1;
-        if (is_boss) {
-            strcpy(enemy.name, "🔥 자쿰의 팔 (BOSS) 🔥");
-            enemy.max_hp = 25000; enemy.def = 150; enemy.is_boss = 1;
-            strcpy(enemy.loot.name, "자쿰의 나뭇가지");
-            strcpy(enemy.loot.description, "자쿰의 팔에서 떨어진 단단한 가지");
-            enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 1000;
-        } else {
-            if (type == 0) {
-                strcpy(enemy.name, "고블린");
-                enemy.max_hp = 3000; enemy.def = 40;
-                strcpy(enemy.loot.name, "고블린의 몽둥이");
-                strcpy(enemy.loot.description, "투박한 나무 몽둥이");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 100;
-            } else if (type == 1) {
-                strcpy(enemy.name, "오크");
-                enemy.max_hp = 6000; enemy.def = 80;
-                strcpy(enemy.loot.name, "오크의 이빨");
-                strcpy(enemy.loot.description, "거칠게 갈린 오크의 송곳니");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 150;
-            } else {
-                strcpy(enemy.name, "와일드카고");
-                enemy.max_hp = 10000; enemy.def = 120;
-                strcpy(enemy.loot.name, "와일드카고의 눈동자");
-                strcpy(enemy.loot.description, "무섭게 빛나는 눈동자");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 200;
-            }
-            enemy.is_boss = 0;
-        }
-    } else if (p->level < 15) {
-        // Level 10-14: Advanced
-        enemy_rank = 2;
-        if (is_boss) {
-            strcpy(enemy.name, "🕒 시계탑의 파풀라투스 (BOSS) 🕒");
-            enemy.max_hp = 150000; enemy.def = 400; enemy.is_boss = 1;
-            strcpy(enemy.loot.name, "시계 파편");
-            strcpy(enemy.loot.description, "시간의 마력이 깃든 시계 부품");
-            enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 5000;
-        } else {
-            if (type == 0) {
-                strcpy(enemy.name, "스켈레톤");
-                enemy.max_hp = 25000; enemy.def = 200;
-                strcpy(enemy.loot.name, "부서진 뼈");
-                strcpy(enemy.loot.description, "말라비틀어진 창백한 뼈");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 500;
-            } else if (type == 1) {
-                strcpy(enemy.name, "다크 레인저");
-                enemy.max_hp = 45000; enemy.def = 300;
-                strcpy(enemy.loot.name, "검은 화살촉");
-                strcpy(enemy.loot.description, "어둠의 기운이 감도는 화살촉");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 800;
-            } else {
-                strcpy(enemy.name, "듀얼 파이렛");
-                enemy.max_hp = 70000; enemy.def = 350;
-                strcpy(enemy.loot.name, "해적의 동전");
-                strcpy(enemy.loot.description, "해적들이 사용하던 낡은 금화");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 1000;
-            }
-            enemy.is_boss = 0;
-        }
-    } else {
-        // Level 15+: Elite
-        enemy_rank = 3;
-        if (is_boss) {
-            strcpy(enemy.name, "🌸 군단장 핑크빈 (BOSS) 🌸");
-            enemy.max_hp = 800000; enemy.def = 1000; enemy.is_boss = 1;
-            strcpy(enemy.loot.name, "핑크빈의 인형");
-            strcpy(enemy.loot.description, "폭신폭신하고 귀여운 핑크색 인형");
-            enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 20000;
-        } else {
-            if (type == 0) {
-                strcpy(enemy.name, "블루 와이번");
-                enemy.max_hp = 150000; enemy.def = 500;
-                strcpy(enemy.loot.name, "와이번의 발톱");
-                strcpy(enemy.loot.description, "날카로운 블루 와이번의 발톱");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 2000;
-            } else if (type == 1) {
-                strcpy(enemy.name, "다크 코르니안");
-                enemy.max_hp = 300000; enemy.def = 700;
-                strcpy(enemy.loot.name, "단단한 비늘");
-                strcpy(enemy.loot.description, "검은 기운이 서린 단단한 비늘");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 3000;
-            } else {
-                strcpy(enemy.name, "스켈레곤");
-                enemy.max_hp = 500000; enemy.def = 900;
-                strcpy(enemy.loot.name, "용의 뼈");
-                strcpy(enemy.loot.description, "거대한 용의 화석 조각");
-                enemy.loot.type = ITEM_TYPE_TROPHY; enemy.loot.value = 5000;
-            }
-            enemy.is_boss = 0;
-        }
-    }
-    enemy.hp = enemy.max_hp;
-
-    printf("\n--- %s(이)가 나타났다! (HP: %d, 방어율: %d) ---\n", enemy.name, enemy.hp, enemy.def);
-
+    printf("\n--- %s에 입장했습니다! ---\n", d->name);
+    printf("--- %s(이)가 나타났다! (HP: %d, 방어율: %d) ---\n", enemy.name, enemy.hp, enemy.def);
 
     while (p->hp > 0 && enemy.hp > 0) {
         clear_screen();
@@ -360,10 +238,10 @@ void start_combat(Player* p) {
         }
         clear_input_buffer();
 
-        int skip_attack = 0;
         if (choice == 2) {
             int escape_dice[5];
             roll_dice(escape_dice, 5);
+            sort_dice(escape_dice, 5); // 도망 주사위 정렬 추가
             int sum = 0;
             printf("> 도망 주사위 결과: [");
             for (int i = 0; i < 5; i++) {
@@ -378,72 +256,43 @@ void start_combat(Player* p) {
                 return;
             } else {
                 printf("💀 도망에 실패했습니다! 공격 기회를 잃었습니다... 💀\n");
-                skip_attack = 1;
             }
-        }
-
-        if (!skip_attack) {
+        } else {
             int p_dice[5];
             roll_dice(p_dice, 5);
+            sort_dice(p_dice, 5); // 주사위 정렬 추가
             printf("> 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice[0], p_dice[1], p_dice[2], p_dice[3], p_dice[4]);
             
             int yacht_score = calculate_yacht_damage(p, p_dice);
             int final_dmg = calculate_final_damage(p, &enemy, yacht_score);
             
-            float base_power = 0;
-            switch(p->job) {
-                case JOB_WARRIOR: base_power = p->str * 5.0f; break;
-                case JOB_ARCHER:  base_power = p->dex * 5.0f; break;
-                case JOB_MAGE:    base_power = p->intel * 5.0f; break;
-                case JOB_THIEF:   base_power = p->luk * 5.0f; break;
-                case JOB_GLADIATOR: base_power = (p->str + p->dex) * 3.0f; break;
-                case JOB_CRUSADER:  base_power = (p->str + p->intel) * 3.0f; break;
-                case JOB_BERSERKER: base_power = (p->str + p->luk) * 3.0f; break;
-                case JOB_RANGER:    base_power = (p->dex + p->intel) * 3.0f; break;
-                case JOB_ASSASSIN:  base_power = (p->dex + p->luk) * 3.0f; break;
-                case JOB_SAGE:      base_power = (p->intel + p->luk) * 3.0f; break;
-                case JOB_CHAMPION:  base_power = (p->str + p->dex + p->intel) * 2.5f; break;
-                case JOB_JUDGE:     base_power = (p->str + p->dex + p->luk) * 2.5f; break;
-                case JOB_PALADIN:   base_power = (p->str + p->intel + p->luk) * 2.5f; break;
-                case JOB_GRANDMAGE: base_power = (p->dex + p->intel + p->luk) * 2.5f; break;
-                case JOB_AVATAR:    base_power = (p->str + p->dex + p->intel + p->luk) * 2.0f; break;
-                default:          base_power = p->str * 4.0f + p->dex; break;
-            }
-
-            printf("> 데미지 계산: (투자효율 %d * 배율 %.1fx) - 방어 %+d = [ %d ]\n", 
-                   (int)base_power, yacht_score / 100.0f, (int)(enemy.def * (1.0f - p->ied)), final_dmg);
-            
+            printf("> 데미지 계산 결과: [ %d ]\n", final_dmg);
             enemy.hp -= final_dmg;
             if (enemy.hp < 0) enemy.hp = 0;
-            printf("> %s의 HP: %d / %d\n", enemy.name, enemy.hp, enemy.max_hp);
 
             if (enemy.hp <= 0) {
                 int exp_gain = (enemy_rank + 1) * 100;
                 int gold_gain = (enemy_rank + 1) * 200;
                 if (enemy.is_boss) {
                     exp_gain *= 5; gold_gain *= 10;
-                    printf("🏆 보스 처치 특별 보상! 🏆\n");
+                    printf("🏆 보물 같은 보스 처치! 🏆\n");
                 }
                 p->exp += exp_gain;
                 p->gold += gold_gain;
                 printf("EXP +%d, Gold +%d 획득!\n", exp_gain, gold_gain);
                 
-                // 전리품 획득 로직
                 if (p->inventory.count < MAX_INVENTORY_SIZE) {
                     p->inventory.items[p->inventory.count] = enemy.loot;
                     p->inventory.count++;
                     printf("🎁 전리품 획득: [%s] 🎁\n", enemy.loot.name);
-                } else {
-                    printf("🎒 인벤토리가 가득 차서 [%s](을)를 얻지 못했습니다.\n", enemy.loot.name);
                 }
-
                 check_level_up(p);
                 wait_for_enter();
-                break;
+                return;
             }
         }
 
-        // 적 턴 (단순화 유지)
+        // 적 턴
         printf("\n[%s의 턴] 공격합니다!\n", enemy.name);
         int e_dice[3];
         roll_dice(e_dice, 3);
@@ -452,14 +301,133 @@ void start_combat(Player* p) {
         printf("> %d의 데미지를 입었습니다!\n", e_dmg);
         p->hp -= e_dmg;
         if (p->hp < 0) p->hp = 0;
-        printf("> 플레이어의 HP: %d / %d\n", p->hp, p->max_hp);
 
         if (p->hp <= 0) {
             apply_death_penalty(p);
             wait_for_enter();
             break;
         }
-
         wait_for_enter();
+    }
+}
+
+void select_dungeon(Player* p) {
+    Dungeon dungeons[5];
+    
+    // 1. 초심자의 들판
+    strcpy(dungeons[0].name, "초심자의 들판");
+    dungeons[0].min_cp = 0; dungeons[0].max_cp = 500;
+    dungeons[0].monster_count = 2;
+    strcpy(dungeons[0].monsters[0].name, "파란 달팽이");
+    dungeons[0].monsters[0].max_hp = 300; dungeons[0].monsters[0].def = 5; dungeons[0].monsters[0].is_boss = 0;
+    strcpy(dungeons[0].monsters[0].loot.name, "달팽이 껍질"); dungeons[0].monsters[0].loot.value = 10;
+    strcpy(dungeons[0].monsters[1].name, "슬라임");
+    dungeons[0].monsters[1].max_hp = 600; dungeons[0].monsters[1].def = 10; dungeons[0].monsters[1].is_boss = 0;
+    strcpy(dungeons[0].monsters[1].loot.name, "슬라임의 핵"); dungeons[0].monsters[1].loot.value = 20;
+    dungeons[0].has_boss = 0;
+
+    // 2. 노란 버섯 동산
+    strcpy(dungeons[1].name, "노란 버섯 동산");
+    dungeons[1].min_cp = 500; dungeons[1].max_cp = 2000;
+    dungeons[1].monster_count = 1;
+    strcpy(dungeons[1].monsters[0].name, "주황버섯");
+    dungeons[1].monsters[0].max_hp = 1500; dungeons[1].monsters[0].def = 30; dungeons[1].monsters[0].is_boss = 0;
+    strcpy(dungeons[1].monsters[0].loot.name, "버섯 갓"); dungeons[1].monsters[0].loot.value = 50;
+    dungeons[1].has_boss = 1;
+    strcpy(dungeons[1].boss.name, "🍄 머쉬맘 (BOSS) 🍄");
+    dungeons[1].boss.max_hp = 10000; dungeons[1].boss.def = 100; dungeons[1].boss.is_boss = 1;
+    strcpy(dungeons[1].boss.loot.name, "머쉬맘의 포자"); dungeons[1].boss.loot.value = 500;
+
+    // 3. 축축한 습지
+    strcpy(dungeons[2].name, "축축한 습지");
+    dungeons[2].min_cp = 2000; dungeons[2].max_cp = 5000;
+    dungeons[2].monster_count = 2;
+    strcpy(dungeons[2].monsters[0].name, "오크");
+    dungeons[2].monsters[0].max_hp = 8000; dungeons[2].monsters[0].def = 80; dungeons[2].monsters[0].is_boss = 0;
+    strcpy(dungeons[2].monsters[0].loot.name, "오크의 이빨"); dungeons[2].monsters[0].loot.value = 150;
+    strcpy(dungeons[2].monsters[1].name, "와일드카고");
+    dungeons[2].monsters[1].max_hp = 15000; dungeons[2].monsters[1].def = 150; dungeons[2].monsters[1].is_boss = 0;
+    strcpy(dungeons[2].monsters[1].loot.name, "와일드카고의 눈동자"); dungeons[2].monsters[1].loot.value = 250;
+    dungeons[2].has_boss = 1;
+    strcpy(dungeons[2].boss.name, "🔥 자쿰의 팔 (BOSS) 🔥");
+    dungeons[2].boss.max_hp = 50000; dungeons[2].boss.def = 300; dungeons[2].boss.is_boss = 1;
+    strcpy(dungeons[2].boss.loot.name, "자쿰의 나뭇가지"); dungeons[2].boss.loot.value = 2000;
+
+    // 4. 잊혀진 신전
+    strcpy(dungeons[3].name, "잊혀진 신전");
+    dungeons[3].min_cp = 5000; dungeons[3].max_cp = 15000;
+    dungeons[3].monster_count = 2;
+    strcpy(dungeons[3].monsters[0].name, "스켈레톤");
+    dungeons[3].monsters[0].max_hp = 50000; dungeons[3].monsters[0].def = 300; dungeons[3].monsters[0].is_boss = 0;
+    strcpy(dungeons[3].monsters[0].loot.name, "부서진 뼈"); dungeons[3].monsters[0].loot.value = 600;
+    strcpy(dungeons[3].monsters[1].name, "다크 레인저");
+    dungeons[3].monsters[1].max_hp = 80000; dungeons[3].monsters[1].def = 400; dungeons[3].monsters[1].is_boss = 0;
+    strcpy(dungeons[3].monsters[1].loot.name, "검은 화살촉"); dungeons[3].monsters[1].loot.value = 1000;
+    dungeons[3].has_boss = 1;
+    strcpy(dungeons[3].boss.name, "🕒 파풀라투스 (BOSS) 🕒");
+    dungeons[3].boss.max_hp = 300000; dungeons[3].boss.def = 600; dungeons[3].boss.is_boss = 1;
+    strcpy(dungeons[3].boss.loot.name, "시계 파편"); dungeons[3].boss.loot.value = 8000;
+
+    // 5. 검은 용의 둥지
+    strcpy(dungeons[4].name, "검은 용의 둥지");
+    dungeons[4].min_cp = 15000; dungeons[4].max_cp = 999999;
+    dungeons[4].monster_count = 2;
+    strcpy(dungeons[4].monsters[0].name, "블루 와이번");
+    dungeons[4].monsters[0].max_hp = 200000; dungeons[4].monsters[0].def = 600; dungeons[4].monsters[0].is_boss = 0;
+    strcpy(dungeons[4].monsters[0].loot.name, "와이번의 발톱"); dungeons[4].monsters[0].loot.value = 2500;
+    strcpy(dungeons[4].monsters[1].name, "다크 코르니안");
+    dungeons[4].monsters[1].max_hp = 400000; dungeons[4].monsters[1].def = 800; dungeons[4].monsters[1].is_boss = 0;
+    strcpy(dungeons[4].monsters[1].loot.name, "단단한 비늘"); dungeons[4].monsters[1].loot.value = 4000;
+    dungeons[4].has_boss = 1;
+    strcpy(dungeons[4].boss.name, "🌸 핑크빈 (BOSS) 🌸");
+    dungeons[4].boss.max_hp = 1200000; dungeons[4].boss.def = 1200; dungeons[4].boss.is_boss = 1;
+    strcpy(dungeons[4].boss.loot.name, "핑크빈의 인형"); dungeons[4].boss.loot.value = 30000;
+
+    while(1) {
+        clear_screen();
+        show_compact_status(p);
+        printf("\n========= [사냥터 선택] =========\n");
+        printf("현재 전투력에 맞는 던전을 선택하세요.\n\n");
+        
+        for(int i=0; i<5; i++) {
+            printf("%d. %s (권장 CP: %d ~ ", i+1, dungeons[i].name, dungeons[i].min_cp);
+            if(dungeons[i].max_cp > 100000) printf("MAX)\n");
+            else printf("%d)\n", dungeons[i].max_cp);
+            printf("   - 등장: %s, %s", dungeons[i].monsters[0].name, dungeons[i].monsters[1].name);
+            if(dungeons[i].has_boss) printf(", %s", dungeons[i].boss.name);
+            printf("\n");
+        }
+        printf("0. 뒤로 가기\n");
+        printf("선택: ");
+        
+        int choice;
+        if (scanf("%d", &choice) != 1) {
+            clear_input_buffer();
+            continue;
+        }
+        clear_input_buffer();
+        
+        if (choice == 0) break;
+        if (choice < 1 || choice > 5) {
+            printf("[알림] 잘못된 선택입니다.\n");
+            wait_for_enter();
+            continue;
+        }
+        
+        Dungeon *selected = &dungeons[choice-1];
+        if (p->combat_power < selected->min_cp) {
+            printf("\n⚠️ [경고] 전투력이 권장 수치보다 낮습니다! 진입하시겠습니까?\n");
+            printf("1. 예 (위험 감수)\n2. 아니오 (마을로 돌아감)\n선택: ");
+            int confirm;
+            scanf("%d", &confirm);
+            clear_input_buffer();
+            if (confirm != 1) continue;
+        }
+        
+        // 던전 진입 (단순하게 전투 바로 시작 또는 이벤트 발생)
+        // 여기서는 기존 이벤트 시스템과 통합하거나 바로 start_combat 호출
+        // 사용자가 "전투하러 가면... 알려줘"라고 했으므로 바로 전투 또는 던전 전용 이벤트
+        start_combat(p, selected);
+        break;
     }
 }

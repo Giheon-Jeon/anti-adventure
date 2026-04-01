@@ -16,12 +16,15 @@ static void event_mysterious_chest(Player* p) {
     
     if (choice == 1) {
         printf("\n주사위 5개를 던집니다...\n");
+        int dice[5];
+        roll_dice(dice, 5);
+        sort_dice(dice, 5); // 주사위 정렬 추가
+        
         int total = 0;
         printf("결과: [ ");
         for (int i = 0; i < 5; i++) {
-            int roll = (rand() % 6) + 1;
-            printf("%d ", roll);
-            total += roll;
+            printf("%d ", dice[i]);
+            total += dice[i];
         }
         printf("] 합계: %d\n", total);
         
@@ -131,22 +134,19 @@ void trigger_event(Player* p) {
     
     int event_chance = rand() % 100;
 
-    if (event_chance < 40) {
-        // 40% 확률로 전투 발생
-        start_combat(p);
-    } else if (event_chance < 50) {
+    if (event_chance < 15) {
         event_mysterious_chest(p);
-    } else if (event_chance < 55) {
+    } else if (event_chance < 25) {
         event_oasis(p);
-    } else if (event_chance < 60) {
+    } else if (event_chance < 35) {
         event_trap(p);
-    } else if (event_chance < 70) {
+    } else if (event_chance < 50) {
         event_training_ground(p);
-    } else if (event_chance < 80) {
+    } else if (event_chance < 65) {
         event_library(p);
-    } else if (event_chance < 90) {
+    } else if (event_chance < 80) {
         event_alley_gamble(p);
-    } else if (event_chance < 95) {
+    } else if (event_chance < 90) {
         event_mysterious_potion(p);
     } else {
         // 나머지 일반 텍스트 이벤트
