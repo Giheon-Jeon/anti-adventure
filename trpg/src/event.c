@@ -131,22 +131,19 @@ void trigger_event(Player* p) {
     
     int event_chance = rand() % 100;
 
-    if (event_chance < 40) {
-        // 40% 확률로 전투 발생
-        start_combat(p);
-    } else if (event_chance < 50) {
+    if (event_chance < 15) {
         event_mysterious_chest(p);
-    } else if (event_chance < 55) {
+    } else if (event_chance < 25) {
         event_oasis(p);
-    } else if (event_chance < 60) {
+    } else if (event_chance < 35) {
         event_trap(p);
-    } else if (event_chance < 70) {
+    } else if (event_chance < 50) {
         event_training_ground(p);
-    } else if (event_chance < 80) {
+    } else if (event_chance < 65) {
         event_library(p);
-    } else if (event_chance < 90) {
+    } else if (event_chance < 80) {
         event_alley_gamble(p);
-    } else if (event_chance < 95) {
+    } else if (event_chance < 90) {
         event_mysterious_potion(p);
     } else {
         // 나머지 일반 텍스트 이벤트

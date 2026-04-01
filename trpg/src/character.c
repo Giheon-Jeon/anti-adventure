@@ -30,6 +30,7 @@ void init_player(Player* p) {
     
     p->inventory.count = 0;
     
+    update_combat_power(p);
     printf("\n'%s'님, 모험을 시작합니다!\n", p->name);
 }
 
@@ -150,6 +151,7 @@ void check_level_up(Player* p) {
             printf("\n");
         }
         
+        update_combat_power(p);
         check_level_up(p); 
     }
 }
@@ -163,7 +165,8 @@ const char* get_job_name(JobType job) {
     return names[job];
 }
 
-void show_status(const Player* p) {
+void show_status(Player* p) {
+    update_combat_power(p);
     printf("\n====== [%s] 상태 (Level %d / %s) ======\n", p->name, p->level, get_job_name(p->job));
     printf("HP: %d / %d | MP: %d / %d\n", p->hp, p->max_hp, p->mp, p->max_mp);
     printf("--------------------------\n");
@@ -174,12 +177,14 @@ void show_status(const Player* p) {
     printf("보뎀: %.1f%% | 뎀퍼: %.1f%%\n", p->boss_dmg * 100.0f, p->dmg_percent * 100.0f);
     printf("--------------------------\n");
     printf("EXP: %d / %d | Gold: %d\n", p->exp, p->level * 100, p->gold);
+    printf("전투력: %d\n", p->combat_power);
     printf("========================\n");
 }
 
-void show_compact_status(const Player* p) {
-    printf("\n[ %s | %s LV %d | HP: %d/%d | Gold: %d G ]\n", 
-           p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->gold);
+void show_compact_status(Player* p) {
+    update_combat_power(p);
+    printf("\n[ %s | %s LV %d | HP: %d/%d | 전투력: %d | Gold: %d G ]\n", 
+           p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->combat_power, p->gold);
     printf("[ STR:%d DEX:%d INT:%d LUK:%d ]\n", p->str, p->dex, p->intel, p->luk);
     printf("------------------------------------------------------------\n");
 }
@@ -234,4 +239,14 @@ void apply_death_penalty(Player* p) {
     p->mp = p->max_mp / 10;
 
     printf("\n겨우 목숨만 건져 마을로 돌아왔습니다...\n");
+    update_combat_power(p);
+}
+
+void update_combat_power(Player* p) {
+    // CP = (주스탯 합 * 10) + (MaxHP / 10) + (MaxMP / 10) + (마력 * 5) + (방무% * 2000) + (보뎀% * 2000) + (뎀퍼% * 2000)
+    int stat_sum = p->str + p->dex + p->intel + p->luk;
+    float cp = (stat_sum * 10.0f) + (p->max_hp / 10.0f) + (p->max_mp / 10.0f) + (p->magic_atk * 5.0f);
+    cp += (p->ied * 2000.0f) + (p->boss_dmg * 2000.0f) + (p->dmg_percent * 2000.0f);
+    
+    p->combat_power = (int)cp;
 }
