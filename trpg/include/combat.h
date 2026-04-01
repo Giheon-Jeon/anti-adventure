@@ -25,6 +25,7 @@ typedef struct {
 
 // 주사위 굴리기 (n개)
 void roll_dice(int* dice, int count);
+void sort_dice(int* dice, int count);
 
 // 야추 규칙 데미지 계산
 int calculate_yacht_damage(Player* p, int dice[5]);

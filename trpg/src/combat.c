@@ -241,6 +241,7 @@ void start_combat(Player* p, Dungeon* d) {
         if (choice == 2) {
             int escape_dice[5];
             roll_dice(escape_dice, 5);
+            sort_dice(escape_dice, 5); // 도망 주사위 정렬 추가
             int sum = 0;
             printf("> 도망 주사위 결과: [");
             for (int i = 0; i < 5; i++) {
@@ -259,6 +260,7 @@ void start_combat(Player* p, Dungeon* d) {
         } else {
             int p_dice[5];
             roll_dice(p_dice, 5);
+            sort_dice(p_dice, 5); // 주사위 정렬 추가
             printf("> 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice[0], p_dice[1], p_dice[2], p_dice[3], p_dice[4]);
             
             int yacht_score = calculate_yacht_damage(p, p_dice);

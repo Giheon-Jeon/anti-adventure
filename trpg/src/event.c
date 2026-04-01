@@ -16,12 +16,15 @@ static void event_mysterious_chest(Player* p) {
     
     if (choice == 1) {
         printf("\n주사위 5개를 던집니다...\n");
+        int dice[5];
+        roll_dice(dice, 5);
+        sort_dice(dice, 5); // 주사위 정렬 추가
+        
         int total = 0;
         printf("결과: [ ");
         for (int i = 0; i < 5; i++) {
-            int roll = (rand() % 6) + 1;
-            printf("%d ", roll);
-            total += roll;
+            printf("%d ", dice[i]);
+            total += dice[i];
         }
         printf("] 합계: %d\n", total);
         
