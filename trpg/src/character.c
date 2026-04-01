@@ -26,6 +26,9 @@ void init_player(Player* p) {
     
     p->exp = 0;
     p->gold = 100;
+    p->stat_points = 0;
+    p->weapon_tier = 0;
+    p->armor_tier = 0;
     p->accessory_tier = 0;
     
     p->inventory.count = 0;
