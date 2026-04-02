@@ -30,6 +30,9 @@ void init_player(Player* p) {
     p->weapon_tier = 0;
     p->armor_tier = 0;
     p->accessory_tier = 0;
+    p->c_weapon_tier = 0;
+    p->c_armor_tier = 0;
+    p->c_accessory_tier = 0;
     p->last_job_time = 0;
     p->job_count = 0;
     
@@ -182,14 +185,19 @@ void show_status(Player* p) {
     printf("보뎀: %.1f%% | 뎀퍼: %.1f%%\n", p->boss_dmg * 100.0f, p->dmg_percent * 100.0f);
     printf("--------------------------\n");
     printf("EXP: %d / %d | Gold: %d\n", p->exp, p->level * 100, p->gold);
+    printf("--------------------------\n");
+    printf("장비 등급 (상점): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->weapon_tier, p->armor_tier, p->accessory_tier);
+    printf("장비 등급 (연구): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
     printf("전투력: %d\n", p->combat_power);
     printf("========================\n");
 }
 
 void show_compact_status(Player* p) {
     update_combat_power(p);
-    printf("\n[ %s | %s LV %d | HP: %d/%d | 전투력: %d | Gold: %d G ]\n", 
+    printf("\n[ %s | %s LV %d | HP: %d/%d | CP: %d | Gold: %d G ]\n", 
            p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->combat_power, p->gold);
+    printf("[ 기본T:%d/%d/%d | 제작T:%d/%d/%d ]\n", 
+           p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
     printf("[ STR:%d DEX:%d INT:%d LUK:%d ]\n", p->str, p->dex, p->intel, p->luk);
     printf("------------------------------------------------------------\n");
 }
@@ -235,7 +243,21 @@ void apply_death_penalty(Player* p) {
     }
     if (p->accessory_tier > 0 && (rand() % 100 < 20)) {
         p->accessory_tier--;
-        printf("- [경고] 장신구가 빛을 잃어 등급이 하락했습니다! (Tier %d)\n", p->accessory_tier);
+        printf("- [경고] 장신구가 빛을 잃어 등급이 하락했습니다! (Shop Tier %d)\n", p->accessory_tier);
+    }
+    
+    // 제작 아이템 하락 (15% 확률)
+    if (p->c_weapon_tier > 0 && (rand() % 100 < 15)) {
+        p->c_weapon_tier--;
+        printf("- [손실] 제작 무기의 마력이 흩어져 등급이 하락했습니다! (Craft Tier %d)\n", p->c_weapon_tier);
+    }
+    if (p->c_armor_tier > 0 && (rand() % 100 < 15)) {
+        p->c_armor_tier--;
+        printf("- [손실] 제작 방어구가 파손되어 등급이 하락했습니다! (Craft Tier %d)\n", p->c_armor_tier);
+    }
+    if (p->c_accessory_tier > 0 && (rand() % 100 < 15)) {
+        p->c_accessory_tier--;
+        printf("- [손실] 제작 장신구의 힘이 약해져 등급이 하락했습니다! (Craft Tier %d)\n", p->c_accessory_tier);
     }
 
     // 4. HP/MP 복구 (최소한의 생존)

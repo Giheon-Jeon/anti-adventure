@@ -56,10 +56,15 @@ typedef struct {
     int gold;
     int stat_points;   // 레벨업 시 얻는 포인트
     
-    // 장비/스킬 단계 관리
+    // 장비 단계 관리 (상점 구매 - 기본 스탯 중심)
     int weapon_tier;
     int armor_tier;
     int accessory_tier;
+
+    // 제작 장비 단계 관리 (대장간 제작 - 특수 스탯 중심)
+    int c_weapon_tier;
+    int c_armor_tier;
+    int c_accessory_tier;
     
     int combat_power;   // 종합 전투력
     

@@ -65,25 +65,25 @@ void attempt_craft(Player* p, Recipe recipe) {
             consume_materials_logic(p, recipe.materials[i].material_name, recipe.materials[i].count, 100, 1);
         }
 
-        // 스탯 적용 및 티어 상승 (shop.c 로직 참조)
+        // 스탯 적용 및 티어 상승 (특수 스탯 중심)
         if (recipe.craft_type == CRAFT_TYPE_WEAPON) {
-            if (recipe.target_tier == 1) { p->str += 20; p->dex += 10; }
-            else if (recipe.target_tier == 2) { p->str += 60; p->dex += 30; p->boss_dmg += 0.2f; }
-            else if (recipe.target_tier == 3) { p->str += 150; p->dex += 80; p->boss_dmg += 0.3f; p->dmg_percent += 0.1f; }
-            else if (recipe.target_tier == 4) { p->str += 400; p->dex += 200; p->boss_dmg += 0.5f; p->dmg_percent += 0.2f; p->ied += 0.1f; }
-            p->weapon_tier++;
+            if (recipe.target_tier == 1) { printf(">> [거인의 철검] 제작! (보뎀 +5%%)\n"); p->boss_dmg += 0.05f; }
+            else if (recipe.target_tier == 2) { printf(">> [저주받은 오닉스 블레이드] 제작! (보뎀 +15%%, 뎀퍼 +5%%)\n"); p->boss_dmg += 0.15f; p->dmg_percent += 0.05f; }
+            else if (recipe.target_tier == 3) { printf(">> [드래곤 슬레이어] 제작! (보뎀 +30%%, 뎀퍼 +10%%)\n"); p->boss_dmg += 0.30f; p->dmg_percent += 0.10f; }
+            else if (recipe.target_tier == 4) { printf(">> [갓 킬러] 제작! (보뎀 +60%%, 뎀퍼 +25%%)\n"); p->boss_dmg += 0.60f; p->dmg_percent += 0.25f; }
+            p->c_weapon_tier++;
         } else if (recipe.craft_type == CRAFT_TYPE_ARMOR) {
-            if (recipe.target_tier == 1) { p->max_hp += 500; p->max_mp += 200; }
-            else if (recipe.target_tier == 2) { p->max_hp += 2000; p->max_mp += 1000; p->dmg_percent += 0.05f; }
-            else if (recipe.target_tier == 3) { p->max_hp += 6000; p->max_mp += 3000; p->dmg_percent += 0.15f; }
-            else if (recipe.target_tier == 4) { p->max_hp += 20000; p->max_mp += 10000; p->dmg_percent += 0.30f; p->boss_dmg += 0.1f; }
-            p->armor_tier++;
+            if (recipe.target_tier == 1) { printf(">> [늑대 가죽 망토] 제작! (뎀퍼 +5%%)\n"); p->dmg_percent += 0.05f; }
+            else if (recipe.target_tier == 2) { printf(">> [바실리스크 스케일] 제작! (뎀퍼 +15%%, 방무 +5%%)\n"); p->dmg_percent += 0.15f; p->ied += 0.05f; }
+            else if (recipe.target_tier == 3) { printf(">> [티탄의 판금 갑옷] 제작! (뎀퍼 +30%%, 방무 +15%%)\n"); p->dmg_percent += 0.30f; p->ied += 0.15f; }
+            else if (recipe.target_tier == 4) { printf(">> [에테르넬 로브] 제작! (뎀퍼 +50%%, 방무 +30%%)\n"); p->dmg_percent += 0.50f; p->ied += 0.30f; }
+            p->c_armor_tier++;
         } else if (recipe.craft_type == CRAFT_TYPE_ACCESSORY) {
-            if (recipe.target_tier == 1) { p->dex += 20; p->ied += 0.15f; }
-            else if (recipe.target_tier == 2) { p->str += 50; p->dex += 50; p->intel += 50; p->luk += 50; p->ied += 0.30f; }
-            else if (recipe.target_tier == 3) { p->str += 150; p->dex += 150; p->intel += 150; p->luk += 150; p->ied += 0.20f; }
-            else if (recipe.target_tier == 4) { p->str += 400; p->dex += 400; p->intel += 400; p->luk += 400; p->ied += 0.20f; p->dmg_percent += 0.1f; }
-            p->accessory_tier++;
+            if (recipe.target_tier == 1) { printf(">> [독수리의 눈 반지] 제작! (방무 +10%%)\n"); p->ied += 0.10f; }
+            else if (recipe.target_tier == 2) { printf(">> [메두사의 반지] 제작! (방무 +25%%, 보뎀 +5%%)\n"); p->ied += 0.25f; p->boss_dmg += 0.05f; }
+            else if (recipe.target_tier == 3) { printf(">> [소울 스톤] 제작! (방무 +50%%, 보뎀 +15%%)\n"); p->ied += 0.50f; p->boss_dmg += 0.15f; }
+            else if (recipe.target_tier == 4) { printf(">> [영원의 보석] 제작! (방무 +80%%, 보뎀 +30%%)\n"); p->ied += 0.80f; p->boss_dmg += 0.30f; }
+            p->c_accessory_tier++;
         }
         printf("장비 등급이 Tier %d로 상승했습니다!\n", recipe.target_tier);
 
@@ -105,9 +105,9 @@ void open_crafting_menu(Player* p) {
         printf("\n========= [마을 대장간] =========\n");
         printf("몬스터의 전리품을 모아 장비를 제작할 수 있습니다.\n\n");
         
-        printf("1. 무기 제작 (현재 Tier %d)\n", p->weapon_tier);
-        printf("2. 방어구 제작 (현재 Tier %d)\n", p->armor_tier);
-        printf("3. 장신구 제작 (현재 Tier %d)\n", p->accessory_tier);
+        printf("1. 무기 연구/제작 (현재 Craft T%d)\n", p->c_weapon_tier);
+        printf("2. 방어구 연구/제작 (현재 Craft T%d)\n", p->c_armor_tier);
+        printf("3. 장신구 연구/제작 (현재 Craft T%d)\n", p->c_accessory_tier);
         printf("0. 나가기\n");
         printf("선택: ");
         
@@ -122,9 +122,9 @@ void open_crafting_menu(Player* p) {
         Recipe recipe;
         int target_type = choice;
         int current_tier = 0;
-        if (target_type == 1) current_tier = p->weapon_tier;
-        else if (target_type == 2) current_tier = p->armor_tier;
-        else if (target_type == 3) current_tier = p->accessory_tier;
+        if (target_type == 1) current_tier = p->c_weapon_tier;
+        else if (target_type == 2) current_tier = p->c_armor_tier;
+        else if (target_type == 3) current_tier = p->c_accessory_tier;
 
         if (current_tier >= 4) {
             printf("\n[알림] 이미 최고 등급의 제작법만 남았습니다 (또는 제작 한도 도달).\n");
