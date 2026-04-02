@@ -268,6 +268,27 @@ void start_combat(Player* p, Dungeon* d) {
             
             printf("> 데미지 계산 결과: [ %d ]\n", final_dmg);
             enemy.hp -= final_dmg;
+
+            // 어빌리티: 연속 공격 체크
+            float double_attack_prob = 0;
+            for (int i = 0; i < ABILITY_COUNT; i++) {
+                if (p->abilities[i].type == ABILITY_TYPE_DOUBLE_ATTACK) {
+                    double_attack_prob += p->abilities[i].value;
+                }
+            }
+            if (enemy.hp > 0 && (rand() % 100 < (int)double_attack_prob)) {
+                printf("\n✨ [어빌리티] 연속 공격 발동! ✨\n");
+                // 주사위를 새로 굴려 다시 공격 (또는 기존 데미지 재사용 가능하지만 새로 굴리는 것이 더 몰입감 있음)
+                int p_dice2[5];
+                roll_dice(p_dice2, 5);
+                sort_dice(p_dice2, 5);
+                printf("> 추가 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice2[0], p_dice2[1], p_dice2[2], p_dice2[3], p_dice2[4]);
+                int yacht_score2 = calculate_yacht_damage(p, p_dice2);
+                int final_dmg2 = calculate_final_damage(p, &enemy, yacht_score2);
+                printf("> 추가 데미지 결과: [ %d ]\n", final_dmg2);
+                enemy.hp -= final_dmg2;
+                if (enemy.hp < 0) enemy.hp = 0;
+            }
             if (enemy.hp < 0) enemy.hp = 0;
 
             if (enemy.hp <= 0) {

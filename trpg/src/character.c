@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/character.h"
+#include "../include/ability.h"
 
 void init_player(Player* p) {
     printf("--- 캐릭터 생성 ---\n");
@@ -33,6 +34,13 @@ void init_player(Player* p) {
     p->c_weapon_tier = 0;
     p->c_armor_tier = 0;
     p->c_accessory_tier = 0;
+    
+    for (int i = 0; i < ABILITY_COUNT; i++) {
+        p->abilities[i].type = ABILITY_TYPE_NONE;
+        p->abilities[i].rank = ABILITY_RANK_NORMAL;
+        p->abilities[i].value = 0;
+        p->ability_locked[i] = 0;
+    }
     p->last_job_time = 0;
     p->job_count = 0;
     
@@ -188,6 +196,20 @@ void show_status(Player* p) {
     printf("--------------------------\n");
     printf("장비 등급 (상점): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->weapon_tier, p->armor_tier, p->accessory_tier);
     printf("장비 등급 (연구): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
+    
+    printf("--------------------------\n");
+    printf("[어빌리티 능력]\n");
+    int has_ability = 0;
+    for (int i = 0; i < ABILITY_COUNT; i++) {
+        if (p->abilities[i].type != ABILITY_TYPE_NONE) {
+            printf("- %d번: [%s] 수치: %.0f%s\n", 
+                   i + 1, get_ability_rank_name(p->abilities[i].rank), p->abilities[i].value,
+                   (p->abilities[i].type >= ABILITY_TYPE_STR_PER ? "%" : ""));
+            has_ability = 1;
+        }
+    }
+    if (!has_ability) printf("- 개방된 능력이 없습니다.\n");
+
     printf("전투력: %d\n", p->combat_power);
     printf("========================\n");
 }
@@ -270,10 +292,41 @@ void apply_death_penalty(Player* p) {
 }
 
 void update_combat_power(Player* p) {
-    // CP = (주스탯 합 * 10) + (MaxHP / 10) + (MaxMP / 10) + (마력 * 5) + (방무% * 2000) + (보뎀% * 2000) + (뎀퍼% * 2000)
-    int stat_sum = p->str + p->dex + p->intel + p->luk;
+    float str_bonus = 0, dex_bonus = 0, int_bonus = 0, luk_bonus = 0;
+    float str_per = 1.0f, dex_per = 1.0f, int_per = 1.0f, luk_per = 1.0f;
+    float extra_ied = 0, extra_boss = 0, extra_dmg = 0;
+
+    // 어빌리티 효과 집계
+    for (int i = 0; i < ABILITY_COUNT; i++) {
+        Ability a = p->abilities[i];
+        switch (a.type) {
+            case ABILITY_TYPE_STR_FLAT: str_bonus += a.value; break;
+            case ABILITY_TYPE_DEX_FLAT: dex_bonus += a.value; break;
+            case ABILITY_TYPE_INT_FLAT: int_bonus += a.value; break;
+            case ABILITY_TYPE_LUK_FLAT: luk_bonus += a.value; break;
+            case ABILITY_TYPE_STR_PER: str_per += a.value / 100.0f; break;
+            case ABILITY_TYPE_DEX_PER: dex_per += a.value / 100.0f; break;
+            case ABILITY_TYPE_INT_PER: int_per += a.value / 100.0f; break;
+            case ABILITY_TYPE_LUK_PER: luk_per += a.value / 100.0f; break;
+            case ABILITY_TYPE_BOSS_DMG: extra_boss += a.value / 100.0f; break;
+            case ABILITY_TYPE_IED: extra_ied += a.value / 100.0f; break;
+            case ABILITY_TYPE_DMG_PER: extra_dmg += a.value / 100.0f; break;
+            default: break;
+        }
+    }
+
+    // 최종 스택 계산 (CP용)
+    float f_str = (p->str + str_bonus) * str_per;
+    float f_dex = (p->dex + dex_bonus) * dex_per;
+    float f_int = (p->intel + int_bonus) * int_per;
+    float f_luk = (p->luk + luk_bonus) * luk_per;
+    float f_ied = p->ied + extra_ied;
+    float f_boss = p->boss_dmg + extra_boss;
+    float f_dmg = p->dmg_percent + extra_dmg;
+
+    float stat_sum = f_str + f_dex + f_int + f_luk;
     float cp = (stat_sum * 10.0f) + (p->max_hp / 10.0f) + (p->max_mp / 10.0f) + (p->magic_atk * 5.0f);
-    cp += (p->ied * 2000.0f) + (p->boss_dmg * 2000.0f) + (p->dmg_percent * 2000.0f);
+    cp += (f_ied * 2000.0f) + (f_boss * 2000.0f) + (f_dmg * 2000.0f);
     
     p->combat_power = (int)cp;
 }

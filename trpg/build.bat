@@ -1,6 +1,6 @@
 @echo off
 echo Compiling TRPG Game...
-gcc -o trpg_game.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c -Iinclude
+gcc -o trpg_game.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c src/ability.c -Iinclude
 if %errorlevel% neq 0 (
     echo Compilation failed!
     pause
