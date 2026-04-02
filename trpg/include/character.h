@@ -32,6 +32,38 @@ typedef enum {
 
 #define JOB_ADVANCEMENT_LEVEL 10
 
+typedef enum {
+    ABILITY_RANK_NORMAL = 0,
+    ABILITY_RANK_RARE,
+    ABILITY_RANK_EPIC,
+    ABILITY_RANK_UNIQUE,
+    ABILITY_RANK_LEGENDARY
+} AbilityRank;
+
+typedef enum {
+    ABILITY_TYPE_NONE = 0,
+    ABILITY_TYPE_STR_FLAT,
+    ABILITY_TYPE_DEX_FLAT,
+    ABILITY_TYPE_INT_FLAT,
+    ABILITY_TYPE_LUK_FLAT,
+    ABILITY_TYPE_STR_PER,
+    ABILITY_TYPE_DEX_PER,
+    ABILITY_TYPE_INT_PER,
+    ABILITY_TYPE_LUK_PER,
+    ABILITY_TYPE_BOSS_DMG,
+    ABILITY_TYPE_IED,
+    ABILITY_TYPE_DMG_PER,
+    ABILITY_TYPE_DOUBLE_ATTACK
+} AbilityType;
+
+typedef struct {
+    AbilityRank rank;
+    AbilityType type;
+    float value;
+} Ability;
+
+#define ABILITY_COUNT 3
+
 typedef struct {
     char name[50];
     JobType job;       // 캐릭터 직업
@@ -56,16 +88,24 @@ typedef struct {
     int gold;
     int stat_points;   // 레벨업 시 얻는 포인트
     
-    // 장비/스킬 단계 관리
+    // 장비 단계 관리 (상점 구매 - 기본 스탯 중심)
     int weapon_tier;
     int armor_tier;
     int accessory_tier;
+
+    // 제작 장비 단계 관리 (대장간 제작 - 특수 스탯 중심)
+    int c_weapon_tier;
+    int c_armor_tier;
+    int c_accessory_tier;
     
     int combat_power;   // 종합 전투력
     
     // 알바 관련 데이터
     time_t last_job_time;
     int job_count;
+    
+    Ability abilities[ABILITY_COUNT];
+    int ability_locked[ABILITY_COUNT]; // 0: unlock, 1: lock
     
     Inventory inventory;
 } Player;
