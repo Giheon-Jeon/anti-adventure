@@ -46,6 +46,10 @@ void init_player(Player* p) {
     
     p->inventory.count = 0;
     
+    p->skill_count = 0;
+    p->has_ultimate = 0;
+    init_skill_system();
+    
     update_combat_power(p);
     printf("\n'%s'님, 모험을 시작합니다!\n", p->name);
 }
@@ -167,6 +171,9 @@ void check_level_up(Player* p) {
             printf("\n");
         }
         
+        // 3. 스킬 선택
+        select_level_up_skill(p);
+
         update_combat_power(p);
         check_level_up(p); 
     }
@@ -209,6 +216,9 @@ void show_status(Player* p) {
         }
     }
     if (!has_ability) printf("- 개방된 능력이 없습니다.\n");
+
+    printf("--------------------------\n");
+    show_skills(p);
 
     printf("전투력: %d\n", p->combat_power);
     printf("========================\n");
@@ -328,5 +338,12 @@ void update_combat_power(Player* p) {
     float cp = (stat_sum * 10.0f) + (p->max_hp / 10.0f) + (p->max_mp / 10.0f) + (p->magic_atk * 5.0f);
     cp += (f_ied * 2000.0f) + (f_boss * 2000.0f) + (f_dmg * 2000.0f);
     
+    // 스킬에 의한 전투력 보너스 (레벨당 가산)
+    for (int i = 0; i < p->skill_count; i++) {
+        cp += p->learned_skills[i].level * 200;
+        if (p->learned_skills[i].base_atk_bonus > 0) cp += p->learned_skills[i].base_atk_bonus * 5;
+    }
+    if (p->has_ultimate) cp += 5000;
+
     p->combat_power = (int)cp;
 }

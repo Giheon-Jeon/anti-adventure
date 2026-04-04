@@ -189,8 +189,21 @@ int calculate_final_damage(Player* p, Monster* m, int yacht_result) {
         default:          base_stat_power = (p->str * 4.0f + p->dex); break;
     }
     
-    float skill_mult = yacht_result / 100.0f; 
-    float damage = base_stat_power * skill_mult;
+    float skill_extra_mult = 0.0f;
+    int skill_extra_atk = 0;
+    
+    for (int i = 0; i < p->skill_count; i++) {
+        skill_extra_mult += p->learned_skills[i].multiplier * p->learned_skills[i].level;
+        skill_extra_atk += p->learned_skills[i].base_atk_bonus * p->learned_skills[i].level;
+    }
+    
+    if (p->has_ultimate) {
+        skill_extra_mult += p->ultimate_skill.multiplier;
+        skill_extra_atk += p->ultimate_skill.base_atk_bonus;
+    }
+
+    float final_skill_mult = (yacht_result / 100.0f) + skill_extra_mult; 
+    float damage = (base_stat_power + skill_extra_atk) * final_skill_mult;
     damage *= (1.0f + p->dmg_percent);
     if (m->is_boss) damage *= (1.0f + p->boss_dmg);
     float effective_def = m->def * (1.0f - p->ied);
