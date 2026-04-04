@@ -4,31 +4,26 @@
 #include "item.h"
 #include <time.h>
 
+#include "job.h"
+
+#define MAX_LEARNED_SKILLS 10
+#define MAX_SKILL_LEVEL 5
+
 typedef enum {
-    JOB_NONE = 0,
-    // 기본 직업
-    JOB_WARRIOR,    // STR
-    JOB_ARCHER,     // DEX
-    JOB_MAGE,       // INT
-    JOB_THIEF,      // LUK
-    
-    // 2개 동률 (Hybrid)
-    JOB_GLADIATOR,  // STR+DEX
-    JOB_CRUSADER,   // STR+INT
-    JOB_BERSERKER,  // STR+LUK
-    JOB_RANGER,     // DEX+INT
-    JOB_ASSASSIN,   // DEX+LUK
-    JOB_SAGE,       // INT+LUK
-    
-    // 3개 동률 (Elite)
-    JOB_CHAMPION,   // STR+DEX+INT
-    JOB_JUDGE,      // STR+DEX+LUK
-    JOB_PALADIN,    // STR+INT+LUK
-    JOB_GRANDMAGE,  // DEX+INT+LUK
-    
-    // 4개 동률 (Legendary)
-    JOB_AVATAR      // STR+DEX+INT+LUK
-} JobType;
+    SKILL_TYPE_COMMON,
+    SKILL_TYPE_JOB,
+    SKILL_TYPE_ULTIMATE
+} SkillType;
+
+typedef struct {
+    char name[50];
+    char description[100];
+    int level;
+    float multiplier;
+    int base_atk_bonus;
+    SkillType type;
+    JobType required_job;
+} Skill;
 
 #define JOB_ADVANCEMENT_LEVEL 10
 
@@ -108,6 +103,11 @@ typedef struct {
     int ability_locked[ABILITY_COUNT]; // 0: unlock, 1: lock
     
     Inventory inventory;
+    
+    Skill learned_skills[MAX_LEARNED_SKILLS];
+    int skill_count;
+    Skill ultimate_skill;
+    int has_ultimate;
 } Player;
 
 // 플레이어 초기화 함수
@@ -120,6 +120,13 @@ void show_inventory(const Player* p);
 
 // 레벨업 체크 및 처리 함수
 void check_level_up(Player* p);
+
+// 스킬 시스템 관련 함수
+void select_level_up_skill(Player* p);
+void show_skills(Player* p);
+void init_skill_system();
+const char* get_skill_type_name(SkillType type);
+void apply_skill_effects(Player* p);
 
 // 사망 패널티 적용 함수
 void apply_death_penalty(Player* p);
