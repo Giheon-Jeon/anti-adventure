@@ -4,56 +4,79 @@
 #include "../include/character.h"
 #include "../include/utils.h"
 
-#define ALL_SKILLS_COUNT 20
+#define ALL_SKILLS_COUNT 100
 
 static Skill skill_db[ALL_SKILLS_COUNT];
 static int skill_db_count = 0;
 
-void add_to_db(const char* name, const char* desc, float mult, int atk, int luk, SkillType type, JobType job) {
+void add_to_db(const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost, SkillType type, JobType job) {
     if (skill_db_count >= ALL_SKILLS_COUNT) return;
-    strcpy(skill_db[skill_db_count].name, name);
-    strcpy(skill_db[skill_db_count].description, desc);
-    skill_db[skill_db_count].level = 1;
-    skill_db[skill_db_count].multiplier = mult;
-    skill_db[skill_db_count].base_atk_bonus = atk;
-    skill_db[skill_db_count].luk_bonus = luk;
-    skill_db[skill_db_count].type = type;
-    skill_db[skill_db_count].required_job = job;
+    Skill* s = &skill_db[skill_db_count];
+    strcpy(s->name, name);
+    strcpy(s->description, desc);
+    s->level = 1;
+    s->multiplier = mult;
+    s->base_atk_bonus = atk;
+    s->luk_bonus = luk;
+    s->hp_bonus = hp;
+    s->mp_bonus = mp;
+    s->str_bonus = str;
+    s->dex_bonus = dex;
+    s->int_bonus = intel;
+    s->mp_cost = cost;
+    s->type = type;
+    s->required_job = job;
     skill_db_count++;
 }
 
 void init_skill_system() {
     skill_db_count = 0;
-    // 공통 스킬
-    add_to_db("기초 체력 단련", "영구적으로 공격력이 상승합니다.", 0.0f, 10, 0, SKILL_TYPE_COMMON, JOB_NONE);
-    add_to_db("집중력 강화", "주사위 데미지 배수가 상승합니다.", 0.2f, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
-    add_to_db("운수 좋은 날", "기본 공격력과 행운(LUK)이 상승합니다.", 0.0f, 3, 10, SKILL_TYPE_COMMON, JOB_NONE);
+    // --- 공통 스킬 (COMMON) --- (13인자: 이름, 설명, 배수, 공증, 행운, HP, MP, STR, DEX, INT, 소모, 타입, 직업)
+    add_to_db("기초 체력 단련", "영구적으로 공격력이 상승합니다.", 0.0f, 10, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("집중력 강화", "주사위 데미지 배수가 상승합니다.", 0.2f, 0, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("운수 좋은 날", "공격력과 행운(LUK)이 함께 상승합니다.", 0.0f, 3, 10, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("강인한 신체", "최대 HP가 대폭 상승합니다.", 0.0f, 0, 0, 150, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("끝없는 마력", "최대 MP가 대폭 상승합니다.", 0.0f, 0, 0, 0, 80, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("검의 달인", "힘(STR)이 영구적으로 상승합니다.", 0.0f, 0, 0, 0, 0, 12, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("명사자의 눈", "민첩(DEX)이 영구적으로 상승합니다.", 0.0f, 0, 0, 0, 0, 0, 12, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("지혜의 수호", "지능(INT)이 영구적으로 상승합니다.", 0.0f, 0, 0, 0, 0, 0, 0, 12, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("신속한 몸놀림", "데미지 배수와 민첩이 약간 상승합니다.", 0.1f, 0, 0, 0, 0, 0, 5, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
 
-    // 전사 스킬
-    add_to_db("파워 스트라이크", "강력한 일격을 가합니다.", 1.5f, 20, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
-    add_to_db("가드 브레이크", "적의 방어를 무시하는 일격입니다.", 1.0f, 15, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
-    add_to_db("슬래시 블러스트", "검기를 날려 광역 피해를 입힙니다.", 1.2f, 10, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
-    add_to_db("아이언 보디", "방어력을 희생해 공력을 올립니다.", 0.5f, 30, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
+    // --- 전사 계열 (Warrior & Hybrids) ---
+    add_to_db("파워 스트라이크", "강력한 일격을 가합니다.", 1.5f, 20, 0, 0, 0, 0, 0, 0, 10, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("가드 브레이크", "방어 무시 데미지를 입힙니다.", 1.2f, 15, 0, 0, 0, 5, 0, 0, 15, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("슬래시 블러스트", "검기를 날려 광역 피해를 입힙니다.", 1.3f, 10, 0, 0, 0, 0, 0, 0, 12, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("소드 댄스", "검투사의 화려한 연속 베기입니다.", 2.2f, 30, 0, 0, 0, 10, 10, 0, 25, SKILL_TYPE_JOB, JOB_GLADIATOR);
+    add_to_db("홀리 실드", "신성한 힘으로 자신을 보호하며 반격합니다.", 1.8f, 10, 0, 100, 50, 5, 0, 15, 30, SKILL_TYPE_JOB, JOB_CRUSADER);
+    add_to_db("피의 갈증", "자신의 HP를 대가로 파괴적인 힘을 얻습니다.", 4.0f, 100, 20, -50, 0, 30, 0, 0, 0, SKILL_TYPE_JOB, JOB_BERSERKER);
 
-    // 궁수 스킬
-    add_to_db("에로우 블로우", "빠른 화살 한 발을 발사합니다.", 1.4f, 15, 0, SKILL_TYPE_JOB, JOB_ARCHER);
-    add_to_db("더블 샷", "두 발의 화살을 동시에 발사합니다.", 1.8f, 5, 0, SKILL_TYPE_JOB, JOB_ARCHER);
-    add_to_db("포커스", "명중률과 공격 배수를 높입니다.", 0.8f, 0, 0, SKILL_TYPE_JOB, JOB_ARCHER);
-    add_to_db("크리티컬 샷", "치명적인 화살을 날립니다.", 2.5f, 0, 0, SKILL_TYPE_JOB, JOB_ARCHER);
+    // --- 궁수 계열 (Archer & Hybrids) ---
+    add_to_db("에로우 블로우", "빠른 화살 한 발을 발사합니다.", 1.4f, 15, 0, 0, 0, 0, 5, 0, 8, SKILL_TYPE_JOB, JOB_ARCHER);
+    add_to_db("더블 샷", "두 발의 화살을 동시에 발사합니다.", 1.9f, 5, 0, 0, 0, 0, 8, 0, 12, SKILL_TYPE_JOB, JOB_ARCHER);
+    add_to_db("원드 애로우", "바람의 힘을 실은 화살입니다.", 2.5f, 20, 0, 0, 30, 0, 15, 15, 20, SKILL_TYPE_JOB, JOB_RANGER);
+    add_to_db("스나이핑", "적의 급소를 정확히 꿰뚫습니다.", 5.5f, 50, 0, 0, 0, 0, 40, 0, 40, SKILL_TYPE_JOB, JOB_RANGER);
+    add_to_db("트리플 샷", "세 발의 화살을 전방으로 발사합니다.", 3.0f, 15, 0, 0, 0, 0, 20, 0, 25, SKILL_TYPE_JOB, JOB_RANGER);
 
-    // 마법사 스킬
-    add_to_db("에너지 볼트", "작은 마력 구체를 날립니다.", 1.2f, 10, 0, SKILL_TYPE_JOB, JOB_MAGE);
-    add_to_db("매직 클로", "적을 할퀴는 마력 손톱입니다.", 1.8f, 5, 0, SKILL_TYPE_JOB, JOB_MAGE);
-    add_to_db("마나 강화", "최대 MP와 마력이 상승합니다.", 0.5f, 20, 0, SKILL_TYPE_JOB, JOB_MAGE);
-    add_to_db("메디테이션", "명상을 통해 공격 배수를 대폭 높입니다.", 1.0f, 0, 0, SKILL_TYPE_JOB, JOB_MAGE);
+    // --- 마법사 계열 (Mage & Hybrids) ---
+    add_to_db("에너지 볼트", "작은 마력 구체를 날립니다.", 1.2f, 10, 0, 0, 10, 0, 0, 5, 10, SKILL_TYPE_JOB, JOB_MAGE);
+    add_to_db("매직 클로", "적을 할퀴는 마력 손톱입니다.", 2.0f, 5, 0, 0, 0, 0, 0, 8, 15, SKILL_TYPE_JOB, JOB_MAGE);
+    add_to_db("지혜의 샘", "지능과 마나를 대폭 상승시킵니다.", 0.5f, 0, 0, 0, 150, 0, 0, 30, 50, SKILL_TYPE_JOB, JOB_SAGE);
+    add_to_db("이클립스", "태양을 가리는 거대한 마법 폭발입니다.", 6.0f, 100, 0, 0, 0, 0, 0, 60, 100, SKILL_TYPE_JOB, JOB_GRANDMAGE);
+    add_to_db("원소의 폭주", "모든 원소를 융합하여 적을 파괴합니다.", 8.5f, 200, 0, 0, 200, 0, 0, 100, 150, SKILL_TYPE_JOB, JOB_GRANDMAGE);
 
-    // 도적 스킬
-    add_to_db("럭키 세븐", "행운을 담은 표창 두 개를 던집니다.", 2.0f, 0, 0, SKILL_TYPE_JOB, JOB_THIEF);
-    add_to_db("디스오더", "적의 방어력을 깎고 공격 배수를 높입니다.", 0.7f, 10, 0, SKILL_TYPE_JOB, JOB_THIEF);
-    add_to_db("헤이스트", "민첩하게 움직여 추가 피해를 줍니다.", 0.4f, 15, 0, SKILL_TYPE_JOB, JOB_THIEF);
-    add_to_db("세비지 블로우", "적을 난도질하여 큰 피해를 입힙니다.", 3.0f, -10, 0, SKILL_TYPE_JOB, JOB_THIEF);
+    // --- 도적 계열 (Thief & Hybrids) ---
+    add_to_db("럭키 세븐", "행운을 담은 표창 두 개를 던집니다.", 2.2f, 0, 10, 0, 0, 0, 0, 0, 12, SKILL_TYPE_JOB, JOB_THIEF);
+    add_to_db("디스오더", "적의 방어력을 깎고 혼란에 빠뜨립니다.", 1.2f, 10, 5, 0, 0, 0, 5, 0, 15, SKILL_TYPE_JOB, JOB_THIEF);
+    add_to_db("맹독 가르기", "독을 바른 단검으로 적을 벱니다.", 2.8f, 40, 15, 0, 0, 0, 15, 0, 25, SKILL_TYPE_JOB, JOB_ASSASSIN);
+    add_to_db("그림자 습격", "순식간에 뒤로 이동하여 치명상을 입힙니다.", 4.5f, 60, 30, 0, 0, 0, 25, 0, 35, SKILL_TYPE_JOB, JOB_ASSASSIN);
+    add_to_db("다크 플레어", "어둠의 불꽃으로 적을 태웁니다.", 3.5f, 30, 10, 0, 50, 0, 0, 20, 30, SKILL_TYPE_JOB, JOB_ASSASSIN);
 
-    // 하이브리드/전설 스킬들은 확장이 용이하도록 설계됨... (생략)
+    // --- 전설 및 아바타 계열 (Legendary) ---
+    add_to_db("진정한 힘", "한계를 돌파한 초인의 힘입니다.", 5.0f, 100, 0, 300, 100, 50, 50, 50, 0, SKILL_TYPE_JOB, JOB_CHAMPION);
+    add_to_db("최후의 심판", "심판자의 공정한 처단이 시작됩니다.", 7.7f, 150, 50, 0, 0, 60, 60, 0, 100, SKILL_TYPE_JOB, JOB_JUDGE);
+    add_to_db("성궤의 기적", "성궤사에게 내려진 마지막 구원입니다.", 0.2f, 50, 100, 1000, 500, 0, 0, 100, 0, SKILL_TYPE_JOB, JOB_PALADIN);
+    add_to_db("천상의 숨결", "신의 가호가 온몸을 감쌉니다.", 10.0f, 300, 100, 500, 500, 80, 80, 80, 200, SKILL_TYPE_JOB, JOB_AVATAR);
+    add_to_db("신의 권능", "세상의 법칙조차 거스르는 힘입니다.", 15.0f, 500, 200, 1000, 1000, 100, 100, 100, 300, SKILL_TYPE_JOB, JOB_AVATAR);
 }
 
 const char* get_skill_type_name(SkillType type) {
@@ -165,7 +188,13 @@ void select_level_up_skill(Player* p) {
         printf("   - %s\n", s->description);
         if (s->multiplier > 0) printf("   - 데미지 배수: +%.1f\n", s->multiplier);
         if (s->base_atk_bonus > 0) printf("   - 기본 공격력: +%d\n", s->base_atk_bonus);
-        if (s->luk_bonus > 0) printf("   - 행운(LUK) : +%d\n", s->luk_bonus);
+        if (s->hp_bonus != 0) printf("   - 최대 HP : %s%d\n", (s->hp_bonus > 0) ? "+" : "", s->hp_bonus);
+        if (s->mp_bonus != 0) printf("   - 최대 MP : %s%d\n", (s->mp_bonus > 0) ? "+" : "", s->mp_bonus);
+        if (s->str_bonus != 0) printf("   - 힘(STR) : %s%d\n", (s->str_bonus > 0) ? "+" : "", s->str_bonus);
+        if (s->dex_bonus != 0) printf("   - 민첩(DEX) : %s%d\n", (s->dex_bonus > 0) ? "+" : "", s->dex_bonus);
+        if (s->int_bonus != 0) printf("   - 지능(INT) : %s%d\n", (s->int_bonus > 0) ? "+" : "", s->int_bonus);
+        if (s->luk_bonus != 0) printf("   - 행운(LUK) : %s%d\n", (s->luk_bonus > 0) ? "+" : "", s->luk_bonus);
+        if (s->mp_cost > 0) printf("   " RED "[소모 MP: %d]" RESET "\n", s->mp_cost);
         printf("\n");
     }
 
@@ -194,13 +223,29 @@ void select_level_up_skill(Player* p) {
         // 새로 배우기
         p->learned_skills[p->skill_count] = *sel;
         p->learned_skills[p->skill_count].level = 1;
-        p->luk += sel->luk_bonus; // 스탯 즉시 반영
+        
+        // 스탯 즉시 반영
+        p->max_hp += sel->hp_bonus; p->hp += sel->hp_bonus;
+        p->max_mp += sel->mp_bonus; p->mp += sel->mp_bonus;
+        p->str += sel->str_bonus;
+        p->dex += sel->dex_bonus;
+        p->intel += sel->int_bonus;
+        p->luk += sel->luk_bonus;
+        
         printf("\n✨ [%s] 스킬을 새로 배웠습니다! ✨\n", sel->name);
         p->skill_count++;
     } else {
         // 레벨업
         p->learned_skills[learned_idx].level++;
-        p->luk += sel->luk_bonus; // 스탯 즉시 반영
+        
+        // 스탯 보너스 누적 반영
+        p->max_hp += sel->hp_bonus; p->hp += sel->hp_bonus;
+        p->max_mp += sel->mp_bonus; p->mp += sel->mp_bonus;
+        p->str += sel->str_bonus;
+        p->dex += sel->dex_bonus;
+        p->intel += sel->int_bonus;
+        p->luk += sel->luk_bonus;
+        
         printf("\n🔥 [%s] 스킬이 LV.%d로 강화되었습니다! 🔥\n", sel->name, p->learned_skills[learned_idx].level);
     }
 
