@@ -9,13 +9,14 @@
 static Skill skill_db[ALL_SKILLS_COUNT];
 static int skill_db_count = 0;
 
-void add_to_db(const char* name, const char* desc, float mult, int atk, SkillType type, JobType job) {
+void add_to_db(const char* name, const char* desc, float mult, int atk, int luk, SkillType type, JobType job) {
     if (skill_db_count >= ALL_SKILLS_COUNT) return;
     strcpy(skill_db[skill_db_count].name, name);
     strcpy(skill_db[skill_db_count].description, desc);
     skill_db[skill_db_count].level = 1;
     skill_db[skill_db_count].multiplier = mult;
     skill_db[skill_db_count].base_atk_bonus = atk;
+    skill_db[skill_db_count].luk_bonus = luk;
     skill_db[skill_db_count].type = type;
     skill_db[skill_db_count].required_job = job;
     skill_db_count++;
@@ -24,33 +25,33 @@ void add_to_db(const char* name, const char* desc, float mult, int atk, SkillTyp
 void init_skill_system() {
     skill_db_count = 0;
     // 공통 스킬
-    add_to_db("기초 체력 단련", "영구적으로 공격력이 상승합니다.", 0.0f, 10, SKILL_TYPE_COMMON, JOB_NONE);
-    add_to_db("집중력 강화", "주사위 데미지 배수가 상승합니다.", 0.2f, 0, SKILL_TYPE_COMMON, JOB_NONE);
-    add_to_db("운수 좋은 날", "기본 공격력이 소폭 상승합니다.", 0.0f, 5, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("기초 체력 단련", "영구적으로 공격력이 상승합니다.", 0.0f, 10, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("집중력 강화", "주사위 데미지 배수가 상승합니다.", 0.2f, 0, 0, SKILL_TYPE_COMMON, JOB_NONE);
+    add_to_db("운수 좋은 날", "기본 공격력과 행운(LUK)이 상승합니다.", 0.0f, 3, 10, SKILL_TYPE_COMMON, JOB_NONE);
 
     // 전사 스킬
-    add_to_db("파워 스트라이크", "강력한 일격을 가합니다.", 1.5f, 20, SKILL_TYPE_JOB, JOB_WARRIOR);
-    add_to_db("가드 브레이크", "적의 방어를 무시하는 일격입니다.", 1.0f, 15, SKILL_TYPE_JOB, JOB_WARRIOR);
-    add_to_db("슬래시 블러스트", "검기를 날려 광역 피해를 입힙니다.", 1.2f, 10, SKILL_TYPE_JOB, JOB_WARRIOR);
-    add_to_db("아이언 보디", "방어력을 희생해 공력을 올립니다.", 0.5f, 30, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("파워 스트라이크", "강력한 일격을 가합니다.", 1.5f, 20, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("가드 브레이크", "적의 방어를 무시하는 일격입니다.", 1.0f, 15, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("슬래시 블러스트", "검기를 날려 광역 피해를 입힙니다.", 1.2f, 10, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
+    add_to_db("아이언 보디", "방어력을 희생해 공력을 올립니다.", 0.5f, 30, 0, SKILL_TYPE_JOB, JOB_WARRIOR);
 
     // 궁수 스킬
-    add_to_db("에로우 블로우", "빠른 화살 한 발을 발사합니다.", 1.4f, 15, SKILL_TYPE_JOB, JOB_ARCHER);
-    add_to_db("더블 샷", "두 발의 화살을 동시에 발사합니다.", 1.8f, 5, SKILL_TYPE_JOB, JOB_ARCHER);
-    add_to_db("포커스", "명중률과 공격 배수를 높입니다.", 0.8f, 0, SKILL_TYPE_JOB, JOB_ARCHER);
-    add_to_db("크리티컬 샷", "치명적인 화살을 날립니다.", 2.5f, 0, SKILL_TYPE_JOB, JOB_ARCHER);
+    add_to_db("에로우 블로우", "빠른 화살 한 발을 발사합니다.", 1.4f, 15, 0, SKILL_TYPE_JOB, JOB_ARCHER);
+    add_to_db("더블 샷", "두 발의 화살을 동시에 발사합니다.", 1.8f, 5, 0, SKILL_TYPE_JOB, JOB_ARCHER);
+    add_to_db("포커스", "명중률과 공격 배수를 높입니다.", 0.8f, 0, 0, SKILL_TYPE_JOB, JOB_ARCHER);
+    add_to_db("크리티컬 샷", "치명적인 화살을 날립니다.", 2.5f, 0, 0, SKILL_TYPE_JOB, JOB_ARCHER);
 
     // 마법사 스킬
-    add_to_db("에너지 볼트", "작은 마력 구체를 날립니다.", 1.2f, 10, SKILL_TYPE_JOB, JOB_MAGE);
-    add_to_db("매직 클로", "적을 할퀴는 마력 손톱입니다.", 1.8f, 5, SKILL_TYPE_JOB, JOB_MAGE);
-    add_to_db("마나 강화", "최대 MP와 마력이 상승합니다.", 0.5f, 20, SKILL_TYPE_JOB, JOB_MAGE);
-    add_to_db("메디테이션", "명상을 통해 공격 배수를 대폭 높입니다.", 1.0f, 0, SKILL_TYPE_JOB, JOB_MAGE);
+    add_to_db("에너지 볼트", "작은 마력 구체를 날립니다.", 1.2f, 10, 0, SKILL_TYPE_JOB, JOB_MAGE);
+    add_to_db("매직 클로", "적을 할퀴는 마력 손톱입니다.", 1.8f, 5, 0, SKILL_TYPE_JOB, JOB_MAGE);
+    add_to_db("마나 강화", "최대 MP와 마력이 상승합니다.", 0.5f, 20, 0, SKILL_TYPE_JOB, JOB_MAGE);
+    add_to_db("메디테이션", "명상을 통해 공격 배수를 대폭 높입니다.", 1.0f, 0, 0, SKILL_TYPE_JOB, JOB_MAGE);
 
     // 도적 스킬
-    add_to_db("럭키 세븐", "행운을 담은 표창 두 개를 던집니다.", 2.0f, 0, SKILL_TYPE_JOB, JOB_THIEF);
-    add_to_db("디스오더", "적의 방어력을 깎고 공격 배수를 높입니다.", 0.7f, 10, SKILL_TYPE_JOB, JOB_THIEF);
-    add_to_db("헤이스트", "민첩하게 움직여 추가 피해를 줍니다.", 0.4f, 15, SKILL_TYPE_JOB, JOB_THIEF);
-    add_to_db("세비지 블로우", "적을 난도질하여 큰 피해를 입힙니다.", 3.0f, -10, SKILL_TYPE_JOB, JOB_THIEF);
+    add_to_db("럭키 세븐", "행운을 담은 표창 두 개를 던집니다.", 2.0f, 0, 0, SKILL_TYPE_JOB, JOB_THIEF);
+    add_to_db("디스오더", "적의 방어력을 깎고 공격 배수를 높입니다.", 0.7f, 10, 0, SKILL_TYPE_JOB, JOB_THIEF);
+    add_to_db("헤이스트", "민첩하게 움직여 추가 피해를 줍니다.", 0.4f, 15, 0, SKILL_TYPE_JOB, JOB_THIEF);
+    add_to_db("세비지 블로우", "적을 난도질하여 큰 피해를 입힙니다.", 3.0f, -10, 0, SKILL_TYPE_JOB, JOB_THIEF);
 
     // 하이브리드/전설 스킬들은 확장이 용이하도록 설계됨... (생략)
 }
@@ -164,6 +165,7 @@ void select_level_up_skill(Player* p) {
         printf("   - %s\n", s->description);
         if (s->multiplier > 0) printf("   - 데미지 배수: +%.1f\n", s->multiplier);
         if (s->base_atk_bonus > 0) printf("   - 기본 공격력: +%d\n", s->base_atk_bonus);
+        if (s->luk_bonus > 0) printf("   - 행운(LUK) : +%d\n", s->luk_bonus);
         printf("\n");
     }
 
@@ -192,11 +194,13 @@ void select_level_up_skill(Player* p) {
         // 새로 배우기
         p->learned_skills[p->skill_count] = *sel;
         p->learned_skills[p->skill_count].level = 1;
+        p->luk += sel->luk_bonus; // 스탯 즉시 반영
         printf("\n✨ [%s] 스킬을 새로 배웠습니다! ✨\n", sel->name);
         p->skill_count++;
     } else {
         // 레벨업
         p->learned_skills[learned_idx].level++;
+        p->luk += sel->luk_bonus; // 스탯 즉시 반영
         printf("\n🔥 [%s] 스킬이 LV.%d로 강화되었습니다! 🔥\n", sel->name, p->learned_skills[learned_idx].level);
     }
 

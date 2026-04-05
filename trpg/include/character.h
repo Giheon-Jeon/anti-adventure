@@ -21,6 +21,7 @@ typedef struct {
     int level;
     float multiplier;
     int base_atk_bonus;
+    int luk_bonus;      // 추가된 필드: 행운 보너스
     SkillType type;
     JobType required_job;
 } Skill;
