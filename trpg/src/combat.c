@@ -24,6 +24,24 @@ void roll_dice(int* dice, int count) {
     }
 }
 
+// 주사위를 시각적으로 출력 (박스 형태)
+void print_dice_visual(int* dice, int count) {
+    // 상단
+    printf("  ");
+    for (int i = 0; i < count; i++) printf("┌───┐  ");
+    printf("\n");
+
+    // 숫자
+    printf("  ");
+    for (int i = 0; i < count; i++) printf("│ %d │  ", dice[i]);
+    printf("\n");
+
+    // 하단
+    printf("  ");
+    for (int i = 0; i < count; i++) printf("└───┘  ");
+    printf("\n");
+}
+
 // 야추 규칙 데미지 계산
 int calculate_yacht_damage(Player* p, int dice[5]) {
     int counts[7] = {0}; // 1~6 눈금 개수
@@ -47,8 +65,8 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
             else if (p->job == JOB_JUDGE) { mult = 400; skill_name = "최후의 심판!"; }
             else if (p->job == JOB_AVATAR) { mult = 500; skill_name = "신성한 심판!"; }
             
-            if (mult > 30) printf("[직업 스킬: %s (Yacht %d배)]\n", skill_name, mult);
-            else printf("[조합: Yacht! (30배)]\n");
+            if (mult > 30) printf(YELLOW BOLD "[직업 스킬: %s (Yacht %d배)]\n" RESET, skill_name, mult);
+            else printf(YELLOW BOLD "[조합: Yacht! (30배)]\n" RESET);
             
             return sum * 10 * mult;
         }
@@ -72,8 +90,8 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
         else if (p->job == JOB_CHAMPION) { mult = 100; skill_name = "영광의 길!"; }
         else if (p->job == JOB_AVATAR) { mult = 120; skill_name = "세상의 끝!"; }
         
-        if (mult > 25) printf("[직업 스킬: %s (L.Straight %d배)]\n", skill_name, mult);
-        else printf("[조합: Large Straight! (25배)]\n");
+        if (mult > 25) printf(CYAN BOLD "[직업 스킬: %s (L.Straight %d배)]\n" RESET, skill_name, mult);
+        else printf(CYAN BOLD "[조합: Large Straight! (25배)]\n" RESET);
         return sum * 10 * mult;
     }
 
@@ -90,8 +108,8 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
         if (p->job == JOB_CRUSADER) { mult = 100; skill_name = "강화된 신성력!"; }
         else if (p->job == JOB_PALADIN) { mult = 150; skill_name = "성궤의 심판!"; }
         
-        if (mult > 20) printf("[직업 스킬: %s (Full House %d배)]\n", skill_name, mult);
-        else printf("[조합: Full House! (20배)]\n");
+        if (mult > 20) printf(YELLOW "[직업 스킬: %s (Full House %d배)]\n" RESET, skill_name, mult);
+        else printf(YELLOW "[조합: Full House! (20배)]\n" RESET);
         return sum * 10 * mult;
     }
 
@@ -111,8 +129,8 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
         else if (p->job == JOB_CHAMPION) { mult = 60; skill_name = "용사의 연격!"; }
         else if (p->job == JOB_GRANDMAGE) { mult = 80; skill_name = "마력의 파동!"; }
         
-        if (mult > 15) printf("[직업 스킬: %s (S.Straight %d배)]\n", skill_name, mult);
-        else printf("[조합: Small Straight! (15배)]\n");
+        if (mult > 15) printf(CYAN "[직업 스킬: %s (S.Straight %d배)]\n" RESET, skill_name, mult);
+        else printf(CYAN "[조합: Small Straight! (15배)]\n" RESET);
         return sum * 10 * mult;
     }
 
@@ -127,8 +145,8 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
             else if (p->job == JOB_JUDGE) { mult = 80; skill_name = "철퇴 하강!"; }
             else if (p->job == JOB_PALADIN) { mult = 70; skill_name = "홀리 스트라이크!"; }
             
-            if (mult > 10) printf("[직업 스킬: %s (Quad %d배)]\n", skill_name, mult);
-            else printf("[조합: Quad! (10배)]\n");
+            if (mult > 10) printf(WHITE BOLD "[직업 스킬: %s (Quad %d배)]\n" RESET, skill_name, mult);
+            else printf(WHITE BOLD "[조합: Quad! (10배)]\n" RESET);
             return (i * 4 * 10 * mult) + ((sum - i * 4) * 10);
         }
     }
@@ -143,8 +161,8 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
             else if (p->job == JOB_GLADIATOR) { mult = 15; skill_name = "쌍검 난무!"; }
             else if (p->job == JOB_SAGE) { mult = 20; skill_name = "지혜의 일격!"; }
             
-            if (mult > 5) printf("[직업 스킬: %s (Triple %d배)]\n", skill_name, mult);
-            else printf("[조합: Triple! (5배)]\n");
+            if (mult > 5) printf(WHITE "[직업 스킬: %s (Triple %d배)]\n" RESET, skill_name, mult);
+            else printf(WHITE "[조합: Triple! (5배)]\n" RESET);
             return (i * 3 * 10 * mult) + ((sum - i * 3) * 10);
         }
     }
@@ -154,10 +172,10 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
         if (counts[i] == 2) {
             int mult = 2;
             if (p->job == JOB_GLADIATOR || p->job == JOB_SAGE) {
-                printf("[직업 스킬: 연쇄 반응! (Pair 6배)]\n");
+                printf(WHITE "[직업 스킬: 연쇄 반응! (Pair 6배)]\n" RESET);
                 mult = 6;
             } else {
-                printf("[조합: One Pair! (2배)]\n");
+                printf(WHITE "[조합: One Pair! (2배)]\n" RESET);
             }
             return (i * 2 * 10 * mult) + ((sum - i * 2) * 10);
         }
@@ -234,17 +252,29 @@ void start_combat(Player* p, Dungeon* d) {
     enemy.hp = enemy.max_hp;
 
     clear_screen();
-    show_compact_status(p);
-    printf("\n--- %s에 입장했습니다! ---\n", d->name);
-    printf("--- %s(이)가 나타났다! (HP: %d, 방어율: %d) ---\n", enemy.name, enemy.hp, enemy.def);
+    print_divider(60, CYAN);
+    printf(BOLD);
+    print_centered(d->name, 60);
+    print_centered("던전에 입장했습니다!", 60);
+    printf(RESET);
+    print_divider(60, CYAN);
+    
+    printf("\n" RED BOLD);
+    print_centered("⚠️ 몬스터 출현! ⚠️", 60);
+    printf(RESET);
+    printf(RED "\n      [%s] (방어율: %d)\n" RESET, enemy.name, enemy.def);
+    wait_for_enter();
 
     while (p->hp > 0 && enemy.hp > 0) {
         clear_screen();
-        show_compact_status(p);
-        printf("\n[%s HP: %d / %d]\n", enemy.name, enemy.hp, enemy.max_hp);
+        print_divider(60, CYAN);
+        draw_hp_bar("PLAYER", p->hp, p->max_hp, 30, GREEN);
+        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 30, RED);
+        print_divider(60, CYAN);
         
         int choice;
-        printf("\n[플레이어 턴]\n1. 공격하기\n2. 도망가기\n선택: ");
+        printf("\n" BOLD "[플레이어 턴]" RESET "\n");
+        printf(" 1. 공격하기\n 2. 도망가기\n 선택: ");
         if (scanf("%d", &choice) != 1) {
             clear_input_buffer();
             continue;
@@ -254,71 +284,71 @@ void start_combat(Player* p, Dungeon* d) {
         if (choice == 2) {
             int escape_dice[5];
             roll_dice(escape_dice, 5);
-            sort_dice(escape_dice, 5); // 도망 주사위 정렬 추가
+            sort_dice(escape_dice, 5);
             int sum = 0;
-            printf("> 도망 주사위 결과: [");
-            for (int i = 0; i < 5; i++) {
-                sum += escape_dice[i];
-                printf("%d%s", escape_dice[i], (i == 4) ? "" : ", ");
-            }
-            printf("] (합계: %d)\n", sum);
+            for(int i=0; i<5; i++) sum += escape_dice[i];
+
+            printf("\n" CYAN ">> 도망 시도! " RESET "\n");
+            print_dice_visual(escape_dice, 5);
+            printf(" (합계: %d)\n", sum);
 
             if (sum >= 15) {
-                printf("✨ 무사히 도망쳤습니다! ✨\n");
+                printf(GREEN BOLD "\n✨ 무사히 도망쳤습니다! ✨\n" RESET);
                 wait_for_enter();
                 return;
             } else {
-                printf("💀 도망에 실패했습니다! 공격 기회를 잃었습니다... 💀\n");
+                printf(RED BOLD "\n💀 도망에 실패했습니다! 공격 기회를 잃었습니다... 💀\n" RESET);
             }
         } else {
             int p_dice[5];
             roll_dice(p_dice, 5);
-            sort_dice(p_dice, 5); // 주사위 정렬 추가
-            printf("> 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice[0], p_dice[1], p_dice[2], p_dice[3], p_dice[4]);
+            sort_dice(p_dice, 5);
+            printf("\n" CYAN ">> 공격 개시! " RESET "\n");
+            print_dice_visual(p_dice, 5);
             
             int yacht_score = calculate_yacht_damage(p, p_dice);
             int final_dmg = calculate_final_damage(p, &enemy, yacht_score);
             
-            printf("> 데미지 계산 결과: [ %d ]\n", final_dmg);
+            printf(YELLOW BOLD "\n>> TOTAL DAMAGE: [ %d ]\n" RESET, final_dmg);
             enemy.hp -= final_dmg;
 
-            // 어빌리티: 연속 공격 체크
-            float double_attack_prob = 0;
-            for (int i = 0; i < ABILITY_COUNT; i++) {
-                if (p->abilities[i].type == ABILITY_TYPE_DOUBLE_ATTACK) {
-                    double_attack_prob += p->abilities[i].value;
+            if (enemy.hp > 0) {
+                float double_attack_prob = 0;
+                for (int i = 0; i < ABILITY_COUNT; i++) {
+                    if (p->abilities[i].type == ABILITY_TYPE_DOUBLE_ATTACK) {
+                        double_attack_prob += p->abilities[i].value;
+                    }
+                }
+                if (rand() % 100 < (int)double_attack_prob) {
+                    printf("\n" YELLOW BOLD "✨ [어빌리티] 연속 공격 발동! ✨" RESET "\n");
+                    int p_dice2[5];
+                    roll_dice(p_dice2, 5);
+                    sort_dice(p_dice2, 5);
+                    print_dice_visual(p_dice2, 5);
+                    int yacht_score2 = calculate_yacht_damage(p, p_dice2);
+                    int final_dmg2 = calculate_final_damage(p, &enemy, yacht_score2);
+                    printf(YELLOW BOLD ">> ADDITIONAL DAMAGE: [ %d ]\n" RESET, final_dmg2);
+                    enemy.hp -= final_dmg2;
                 }
             }
-            if (enemy.hp > 0 && (rand() % 100 < (int)double_attack_prob)) {
-                printf("\n✨ [어빌리티] 연속 공격 발동! ✨\n");
-                // 주사위를 새로 굴려 다시 공격 (또는 기존 데미지 재사용 가능하지만 새로 굴리는 것이 더 몰입감 있음)
-                int p_dice2[5];
-                roll_dice(p_dice2, 5);
-                sort_dice(p_dice2, 5);
-                printf("> 추가 주사위 결과: [%d, %d, %d, %d, %d]\n", p_dice2[0], p_dice2[1], p_dice2[2], p_dice2[3], p_dice2[4]);
-                int yacht_score2 = calculate_yacht_damage(p, p_dice2);
-                int final_dmg2 = calculate_final_damage(p, &enemy, yacht_score2);
-                printf("> 추가 데미지 결과: [ %d ]\n", final_dmg2);
-                enemy.hp -= final_dmg2;
-                if (enemy.hp < 0) enemy.hp = 0;
-            }
-            if (enemy.hp < 0) enemy.hp = 0;
 
             if (enemy.hp <= 0) {
+                enemy.hp = 0;
                 int exp_gain = (enemy_rank + 1) * 100;
                 int gold_gain = (enemy_rank + 1) * 200;
                 if (enemy.is_boss) {
                     exp_gain *= 5; gold_gain *= 10;
-                    printf("🏆 보물 같은 보스 처치! 🏆\n");
+                    printf(YELLOW BOLD "\n🏆 보물 같은 보스 처치! 🏆\n" RESET);
                 }
                 p->exp += exp_gain;
                 p->gold += gold_gain;
-                printf("EXP +%d, Gold +%d 획득!\n", exp_gain, gold_gain);
+                
+                printf(GREEN BOLD "\n🎯 승리! " RESET "EXP +%d, Gold +%d 획득!\n", exp_gain, gold_gain);
                 
                 if (p->inventory.count < MAX_INVENTORY_SIZE) {
                     p->inventory.items[p->inventory.count] = enemy.loot;
                     p->inventory.count++;
-                    printf("🎁 전리품 획득: [%s] 🎁\n", enemy.loot.name);
+                    printf(YELLOW "🎁 전리품 획득: [%s] 🎁\n" RESET, enemy.loot.name);
                 }
                 check_level_up(p);
                 wait_for_enter();
@@ -327,16 +357,17 @@ void start_combat(Player* p, Dungeon* d) {
         }
 
         // 적 턴
-        printf("\n[%s의 턴] 공격합니다!\n", enemy.name);
+        printf("\n" RED BOLD "[%s의 턴]" RESET " 공격합니다!\n", enemy.name);
         int e_dice[3];
         roll_dice(e_dice, 3);
         int e_dmg = (e_dice[0] + e_dice[1] + e_dice[2]) * (enemy_rank + 1) * 2;
         if (enemy.is_boss) e_dmg *= 3;
-        printf("> %d의 데미지를 입었습니다!\n", e_dmg);
+        
+        printf(RED ">> %d의 데미지를 입었습니다!\n" RESET, e_dmg);
         p->hp -= e_dmg;
-        if (p->hp < 0) p->hp = 0;
-
         if (p->hp <= 0) {
+            p->hp = 0;
+            printf(RED BOLD "\n💀 눈앞이 캄캄해졌습니다... 💀\n" RESET);
             apply_death_penalty(p);
             wait_for_enter();
             break;

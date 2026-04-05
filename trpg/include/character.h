@@ -21,6 +21,13 @@ typedef struct {
     int level;
     float multiplier;
     int base_atk_bonus;
+    int luk_bonus;
+    int hp_bonus;       // 추가: 최대 HP 보너스
+    int mp_bonus;       // 추가: 최대 MP 보너스
+    int str_bonus;      // 추가: 힘 보너스
+    int dex_bonus;      // 추가: 민첩 보너스
+    int int_bonus;      // 추가: 지력 보너스
+    int mp_cost;        // 추가: 스킬 발동 시 MP 소모 (패시브는 0)
     SkillType type;
     JobType required_job;
 } Skill;
