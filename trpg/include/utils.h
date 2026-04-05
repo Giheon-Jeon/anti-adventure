@@ -33,4 +33,7 @@ void print_centered(const char* text, int width);
 // 가로 구분선 출력
 void print_divider(int width, const char* color);
 
+// 타이틀 화면 (Game Start Screen)
+void show_title_screen();
+
 #endif

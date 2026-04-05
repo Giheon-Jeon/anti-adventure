@@ -74,7 +74,45 @@ void print_centered(const char* text, int width) {
 }
 
 void print_divider(int width, const char* color) {
-    printf("%s", color);
+    if (color != NULL) printf("%s", color);
     for (int i = 0; i < width; i++) printf("━");
-    printf(RESET "\n");
+    if (color != NULL) printf(RESET "\n");
+    else printf("\n");
+}
+
+void show_title_screen() {
+    clear_screen();
+    printf("\n\n");
+    printf(YELLOW BOLD);
+    print_centered("   ___   _  _  _____  ___  ___   ___   _   _  ___  _  _  _____  _   _  ___   ___  ", 80);
+    print_centered("  / _ \\ | \\| ||_   _||_ _|/ __| | _ \\ /_\\ | _ \\| \\| ||_   _|| | | || _ \\ | __| ", 80);
+    print_centered(" |  _  || .  |  | |   | || (_ | |   // _ \\|   /| .  |  | |  | |_| ||   / | _|  ", 80);
+    print_centered(" |_| |_||_|\\_|  |_|  |___|\\___| |_|_/_/ \\_\\|_|_\\|_|\\_|  |_|   \\___/ |_|_\\ |___| ", 80);
+    printf(RESET);
+    
+    printf("\n\n");
+    print_divider(80, CYAN);
+    printf(WHITE BOLD);
+    print_centered("Welcome to the World of Anti-Adventure", 80);
+    printf(RESET);
+    print_divider(80, CYAN);
+    
+    printf("\n\n");
+    printf(CYAN);
+    print_centered("- Explore Dungeons, Defeat Monsters -", 80);
+    print_centered("- Craft Legendary Gear, Master Powerful Skills -", 80);
+    printf(RESET);
+
+    printf("\n\n\n");
+    printf(BOLD YELLOW);
+    print_centered(">> PRESS ENTER TO START YOUR LEGACY <<", 80);
+    printf(RESET);
+    
+    printf("\n\n");
+    print_divider(80, RED);
+    printf(WHITE);
+    print_centered("(C) 2026 Anti-Adventure Team. All rights reserved.", 80);
+    printf(RESET);
+    
+    getchar(); // 타이틀 화면 대기
 }
