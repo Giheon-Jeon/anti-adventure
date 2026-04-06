@@ -130,6 +130,7 @@ void check_level_up(Player* p);
 
 // 스킬 시스템 관련 함수
 void select_level_up_skill(Player* p);
+void grant_event_skill(Player* p, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost);
 void show_skills(Player* p);
 void init_skill_system();
 const char* get_skill_type_name(SkillType type);

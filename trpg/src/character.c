@@ -230,8 +230,17 @@ void show_compact_status(Player* p) {
            p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->combat_power, p->gold);
     printf("[ 기본T:%d/%d/%d | 제작T:%d/%d/%d ]\n", 
            p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
-    printf("[ STR:%d DEX:%d INT:%d LUK:%d ]\n", p->str, p->dex, p->intel, p->luk);
-    printf("------------------------------------------------------------\n");
+    printf("[ STR:%d DEX:%d INT:%d LUK:%d ]", p->str, p->dex, p->intel, p->luk);
+    
+    // 추가: 특수 능력치가 있을 경우만 표시
+    if (p->ied > 0 || p->boss_dmg > 0 || p->dmg_percent > 0) {
+        printf(" [ ");
+        if (p->ied > 0) printf("IED:%.0f%% ", p->ied * 100);
+        if (p->boss_dmg > 0) printf("Boss:%.0f%% ", p->boss_dmg * 100);
+        if (p->dmg_percent > 0) printf("Dmg:%.0f%% ", p->dmg_percent * 100);
+        printf("]");
+    }
+    printf("\n------------------------------------------------------------\n");
 }
 
 void show_inventory(const Player* p) {
