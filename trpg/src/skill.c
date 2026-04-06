@@ -93,6 +93,58 @@ void apply_skill_effects(Player* p) {
     // 실제 데미지 계산 로직(combat.c)에서 스킬 목록을 순회하여 사용함
 }
 
+void grant_event_skill(Player* p, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost) {
+    if (p->skill_count >= MAX_LEARNED_SKILLS) {
+        printf("\n[알림] 스킬 칸이 부족하여 [%s] 스킬을 배울 수 없습니다.\n", name);
+        return;
+    }
+    
+    // 이미 배운 스킬인지 확인 (중복 방지)
+    for (int i = 0; i < p->skill_count; i++) {
+        if (strcmp(p->learned_skills[i].name, name) == 0) {
+            // 이미 있으면 레벨업 처리
+            p->learned_skills[i].level++;
+            // 기존 스탯 보너스 재적용 (누적)
+            p->max_hp += hp; p->hp += hp;
+            p->max_mp += mp; p->mp += mp;
+            p->str += str;
+            p->dex += dex;
+            p->intel += intel;
+            p->luk += luk;
+            printf("\n🌟 보상: [%s] 스킬이 LV.%d로 강화되었습니다! 🌟\n", name, p->learned_skills[i].level);
+            return;
+        }
+    }
+
+    Skill* s = &p->learned_skills[p->skill_count];
+    strcpy(s->name, name);
+    strcpy(s->description, desc);
+    s->level = 1;
+    s->multiplier = mult;
+    s->base_atk_bonus = atk;
+    s->luk_bonus = luk;
+    s->hp_bonus = hp;
+    s->mp_bonus = mp;
+    s->str_bonus = str;
+    s->dex_bonus = dex;
+    s->int_bonus = intel;
+    s->mp_cost = cost;
+    s->type = SKILL_TYPE_COMMON; // 고유 스킬도 공통 타입으로 취급
+    s->required_job = JOB_NONE;
+
+    // 즉시 스탯 반영
+    p->max_hp += hp; p->hp += hp;
+    p->max_mp += mp; p->mp += mp;
+    p->str += str;
+    p->dex += dex;
+    p->intel += intel;
+    p->luk += luk;
+
+    p->skill_count++;
+    printf("\n✨ 특별 보상: 영구적인 고유 스킬 [%s]를 획득했습니다! ✨\n", name);
+    printf("   - %s\n", desc);
+}
+
 void select_level_up_skill(Player* p) {
     if (skill_db_count == 0) init_skill_system();
     
