@@ -174,6 +174,9 @@ void check_level_up(Player* p) {
         // 3. 스킬 선택
         select_level_up_skill(p);
 
+        // 4. 콤보 스킬 체크 (자동 습득)
+        grant_combo_skill_if_eligible(p);
+
         update_combat_power(p);
         check_level_up(p); 
     }
