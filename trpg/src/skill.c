@@ -77,6 +77,13 @@ void init_skill_system() {
     add_to_db("성궤의 기적", "성궤사에게 내려진 마지막 구원입니다.", 0.2f, 50, 100, 1000, 500, 0, 0, 100, 0, SKILL_TYPE_JOB, JOB_PALADIN);
     add_to_db("천상의 숨결", "신의 가호가 온몸을 감쌉니다.", 10.0f, 300, 100, 500, 500, 80, 80, 80, 200, SKILL_TYPE_JOB, JOB_AVATAR);
     add_to_db("신의 권능", "세상의 법칙조차 거스르는 힘입니다.", 15.0f, 500, 200, 1000, 1000, 100, 100, 100, 300, SKILL_TYPE_JOB, JOB_AVATAR);
+    
+    // --- 콤보 액티브 스킬 (COMBO) ---
+    // (이 스킬들은 특정 레벨 도달 시 자동 습득하며, 특정 주사위 조합 시 발동됩니다)
+    add_to_db("[진·용참선]", "모든 주사위가 4 이상일 때 발동하는 강력한 일격입니다.", 80.0f, 0, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMBO, JOB_NONE);
+    add_to_db("[신·천궁살]", "주사위 합계가 정해진 수치(15 또는 20)일 때 발동하는 백발백중의 화살입니다.", 100.0f, 0, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMBO, JOB_NONE);
+    add_to_db("[극·명도권]", "모든 주사위가 소수(2, 3, 5)일 때 발동하는 마력의 권능입니다.", 90.0f, 0, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMBO, JOB_NONE);
+    add_to_db("[비·영격참]", "주사위가 1과 6으로만 구성될 때 발동하는 치명적인 습격입니다.", 120.0f, 0, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMBO, JOB_NONE);
 }
 
 const char* get_skill_type_name(SkillType type) {
@@ -84,6 +91,7 @@ const char* get_skill_type_name(SkillType type) {
         case SKILL_TYPE_COMMON: return "공통";
         case SKILL_TYPE_JOB: return "직업";
         case SKILL_TYPE_ULTIMATE: return "궁극기";
+        case SKILL_TYPE_COMBO: return "콤보";
         default: return "알 수 없음";
     }
 }
@@ -302,6 +310,51 @@ void select_level_up_skill(Player* p) {
     }
 
     wait_for_enter();
+}
+
+void grant_combo_skill_if_eligible(Player* p) {
+    if (p->level < 20) return;
+
+    const char* combo_name = NULL;
+    
+    // 직업별 적합한 콤보 스킬 결정
+    switch (p->job) {
+        case JOB_WARRIOR: case JOB_GLADIATOR: case JOB_BERSERKER: case JOB_CHAMPION: case JOB_JUDGE:
+            combo_name = "[진·용참선]";
+            break;
+        case JOB_ARCHER: case JOB_RANGER: case JOB_GRANDMAGE:
+            combo_name = "[신·천궁살]";
+            break;
+        case JOB_MAGE: case JOB_SAGE: case JOB_CRUSADER: case JOB_PALADIN:
+            combo_name = "[극·명도권]";
+            break;
+        case JOB_THIEF: case JOB_ASSASSIN: case JOB_AVATAR:
+            combo_name = "[비·영격참]";
+            break;
+        default:
+            return;
+    }
+
+    if (combo_name == NULL) return;
+
+    // 이미 배웠는지 확인
+    for (int i = 0; i < p->skill_count; i++) {
+        if (strcmp(p->learned_skills[i].name, combo_name) == 0) return;
+    }
+
+    // DB에서 스킬 정보 찾아 증정
+    for (int i = 0; i < skill_db_count; i++) {
+        if (strcmp(skill_db[i].name, combo_name) == 0) {
+            if (p->skill_count < MAX_LEARNED_SKILLS) {
+                p->learned_skills[p->skill_count] = skill_db[i];
+                p->skill_count++;
+                printf("\n" MAGENTA BOLD "🌟 [습득] 레벨 20 달성 기념! 직업 비기 [%s]를 터득했습니다! 🌟" RESET "\n", combo_name);
+                printf("   - %s\n", skill_db[i].description);
+                wait_for_enter();
+            }
+            break;
+        }
+    }
 }
 
 void show_skills(Player* p) {

@@ -12,7 +12,8 @@
 typedef enum {
     SKILL_TYPE_COMMON,
     SKILL_TYPE_JOB,
-    SKILL_TYPE_ULTIMATE
+    SKILL_TYPE_ULTIMATE,
+    SKILL_TYPE_COMBO
 } SkillType;
 
 typedef struct {
@@ -135,6 +136,7 @@ void show_skills(Player* p);
 void init_skill_system();
 const char* get_skill_type_name(SkillType type);
 void apply_skill_effects(Player* p);
+void grant_combo_skill_if_eligible(Player* p);
 
 // 사망 패널티 적용 함수
 void apply_death_penalty(Player* p);

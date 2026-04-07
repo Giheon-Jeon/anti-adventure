@@ -42,6 +42,43 @@ void print_dice_visual(int* dice, int count) {
     printf("\n");
 }
 
+static void print_combo_effect(const char* skill_name) {
+    printf("\n" MAGENTA BOLD);
+    printf("  ╔══════════════════════════════════════════════════════╗\n");
+    printf("  ║                                                      ║\n");
+    printf("  ║          🌟 액티브 콤보 스킬 발동!! 🌟               ║\n");
+    printf("  ║                                                      ║\n");
+    printf("  ║             >> %-20s <<             ║\n", skill_name);
+    printf("  ║                                                      ║\n");
+    printf("  ╚══════════════════════════════════════════════════════╝\n");
+    printf(RESET "\n");
+}
+
+int is_combo_matched(Player* p, int dice[5], const char* skill_name) {
+    int sum = 0;
+    int prime_count = 0;
+    int high_count = 0;
+    int polar_count = 0;
+
+    for (int i = 0; i < 5; i++) {
+        sum += dice[i];
+        if (dice[i] >= 4) high_count++;
+        if (dice[i] == 2 || dice[i] == 3 || dice[i] == 5) prime_count++;
+        if (dice[i] == 1 || dice[i] == 6) polar_count++;
+    }
+
+    if (strcmp(skill_name, "[진·용참선]") == 0) {
+        return (high_count == 5);
+    } else if (strcmp(skill_name, "[신·천궁살]") == 0) {
+        return (sum == 15 || sum == 20);
+    } else if (strcmp(skill_name, "[극·명도권]") == 0) {
+        return (prime_count == 5);
+    } else if (strcmp(skill_name, "[비·영격참]") == 0) {
+        return (polar_count == 5);
+    }
+    return 0;
+}
+
 // 야추 규칙 데미지 계산
 int calculate_yacht_damage(Player* p, int dice[5]) {
     int counts[7] = {0}; // 1~6 눈금 개수
@@ -49,6 +86,16 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     for (int i = 0; i < 5; i++) {
         counts[dice[i]]++;
         sum += dice[i];
+    }
+
+    // --- 콤보 스킬 우선 체크 ---
+    for (int i = 0; i < p->skill_count; i++) {
+        if (p->learned_skills[i].type == SKILL_TYPE_COMBO) {
+            if (is_combo_matched(p, dice, p->learned_skills[i].name)) {
+                print_combo_effect(p->learned_skills[i].name);
+                return sum * 10 * (int)p->learned_skills[i].multiplier;
+            }
+        }
     }
 
     sort_dice(dice, 5);
