@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "../include/character.h"
 #include "../include/ability.h"
+#include "../include/utils.h"
 
 void init_player(Player* p) {
     printf("--- 캐릭터 생성 ---\n");
@@ -247,19 +248,35 @@ void show_compact_status(Player* p) {
 }
 
 void show_inventory(const Player* p) {
-    printf("\n========= [인벤토리] (%d / %d) =========\n", p->inventory.count, MAX_INVENTORY_SIZE);
+    clear_screen();
+    printf("\n" CYAN "┌──────────────────────────────────────────────────────────────┐" RESET "\n");
+    printf(CYAN "│" RESET "  " YELLOW BOLD "🎒 인벤토리 창" RESET "                                       " CYAN "│" RESET "\n");
+    printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
+    printf(CYAN "│" RESET "  현재 소지량: [ " GREEN BOLD "%2d" RESET " / " WHITE "%2d" RESET " ]                                " CYAN "│" RESET "\n", p->inventory.count, MAX_INVENTORY_SIZE);
+    printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
+
     if (p->inventory.count == 0) {
-        printf("비어 있습니다.\n");
+        printf(CYAN "│" RESET "                                                              " CYAN "│" RESET "\n");
+        printf(CYAN "│" RESET "  " WHITE "비어 있습니다. 모험을 통해 아이템을 획득하세요!" RESET "           " CYAN "│" RESET "\n");
+        printf(CYAN "│" RESET "                                                              " CYAN "│" RESET "\n");
     } else {
         for (int i = 0; i < p->inventory.count; i++) {
-            printf("%d. [%s] - %s (가치: %d G)\n", 
-                   i + 1, p->inventory.items[i].name, p->inventory.items[i].description, p->inventory.items[i].value);
+            printf(CYAN "│" RESET "  " BOLD "%2d." RESET " [" GREEN "%-14s" RESET "]                                    " CYAN "│" RESET "\n", 
+                   i + 1, p->inventory.items[i].name);
+            printf(CYAN "│" RESET "      " WHITE "↳ %-42s" RESET " " YELLOW "%5d G" RESET " " CYAN "│" RESET "\n", 
+                   p->inventory.items[i].description, p->inventory.items[i].value);
+            
+            if (i < p->inventory.count - 1) {
+                printf(CYAN "│" RESET "  " WHITE "----------------------------------------------------------" RESET "  " CYAN "│" RESET "\n");
+            }
         }
     }
-    printf("========================================\n");
-    printf("엔터를 누르면 돌아갑니다...");
-    while (getchar() != '\n'); // 이전 입력 버퍼 비우기용 (안정성)
-    getchar(); 
+
+    printf(CYAN "└──────────────────────────────────────────────────────────────┘" RESET "\n");
+    printf("\n  " BOLD "계속하려면 엔터를 누르세요..." RESET);
+    
+    // 버퍼 비우기 및 입력 대기 (utils.h의 함수 활용)
+    wait_for_enter();
 }
 void apply_death_penalty(Player* p) {
     printf("\n💀 [사망] 전투에서 패배했습니다! 💀\n");
