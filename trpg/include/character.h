@@ -6,8 +6,8 @@
 
 #include "job.h"
 
-#define MAX_LEARNED_SKILLS 10
-#define MAX_SKILL_LEVEL 5
+#define MAX_LEARNED_SKILLS 50
+#define MAX_SKILL_LEVEL 10
 
 typedef enum {
     SKILL_TYPE_COMMON,
@@ -17,20 +17,29 @@ typedef enum {
 } SkillType;
 
 typedef struct {
+    int id;             // 고유 ID
     char name[50];
     char description[100];
-    int level;
+    int level;          // 현재 스킬 레벨 (투자된 포인트)
+    int max_level;      // 최대 레벨 (기본 10)
+    
     float multiplier;
     int base_atk_bonus;
     int luk_bonus;
-    int hp_bonus;       // 추가: 최대 HP 보너스
-    int mp_bonus;       // 추가: 최대 MP 보너스
-    int str_bonus;      // 추가: 힘 보너스
-    int dex_bonus;      // 추가: 민첩 보너스
-    int int_bonus;      // 추가: 지력 보너스
-    int mp_cost;        // 추가: 스킬 발동 시 MP 소모 (패시브는 0)
+    int hp_bonus;
+    int mp_bonus;
+    int str_bonus;
+    int dex_bonus;
+    int int_bonus;
+    int mp_cost;
+    
     SkillType type;
     JobType required_job;
+    
+    int tier;           // 계층 (0:공통, 1:기본, 2:대가)
+    int prereq_id;      // 선행 스킬 ID (-1이면 없음)
+    int is_passive;     // 패시브 효과 존재 여부
+    int is_active;      // 액티브 효과 존재 여부
 } Skill;
 
 #define JOB_ADVANCEMENT_LEVEL 10
@@ -89,7 +98,8 @@ typedef struct {
     
     int exp;
     int gold;
-    int stat_points;   // 레벨업 시 얻는 포인트
+    int stat_points;   // 레벨업 시 얻는 스탯 포인트
+    int skill_points;  // 레벨업 시 얻는 스킬 포인트
     
     // 장비 단계 관리 (상점 구매 - 기본 스탯 중심)
     int weapon_tier;
@@ -133,6 +143,7 @@ void check_level_up(Player* p);
 void select_level_up_skill(Player* p);
 void grant_event_skill(Player* p, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost);
 void show_skills(Player* p);
+void show_skill_tree(Player* p); // 새 스킬 트리 UI
 void init_skill_system();
 const char* get_skill_type_name(SkillType type);
 void apply_skill_effects(Player* p);

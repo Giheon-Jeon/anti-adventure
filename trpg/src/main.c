@@ -33,7 +33,8 @@ int main() {
         printf("  4. " CYAN "마을 활동 " RESET "(알바/도박)\n");
         printf("  5. " BOLD "인벤토리 보기" RESET "\n");
         printf("  6. " BOLD "캐릭터 상세정보" RESET "\n");
-        printf("  7. " RED "게임 종료" RESET "\n");
+        printf("  7. " MAGENTA BOLD "스킬 트리 " RESET "\n");
+        printf("  8. " RED "게임 종료" RESET "\n");
         print_divider(40, CYAN);
         
         printf("\n  선택: ");
@@ -66,6 +67,9 @@ int main() {
                 wait_for_enter();
                 break;
             case 7:
+                show_skill_tree(&player);
+                break;
+            case 8:
                 printf("\n" YELLOW BOLD "게임을 종료합니다. 안녕히 가세요!" RESET "\n");
                 return 0;
             default:

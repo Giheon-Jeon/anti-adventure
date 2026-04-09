@@ -29,6 +29,7 @@ void init_player(Player* p) {
     p->exp = 0;
     p->gold = 100;
     p->stat_points = 0;
+    p->skill_points = 0;
     p->weapon_tier = 0;
     p->armor_tier = 0;
     p->accessory_tier = 0;
@@ -70,8 +71,10 @@ void check_level_up(Player* p) {
         p->mp = p->max_mp;
         
         p->stat_points += 5;
+        p->skill_points += 3;
         
         printf("\n🎉 레벨 업! [Level %d]가 되었습니다! 🎉\n", p->level);
+        printf("   (보너스: 스탯 포인트 5, 스킬 포인트 3 획득!)\n");
 
         // 1. 전직 체크
         if (p->job == JOB_NONE && p->level >= JOB_ADVANCEMENT_LEVEL) {
@@ -172,8 +175,8 @@ void check_level_up(Player* p) {
             printf("\n");
         }
         
-        // 3. 스킬 선택
-        select_level_up_skill(p);
+        // 3. 스킬 포인트 시스템 도입으로 기존 무작위 선택 제거
+        // select_level_up_skill(p);
 
         // 4. 콤보 스킬 체크 (자동 습득)
         grant_combo_skill_if_eligible(p);
