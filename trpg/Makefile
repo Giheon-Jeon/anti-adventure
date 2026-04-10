@@ -4,12 +4,17 @@ SRC = src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c
 OBJ = $(SRC:.c=.o)
 TARGET = trpg_game
 
-all: $(TARGET)
+PYTHON = $(shell where py >nul 2>nul && echo py || echo python3)
+
+all: generate $(TARGET)
+
+generate:
+	$(PYTHON) scripts/generate_data.py
 
 $(TARGET): $(OBJ)
 	$(CC) -o $@ $^
 
-%.o: %.c
+%.o: %.c include/generated_data.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

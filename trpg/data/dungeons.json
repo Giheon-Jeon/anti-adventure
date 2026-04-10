@@ -1,0 +1,41 @@
+[
+  {
+    "name": "초심자의 들판",
+    "min_cp": 0,
+    "max_cp": 500,
+    "monster_ids": [1, 2],
+    "has_boss": 0
+  },
+  {
+    "name": "노란 버섯 동산",
+    "min_cp": 500,
+    "max_cp": 2000,
+    "monster_ids": [3],
+    "has_boss": 1,
+    "boss_id": 4
+  },
+  {
+    "name": "축축한 습지",
+    "min_cp": 2000,
+    "max_cp": 5000,
+    "monster_ids": [5, 6],
+    "has_boss": 1,
+    "boss_id": 7
+  },
+  {
+    "name": "잊혀진 신전",
+    "min_cp": 5000,
+    "max_cp": 15000,
+    "monster_ids": [8, 9],
+    "has_boss": 1,
+    "boss_id": 10
+  },
+  {
+    "name": "검은 용의 둥지",
+    "min_cp": 15000,
+    "max_cp": 999999,
+    "monster_ids": [11, 12],
+    "has_boss": 1,
+    "boss_id": 13
+  }
+]

@@ -1,0 +1,8 @@
+services:
+  trpg:
+    build: .
+    image: anti-adventure-trpg:latest
+    stdin_open: true
+    tty: true
+    # 컨테이너 실행 시 자동으로 게임이 시작되도록 설정
+    command: ./trpg_game
