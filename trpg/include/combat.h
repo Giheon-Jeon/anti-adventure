@@ -5,6 +5,7 @@
 #include "item.h"
 
 typedef struct {
+    int id;             // 고유 ID
     char name[50];
     int hp;
     int max_hp;

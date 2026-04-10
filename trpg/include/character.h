@@ -8,6 +8,7 @@
 
 #define MAX_LEARNED_SKILLS 50
 #define MAX_SKILL_LEVEL 10
+#define MAX_BOOK_ENTRIES 20
 
 typedef enum {
     SKILL_TYPE_COMMON,
@@ -74,6 +75,12 @@ typedef struct {
     float value;
 } Ability;
 
+typedef struct {
+    int id;             // 몬스터 ID
+    int is_registered;  // 등록 여부
+    int kill_count;     // 누적 처치 수
+} MonsterBookEntry;
+
 #define ABILITY_COUNT 3
 
 typedef struct {
@@ -126,6 +133,8 @@ typedef struct {
     int skill_count;
     Skill ultimate_skill;
     int has_ultimate;
+
+    MonsterBookEntry encyclopedia[MAX_BOOK_ENTRIES];
 } Player;
 
 // 플레이어 초기화 함수
@@ -154,5 +163,8 @@ void apply_death_penalty(Player* p);
 
 // 전투력 업데이트 함수
 void update_combat_power(Player* p);
+
+// 도감 관련 함수
+void show_monster_encyclopedia(Player* p);
 
 #endif

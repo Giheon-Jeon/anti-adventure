@@ -17,6 +17,7 @@ void open_village_menu(Player* p) {
         printf("2. 주사위 도박 (하이/로우) - [최소 배팅: 50G]\n");
         printf("3. 장비 제작 (대장간) - [몬스터 전리품 재료]\n");
         printf("4. 어빌리티 잠재력 (신비한 재단) - [골드 소모]\n");
+        printf("5. 몬스터 도감 (지식의 기록) - [연구 및 보너스]\n");
         printf("0. 뒤로 가기\n");
         printf("선택: ");
         
@@ -113,6 +114,9 @@ void open_village_menu(Player* p) {
                 break;
             case 4:
                 open_ability_menu(p);
+                break;
+            case 5:
+                show_monster_encyclopedia(p);
                 break;
             default:
                 printf("\n[알림] 잘못된 선택입니다.\n");
