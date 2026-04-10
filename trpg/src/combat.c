@@ -3,6 +3,7 @@
 #include <string.h>
 #include "../include/combat.h"
 #include "../include/utils.h"
+#include "../include/generated_data.h"
 
 // 주사위 정렬 (오름차순)
 void sort_dice(int* dice, int count) {
@@ -233,6 +234,20 @@ int calculate_yacht_damage(Player* p, int dice[5]) {
     return sum * 10;
 }
 
+static MonsterBookEntry* get_monster_entry(Player* p, int monster_id) {
+    if (monster_id <= 0) return NULL;
+    for (int i = 0; i < MAX_BOOK_ENTRIES; i++) {
+        if (p->encyclopedia[i].id == monster_id) return &p->encyclopedia[i];
+        if (p->encyclopedia[i].id == 0) {
+             p->encyclopedia[i].id = monster_id;
+             p->encyclopedia[i].is_registered = 0;
+             p->encyclopedia[i].kill_count = 0;
+             return &p->encyclopedia[i];
+        }
+    }
+    return NULL;
+}
+
 int calculate_final_damage(Player* p, Monster* m, int yacht_result) {
     float base_stat_power = 0;
     switch (p->job) {
@@ -271,6 +286,13 @@ int calculate_final_damage(Player* p, Monster* m, int yacht_result) {
     float damage = (base_stat_power + skill_extra_atk) * final_skill_mult;
     damage *= (1.0f + p->dmg_percent);
     if (m->is_boss) damage *= (1.0f + p->boss_dmg);
+
+    // 도감 보너스 (연구 레벨 2: 10회 이상 처치 시 데미지 20% 증가)
+    MonsterBookEntry* entry = get_monster_entry(p, m->id);
+    if (entry && entry->is_registered && entry->kill_count >= 10) {
+        damage *= 1.2f;
+    }
+
     float effective_def = m->def * (1.0f - p->ied);
     if (effective_def < 0) effective_def = 0;
     int final_dmg = (int)(damage - effective_def);
@@ -310,7 +332,23 @@ void start_combat(Player* p, Dungeon* d) {
     print_centered("⚠️ 몬스터 출현! ⚠️", 60);
     printf(RESET);
     printf(RED "\n      [%s] (방어율: %d)\n" RESET, enemy.name, enemy.def);
-    wait_for_enter();
+    
+    // 자동 사냥 체크 (연구 레벨 3: 30회 이상 처치 시)
+    int skip_combat = 0;
+    MonsterBookEntry* entry = get_monster_entry(p, enemy.id);
+    if (!enemy.is_boss && entry && entry->is_registered && entry->kill_count >= 30) {
+        printf("\n" YELLOW BOLD "[도감 마스터] %s의 모든 패턴을 파악했습니다!" RESET "\n", enemy.name);
+        printf(" 1. 일반 전투\n 2. 자동 사냥 (즉시 처치)\n 선택: ");
+        int auto_choice;
+        if (scanf("%d", &auto_choice) == 1 && auto_choice == 2) {
+            printf(GREEN BOLD "\n✨ 순식간에 %s를 처치했습니다! ✨\n" RESET, enemy.name);
+            enemy.hp = 0;
+            skip_combat = 1;
+        }
+        clear_input_buffer();
+    }
+
+    if (!skip_combat) wait_for_enter();
 
     while (p->hp > 0 && enemy.hp > 0) {
         clear_screen();
@@ -397,6 +435,20 @@ void start_combat(Player* p, Dungeon* d) {
                     p->inventory.count++;
                     printf(YELLOW "🎁 전리품 획득: [%s] 🎁\n" RESET, enemy.loot.name);
                 }
+
+                // 도감 업데이트
+                MonsterBookEntry* v_entry = get_monster_entry(p, enemy.id);
+                if (v_entry) {
+                    v_entry->kill_count++;
+                    if (!v_entry->is_registered) {
+                        int reg_chance = enemy.is_boss ? 5 : 10; // 보스 5%, 일반 10%
+                        if (rand() % 100 < reg_chance) {
+                            v_entry->is_registered = 1;
+                            printf(MAGENTA BOLD "\n📖 [도감 등록] %s의 정보를 도감에 기록했습니다! 📖\n" RESET, enemy.name);
+                        }
+                    }
+                }
+
                 check_level_up(p);
                 wait_for_enter();
                 return;
@@ -424,76 +476,22 @@ void start_combat(Player* p, Dungeon* d) {
 }
 
 void select_dungeon(Player* p) {
-    Dungeon dungeons[5];
+    Dungeon dungeons[DUNGEON_COUNT];
     
-    // 1. 초심자의 들판
-    strcpy(dungeons[0].name, "초심자의 들판");
-    dungeons[0].min_cp = 0; dungeons[0].max_cp = 500;
-    dungeons[0].monster_count = 2;
-    strcpy(dungeons[0].monsters[0].name, "파란 달팽이");
-    dungeons[0].monsters[0].max_hp = 300; dungeons[0].monsters[0].def = 5; dungeons[0].monsters[0].is_boss = 0;
-    strcpy(dungeons[0].monsters[0].loot.name, "달팽이 껍질"); dungeons[0].monsters[0].loot.value = 10;
-    strcpy(dungeons[0].monsters[1].name, "슬라임");
-    dungeons[0].monsters[1].max_hp = 600; dungeons[0].monsters[1].def = 10; dungeons[0].monsters[1].is_boss = 0;
-    strcpy(dungeons[0].monsters[1].loot.name, "슬라임의 핵"); dungeons[0].monsters[1].loot.value = 20;
-    dungeons[0].has_boss = 0;
-
-    // 2. 노란 버섯 동산
-    strcpy(dungeons[1].name, "노란 버섯 동산");
-    dungeons[1].min_cp = 500; dungeons[1].max_cp = 2000;
-    dungeons[1].monster_count = 1;
-    strcpy(dungeons[1].monsters[0].name, "주황버섯");
-    dungeons[1].monsters[0].max_hp = 1500; dungeons[1].monsters[0].def = 30; dungeons[1].monsters[0].is_boss = 0;
-    strcpy(dungeons[1].monsters[0].loot.name, "버섯 갓"); dungeons[1].monsters[0].loot.value = 50;
-    dungeons[1].has_boss = 1;
-    strcpy(dungeons[1].boss.name, "🍄 머쉬맘 (BOSS) 🍄");
-    dungeons[1].boss.max_hp = 10000; dungeons[1].boss.def = 100; dungeons[1].boss.is_boss = 1;
-    strcpy(dungeons[1].boss.loot.name, "머쉬맘의 포자"); dungeons[1].boss.loot.value = 500;
-
-    // 3. 축축한 습지
-    strcpy(dungeons[2].name, "축축한 습지");
-    dungeons[2].min_cp = 2000; dungeons[2].max_cp = 5000;
-    dungeons[2].monster_count = 2;
-    strcpy(dungeons[2].monsters[0].name, "오크");
-    dungeons[2].monsters[0].max_hp = 8000; dungeons[2].monsters[0].def = 80; dungeons[2].monsters[0].is_boss = 0;
-    strcpy(dungeons[2].monsters[0].loot.name, "오크의 이빨"); dungeons[2].monsters[0].loot.value = 150;
-    strcpy(dungeons[2].monsters[1].name, "와일드카고");
-    dungeons[2].monsters[1].max_hp = 15000; dungeons[2].monsters[1].def = 150; dungeons[2].monsters[1].is_boss = 0;
-    strcpy(dungeons[2].monsters[1].loot.name, "와일드카고의 눈동자"); dungeons[2].monsters[1].loot.value = 250;
-    dungeons[2].has_boss = 1;
-    strcpy(dungeons[2].boss.name, "🔥 자쿰의 팔 (BOSS) 🔥");
-    dungeons[2].boss.max_hp = 50000; dungeons[2].boss.def = 300; dungeons[2].boss.is_boss = 1;
-    strcpy(dungeons[2].boss.loot.name, "자쿰의 나뭇가지"); dungeons[2].boss.loot.value = 2000;
-
-    // 4. 잊혀진 신전
-    strcpy(dungeons[3].name, "잊혀진 신전");
-    dungeons[3].min_cp = 5000; dungeons[3].max_cp = 15000;
-    dungeons[3].monster_count = 2;
-    strcpy(dungeons[3].monsters[0].name, "스켈레톤");
-    dungeons[3].monsters[0].max_hp = 50000; dungeons[3].monsters[0].def = 300; dungeons[3].monsters[0].is_boss = 0;
-    strcpy(dungeons[3].monsters[0].loot.name, "부서진 뼈"); dungeons[3].monsters[0].loot.value = 600;
-    strcpy(dungeons[3].monsters[1].name, "다크 레인저");
-    dungeons[3].monsters[1].max_hp = 80000; dungeons[3].monsters[1].def = 400; dungeons[3].monsters[1].is_boss = 0;
-    strcpy(dungeons[3].monsters[1].loot.name, "검은 화살촉"); dungeons[3].monsters[1].loot.value = 1000;
-    dungeons[3].has_boss = 1;
-    strcpy(dungeons[3].boss.name, "🕒 파풀라투스 (BOSS) 🕒");
-    dungeons[3].boss.max_hp = 300000; dungeons[3].boss.def = 600; dungeons[3].boss.is_boss = 1;
-    strcpy(dungeons[3].boss.loot.name, "시계 파편"); dungeons[3].boss.loot.value = 8000;
-
-    // 5. 검은 용의 둥지
-    strcpy(dungeons[4].name, "검은 용의 둥지");
-    dungeons[4].min_cp = 15000; dungeons[4].max_cp = 999999;
-    dungeons[4].monster_count = 2;
-    strcpy(dungeons[4].monsters[0].name, "블루 와이번");
-    dungeons[4].monsters[0].max_hp = 200000; dungeons[4].monsters[0].def = 600; dungeons[4].monsters[0].is_boss = 0;
-    strcpy(dungeons[4].monsters[0].loot.name, "와이번의 발톱"); dungeons[4].monsters[0].loot.value = 2500;
-    strcpy(dungeons[4].monsters[1].name, "다크 코르니안");
-    dungeons[4].monsters[1].max_hp = 400000; dungeons[4].monsters[1].def = 800; dungeons[4].monsters[1].is_boss = 0;
-    strcpy(dungeons[4].monsters[1].loot.name, "단단한 비늘"); dungeons[4].monsters[1].loot.value = 4000;
-    dungeons[4].has_boss = 1;
-    strcpy(dungeons[4].boss.name, "🌸 핑크빈 (BOSS) 🌸");
-    dungeons[4].boss.max_hp = 1200000; dungeons[4].boss.def = 1200; dungeons[4].boss.is_boss = 1;
-    strcpy(dungeons[4].boss.loot.name, "핑크빈의 인형"); dungeons[4].boss.loot.value = 30000;
+    for (int i = 0; i < DUNGEON_COUNT; i++) {
+        const DungeonTemplate* t = &g_dungeon_templates[i];
+        strcpy(dungeons[i].name, t->name);
+        dungeons[i].min_cp = t->min_cp;
+        dungeons[i].max_cp = t->max_cp;
+        dungeons[i].monster_count = t->monster_count;
+        for (int j = 0; j < t->monster_count; j++) {
+            dungeons[i].monsters[j] = get_monster_by_id(t->monster_ids[j]);
+        }
+        dungeons[i].has_boss = t->has_boss;
+        if (t->has_boss) {
+            dungeons[i].boss = get_monster_by_id(t->boss_id);
+        }
+    }
 
     while(1) {
         clear_screen();
@@ -501,11 +499,14 @@ void select_dungeon(Player* p) {
         printf("\n========= [사냥터 선택] =========\n");
         printf("현재 전투력에 맞는 던전을 선택하세요.\n\n");
         
-        for(int i=0; i<5; i++) {
+        for(int i=0; i<DUNGEON_COUNT; i++) {
             printf("%d. %s (권장 CP: %d ~ ", i+1, dungeons[i].name, dungeons[i].min_cp);
             if(dungeons[i].max_cp > 100000) printf("MAX)\n");
             else printf("%d)\n", dungeons[i].max_cp);
-            printf("   - 등장: %s, %s", dungeons[i].monsters[0].name, dungeons[i].monsters[1].name);
+            printf("   - 등장: ");
+            for(int j=0; j<dungeons[i].monster_count; j++) {
+                printf("%s%s", dungeons[i].monsters[j].name, (j < dungeons[i].monster_count - 1) ? ", " : "");
+            }
             if(dungeons[i].has_boss) printf(", %s", dungeons[i].boss.name);
             printf("\n");
         }
@@ -520,7 +521,7 @@ void select_dungeon(Player* p) {
         clear_input_buffer();
         
         if (choice == 0) break;
-        if (choice < 1 || choice > 5) {
+        if (choice < 1 || choice > DUNGEON_COUNT) {
             printf("[알림] 잘못된 선택입니다.\n");
             wait_for_enter();
             continue;

@@ -50,6 +50,13 @@ void init_player(Player* p) {
     
     p->skill_count = 0;
     p->has_ultimate = 0;
+    
+    for (int i = 0; i < MAX_BOOK_ENTRIES; i++) {
+        p->encyclopedia[i].id = 0;
+        p->encyclopedia[i].is_registered = 0;
+        p->encyclopedia[i].kill_count = 0;
+    }
+
     init_skill_system();
     
     update_combat_power(p);
