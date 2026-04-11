@@ -9,7 +9,12 @@
 #define YELLOW  "\033[33m"
 #define MAGENTA "\033[35m"
 #define CYAN    "\033[36m"
+#define BLACK   "\033[30m"
+#define RED_BG  "\033[41m"
+#define GREEN_BG "\033[42m"
+#define YELLOW_BG "\033[43m"
 #define WHITE   "\033[37m"
+
 
 // 난수 생성 함수 (min ~ max 사이의 정수 반환)
 int get_random_range(int min, int max);

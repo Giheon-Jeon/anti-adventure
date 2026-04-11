@@ -159,9 +159,6 @@ void show_skill_tree(Player* p) {
             if (s->type == SKILL_TYPE_COMBO) continue; // 콤보는 자동 습득
 
             // 공통 스킬이거나, 자신의 직업 계열 스킬인 경우만 표시
-            int is_job_match = (p->job == s->required_job);
-            // 하이브리드 직업 고려 (예: GLADIATOR는 WARRIOR 스킬도 볼 수 있어야 함? 
-            // 일단은 structure에 맞게 required_job이 JOB_NONE이거나 정확히 일치하는 경우만)
             if (s->required_job != JOB_NONE && p->job != s->required_job) {
                 // 부모 직업 개념이 필요할 수 있으나, 일단은 단순하게 구현
             }
