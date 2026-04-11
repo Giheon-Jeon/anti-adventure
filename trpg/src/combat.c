@@ -227,3 +227,57 @@ void start_combat(Player* p, Dungeon* d) {
         }
     }
 }
+
+// 템플릿으로부터 실제 던전 데이터를 생성하는 도우미 함수
+Dungeon get_dungeon_data(int index) {
+    Dungeon d = {0};
+    if (index < 0 || index >= DUNGEON_COUNT) return d;
+    
+    const DungeonTemplate* t = &g_dungeon_templates[index];
+    strncpy(d.name, t->name, 49);
+    d.min_cp = t->min_cp;
+    d.max_cp = t->max_cp;
+    d.monster_count = 0;
+    
+    for (int i = 0; i < 3; i++) {
+        if (t->monster_ids[i] > 0) {
+            d.monsters[d.monster_count++] = get_monster_by_id(t->monster_ids[i]);
+        }
+    }
+    
+    if (t->has_boss && t->boss_id > 0) {
+        d.boss = get_monster_by_id(t->boss_id);
+        d.has_boss = 1;
+    }
+    
+    return d;
+}
+
+void select_dungeon(Player* p) {
+    clear_screen();
+    printf("\n" BOLD "========= [던전 탐험 선택] =========" RESET "\n");
+    printf(" 1. 헤네시스 (요구 CP: 0)\n");
+    printf(" 2. 슬리피우드 (요구 CP: 500)\n");
+    printf(" 3. 시간의 신전 (요구 CP: 2000)\n");
+    printf(" 0. 마을로 돌아가기\n");
+    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    printf("선택: ");
+
+    int choice;
+    if (scanf("%d", &choice) != 1) { clear_input_buffer(); return; }
+    
+    if (choice < 1 || choice > 3) return;
+    
+    // 인덱스 조정 (1번 선택 -> 스크립트의 0번 헤네시스 템플릿)
+    Dungeon selected = get_dungeon_data(choice - 1);
+
+    if (p->combat_power < selected.min_cp) {
+        printf(RED "\n[경고] 전투력이 부족하여 진입할 수 없습니다! (필요: %d)\n" RESET, selected.min_cp);
+        wait_for_enter();
+        return;
+    }
+
+    start_combat(p, &selected);
+}
+
+

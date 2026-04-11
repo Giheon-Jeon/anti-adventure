@@ -9,7 +9,7 @@ typedef enum {
     JOB_MAGE,       // INT
     JOB_THIEF,      // LUK
     
-    // 2개 동률 (Hybrid)
+    // 2차 전직 (Hybrid)
     JOB_GLADIATOR,  // STR+DEX
     JOB_CRUSADER,   // STR+INT
     JOB_BERSERKER,  // STR+LUK
@@ -17,14 +17,17 @@ typedef enum {
     JOB_ASSASSIN,   // DEX+LUK
     JOB_SAGE,       // INT+LUK
     
-    // 3개 동률 (Elite)
+    // 3차 전직 (Elite)
     JOB_CHAMPION,   // STR+DEX+INT
     JOB_JUDGE,      // STR+DEX+LUK
     JOB_PALADIN,    // STR+INT+LUK
     JOB_GRANDMAGE,  // DEX+INT+LUK
     
-    // 4개 동률 (Legendary)
+    // 4차 전직 (Legendary)
     JOB_AVATAR      // STR+DEX+INT+LUK
 } JobType;
+
+// 직업 이름을 문자열로 반환하는 함수
+const char* get_job_name(JobType job);
 
 #endif
