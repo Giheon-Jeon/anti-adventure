@@ -21,6 +21,16 @@ jobs:
     - name: Set up GCC
       run: sudo apt-get update && sudo apt-get install -y build-essential
 
+    - name: Install Python dependencies
+      run: |
+        cd trpg
+        pip install -r requirements.txt
+
+    - name: Data Validation (Pydantic)
+      run: |
+        cd trpg
+        python3 scripts/validate_data.py
+
     - name: Generate Data (Python)
       run: |
         cd trpg
@@ -29,6 +39,4 @@ jobs:
     - name: Build with Makefile
       run: |
         cd trpg
-        # clean 단계에서 Windows 명령어가 실패할 수 있으므로, 
-        # 리눅스 환경에 맞는 빌드 명령어를 수행합니다.
         make
