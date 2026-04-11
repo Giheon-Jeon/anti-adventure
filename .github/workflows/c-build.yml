@@ -18,8 +18,10 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Set up GCC
-      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Set up Build Tools
+      run: |
+        sudo apt-get update 
+        sudo apt-get install -y build-essential doxygen graphviz
 
     - name: Install Python dependencies
       run: |
@@ -40,3 +42,14 @@ jobs:
       run: |
         cd trpg
         make
+
+    - name: Generate Documentation (Doxygen)
+      run: |
+        cd trpg
+        doxygen Doxyfile
+    
+    - name: Upload Documentation Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-documentation
+        path: trpg/docs/html
