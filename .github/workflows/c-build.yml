@@ -1,0 +1,34 @@
+name: C and Python Build CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Set up GCC
+      run: sudo apt-get update && sudo apt-get install -y build-essential
+
+    - name: Generate Data (Python)
+      run: |
+        cd trpg
+        python3 scripts/generate_data.py
+
+    - name: Build with Makefile
+      run: |
+        cd trpg
+        # clean 단계에서 Windows 명령어가 실패할 수 있으므로, 
+        # 리눅스 환경에 맞는 빌드 명령어를 수행합니다.
+        make
