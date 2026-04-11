@@ -55,6 +55,11 @@ int calculate_yacht_damage(Player* p, int dice[5]);
 int calculate_final_damage(Player* p, Monster* m, int yacht_result);
 
 /**
+ * @brief 플레이어가 받는 데미지 산출 (방어구 내구도 반영)
+ */
+int calculate_player_taken_damage(Player* p, int raw_enemy_atk);
+
+/**
  * @brief 전투를 시작합니다.
  */
 void start_combat(Player *p, Dungeon *d);
