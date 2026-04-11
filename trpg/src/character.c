@@ -66,7 +66,9 @@ void init_player(Player* p) {
 // distribute_stats 함수는 더 이상 사용되지 않음 (사용자 규칙: 자동/랜덤 성장)
 
 void check_level_up(Player* p) {
-    int required_exp = p->level * 100;
+    // 경험치 공식 변경: 레벨의 제곱에 비례하도록 수정 (성장 욕구 및 난이도 조절)
+    int required_exp = p->level * p->level * 100;
+
     if (p->exp >= required_exp) {
         p->level++;
         p->exp -= required_exp;
