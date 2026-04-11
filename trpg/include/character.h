@@ -118,6 +118,14 @@ typedef struct {
     int c_armor_tier;
     int c_accessory_tier;
     
+    // 장비 내구도 관리 (0 ~ 100)
+    int weapon_dur;
+    int armor_dur;
+    int accessory_dur;
+    int c_weapon_dur;
+    int c_armor_dur;
+    int c_accessory_dur;
+    
     int combat_power;   // 종합 전투력
     
     // 알바 관련 데이터

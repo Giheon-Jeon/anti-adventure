@@ -36,6 +36,14 @@ void init_player(Player* p) {
     p->c_weapon_tier = 0;
     p->c_armor_tier = 0;
     p->c_accessory_tier = 0;
+
+    // 내구도 100으로 초기화
+    p->weapon_dur = 100;
+    p->armor_dur = 100;
+    p->accessory_dur = 100;
+    p->c_weapon_dur = 100;
+    p->c_armor_dur = 100;
+    p->c_accessory_dur = 100;
     
     for (int i = 0; i < ABILITY_COUNT; i++) {
         p->abilities[i].type = ABILITY_TYPE_NONE;
@@ -384,7 +392,11 @@ void update_combat_power(Player* p) {
         cp += p->learned_skills[i].level * 200;
         if (p->learned_skills[i].base_atk_bonus > 0) cp += p->learned_skills[i].base_atk_bonus * 5;
     }
-    if (p->has_ultimate) cp += 5000;
-
-    p->combat_power = (int)cp;
+    // --- 내구도 보정 적용 (CP에도 성능 저하 반영) ---
+    float avg_dur = (p->weapon_dur + p->armor_dur + p->accessory_dur + 
+                     p->c_weapon_dur + p->c_armor_dur + p->c_accessory_dur) / 6.0f;
+    float dur_eff = 0.1f + 0.9f * (avg_dur / 100.0f);
+    
+    p->combat_power = (int)(cp * dur_eff);
 }
+
