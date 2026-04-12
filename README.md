@@ -90,9 +90,10 @@ anti-adventure/
 ### 빌드 및 실행 (TRPG)
 1. 저장소 루트 폴더에서 아래 명령어를 실행합니다.
    ```bash
+   cd trpg
    build.bat
    ```
-2. 생성된 `trpg/build/game.exe`를 실행하세요!
+2. 생성된 `trpg.exe`를 실행하세요! (이미 위 스크립트에서 자동 실행됩니다.)
 
 ### 대시보드 실행
 1. `dashboard` 폴더로 이동합니다.
