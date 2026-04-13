@@ -72,6 +72,19 @@ void draw_hp_bar(const char* label, int current, int max, int width, const char*
     printf("] %d/%d (%d%%)\n", current, max, (int)(percent * 100));
 }
 
+void draw_exp_bar(int current_exp, int required_exp, int width) {
+    float percent = (float)current_exp / required_exp;
+    if (percent > 1.0f) percent = 1.0f;
+    int filled_len = (int)(percent * width);
+
+    printf(CYAN "EXP [" RESET);
+    for (int i = 0; i < width; i++) {
+        if (i < filled_len) printf(MAGENTA "█" RESET);
+        else printf("░");
+    }
+    printf(CYAN "] %.1f%%" RESET " (%d/%d)\n", percent * 100, current_exp, required_exp);
+}
+
 void print_centered(const char* text, int width) {
     int v_width = get_visual_width(text);
     int padding = (width - v_width) / 2;

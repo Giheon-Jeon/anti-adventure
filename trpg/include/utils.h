@@ -30,10 +30,13 @@ void wait_for_enter();
 
 // --- 추가된 UI 함수 ---
 
-// HP 바 그리기 (width 만큼의 너비 사용)
+// HP 바 그리기
 void draw_hp_bar(const char* label, int current, int max, int width, const char* color);
 
-// 텍스트의 시각적 너비 계산 (한글 2, 영문 1)
+// EXP 바 그리기
+void draw_exp_bar(int current_exp, int required_exp, int width);
+
+// 텍스트의 시각적 너비 계산
 int get_visual_width(const char* text);
 
 // 텍스트 중앙 정렬 출력

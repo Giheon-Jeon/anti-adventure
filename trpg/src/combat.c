@@ -178,17 +178,15 @@ void start_combat(Player* p, Dungeon* d) {
     int turn = 0;
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
-        printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" RESET);
         printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━ [ Turn %d ] ━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n", turn);
         
-        // 플레이어 체력바
+        // 플레이어/몬스터 정보 (체력바 포함)
         draw_hp_bar(p->name, p->hp, p->max_hp, 30, GREEN);
-        // 몬스터 체력바
         draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 30, RED);
         
-        printf("\n" BOLD ">> [엔터] 공격하기" RESET);
+        printf("\n" BOLD ">> [엔터] 공격!!" RESET);
         
-        // 입력 대기 (엔터)
+        // 입력 대기 (이전 버퍼 비우기 및 엔터 대기)
         int any_char;
         while ((any_char = getchar()) != '\n' && any_char != EOF);
 
@@ -206,20 +204,29 @@ void start_combat(Player* p, Dungeon* d) {
         if (p->c_weapon_dur > 0) p->c_weapon_dur--;
 
         if (enemy.hp <= 0) {
-            int exp_gain = (enemy_rank + 1) * 150; // 경험치 획득량 상향 (100 -> 150)
-            int gold_gain = (enemy_rank + 1) * 150 + (rand() % 100); // 골드 획득량 대폭 상향
+            int exp_gain = (enemy_rank + 1) * 150;
+            int gold_gain = (enemy_rank + 1) * 150 + (rand() % 100);
+            int last_exp = p->exp;
             p->exp += exp_gain;
             p->gold += gold_gain;
             
             clear_screen();
-            printf("\n" GREEN_BG BLACK "         ✨ 전투 승리! ✨         " RESET "\n\n");
-            printf(BOLD "  대상: " RESET "%s\n", enemy.name);
-            printf(BOLD "  상태: " RESET "처치 완료\n");
-            printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-            printf(YELLOW "  [보상 내역]\n" RESET);
-            printf("  - 획득 경험치: " CYAN "+%d EXP" RESET "\n", exp_gain);
-            printf("  - 획득 골드  : " YELLOW "+%d G" RESET "\n", gold_gain);
-            printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            print_divider(60, YELLOW);
+            print_centered(YELLOW_BG BLACK "         ⚔️ 전투 결과 보고서 ⚔️         " RESET, 60);
+            print_divider(60, YELLOW);
+            
+            char buf[128];
+            sprintf(buf, "처치한 적: %s", enemy.name);
+            print_box_line(buf, 60, YELLOW);
+            sprintf(buf, "획득 보상: %d 골드 (Gold)", gold_gain);
+            print_box_line(buf, 60, YELLOW);
+            sprintf(buf, "획득 경험: %d EXP", exp_gain);
+            print_box_line(buf, 60, YELLOW);
+            
+            print_divider(60, YELLOW);
+            printf("\n" BOLD "성장 현황:" RESET "\n");
+            int req_exp = (p->level * p->level * 40) + (p->level * 50);
+            draw_exp_bar(p->exp, req_exp, 40);
             
             check_level_up(p);
             wait_for_enter();
