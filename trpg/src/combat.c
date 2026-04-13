@@ -179,9 +179,14 @@ void start_combat(Player* p, Dungeon* d) {
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
         printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" RESET);
-        printf("\n[Turn %d] " GREEN "%s HP: %d/%d" RESET " | " RED "%s HP: %d/%d" RESET "\n", 
-               turn, p->name, p->hp, p->max_hp, enemy.name, enemy.hp, enemy.max_hp);
-        printf(BOLD ">> [엔터] 공격하기" RESET);
+        printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━ [ Turn %d ] ━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n", turn);
+        
+        // 플레이어 체력바
+        draw_hp_bar(p->name, p->hp, p->max_hp, 30, GREEN);
+        // 몬스터 체력바
+        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 30, RED);
+        
+        printf("\n" BOLD ">> [엔터] 공격하기" RESET);
         
         // 입력 대기 (엔터)
         int any_char;
@@ -201,8 +206,8 @@ void start_combat(Player* p, Dungeon* d) {
         if (p->c_weapon_dur > 0) p->c_weapon_dur--;
 
         if (enemy.hp <= 0) {
-            int exp_gain = (enemy_rank + 1) * 100;
-            int gold_gain = (enemy_rank + 1) * 50 + (rand() % 50);
+            int exp_gain = (enemy_rank + 1) * 150; // 경험치 획득량 상향 (100 -> 150)
+            int gold_gain = (enemy_rank + 1) * 150 + (rand() % 100); // 골드 획득량 대폭 상향
             p->exp += exp_gain;
             p->gold += gold_gain;
             
