@@ -74,8 +74,8 @@ void init_player(Player* p) {
 // distribute_stats 함수는 더 이상 사용되지 않음 (사용자 규칙: 자동/랜덤 성장)
 
 void check_level_up(Player* p) {
-    // 경험치 공식 변경: 레벨의 제곱에 비례하도록 수정 (성장 욕구 및 난이도 조절)
-    int required_exp = p->level * p->level * 100;
+    // 경험치 공식 수정: 레벨업 속도를 체감할 수 있게 하향 조정
+    int required_exp = (p->level * p->level * 40) + (p->level * 50);
 
     if (p->exp >= required_exp) {
         p->level++;
@@ -223,7 +223,11 @@ void show_status(Player* p) {
     printf("마력: %d | 방무: %.1f%%\n", p->magic_atk, p->ied * 100.0f);
     printf("보뎀: %.1f%% | 뎀퍼: %.1f%%\n", p->boss_dmg * 100.0f, p->dmg_percent * 100.0f);
     printf("--------------------------\n");
-    printf("EXP: %d / %d | Gold: %d\n", p->exp, p->level * 100, p->gold);
+    printf("--------------------------\n");
+    int req_exp = (p->level * p->level * 40) + (p->level * 50);
+    printf("Gold: %d G\n", p->gold);
+    draw_exp_bar(p->exp, req_exp, 30);
+    printf("--------------------------\n");
     printf("--------------------------\n");
     printf("장비 등급 (상점): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->weapon_tier, p->armor_tier, p->accessory_tier);
     printf("장비 등급 (연구): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
@@ -252,6 +256,8 @@ void show_compact_status(Player* p) {
     update_combat_power(p);
     printf("\n[ %s | %s LV %d | HP: %d/%d | CP: %d | Gold: %d G ]\n", 
            p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->combat_power, p->gold);
+    int req_exp = (p->level * p->level * 40) + (p->level * 50);
+    draw_exp_bar(p->exp, req_exp, 25);
     printf("[ 기본T:%d/%d/%d | 제작T:%d/%d/%d ]\n", 
            p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
     printf("[ STR:%d DEX:%d INT:%d LUK:%d ]", p->str, p->dex, p->intel, p->luk);

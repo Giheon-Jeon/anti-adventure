@@ -178,14 +178,17 @@ void start_combat(Player* p, Dungeon* d) {
     int turn = 0;
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
-        printf("\n[Turn %d] Player HP: %d/%d | %s HP: %d/%d\n", turn, p->hp, p->max_hp, enemy.name, enemy.hp, enemy.max_hp);
-        printf("1. 공격  2. 도망\n선택: ");
-        int choice; scanf("%d", &choice);
-        if (choice == 2) {
-            printf("성공적으로 도망쳤습니다!\n");
-            wait_for_enter();
-            return;
-        }
+        printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━ [ Turn %d ] ━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n", turn);
+        
+        // 플레이어/몬스터 정보 (체력바 포함)
+        draw_hp_bar(p->name, p->hp, p->max_hp, 30, GREEN);
+        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 30, RED);
+        
+        printf("\n" BOLD ">> [엔터] 공격!!" RESET);
+        
+        // 입력 대기 (이전 버퍼 비우기 및 엔터 대기)
+        int any_char;
+        while ((any_char = getchar()) != '\n' && any_char != EOF);
 
         // 플레이어 공격
         int p_dice[5];
@@ -201,9 +204,30 @@ void start_combat(Player* p, Dungeon* d) {
         if (p->c_weapon_dur > 0) p->c_weapon_dur--;
 
         if (enemy.hp <= 0) {
-            int exp_gain = (enemy_rank + 1) * 100;
+            int exp_gain = (enemy_rank + 1) * 150;
+            int gold_gain = (enemy_rank + 1) * 150 + (rand() % 100);
+            int last_exp = p->exp;
             p->exp += exp_gain;
-            printf(GREEN "\n★ 승리! %d의 경험치를 획득했습니다.\n" RESET, exp_gain);
+            p->gold += gold_gain;
+            
+            clear_screen();
+            print_divider(60, YELLOW);
+            print_centered(YELLOW_BG BLACK "         ⚔️ 전투 결과 보고서 ⚔️         " RESET, 60);
+            print_divider(60, YELLOW);
+            
+            char buf[128];
+            sprintf(buf, "처치한 적: %s", enemy.name);
+            print_box_line(buf, 60, YELLOW);
+            sprintf(buf, "획득 보상: %d 골드 (Gold)", gold_gain);
+            print_box_line(buf, 60, YELLOW);
+            sprintf(buf, "획득 경험: %d EXP", exp_gain);
+            print_box_line(buf, 60, YELLOW);
+            
+            print_divider(60, YELLOW);
+            printf("\n" BOLD "성장 현황:" RESET "\n");
+            int req_exp = (p->level * p->level * 40) + (p->level * 50);
+            draw_exp_bar(p->exp, req_exp, 40);
+            
             check_level_up(p);
             wait_for_enter();
             return;
@@ -255,12 +279,14 @@ Dungeon get_dungeon_data(int index) {
 
 void select_dungeon(Player* p) {
     clear_screen();
-    printf("\n" BOLD "========= [던전 탐험 선택] =========" RESET "\n");
-    printf(" 1. 헤네시스 (요구 CP: 0)\n");
-    printf(" 2. 슬리피우드 (요구 CP: 500)\n");
-    printf(" 3. 시간의 신전 (요구 CP: 2000)\n");
-    printf(" 0. 마을로 돌아가기\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    print_divider(60, CYAN);
+    print_centered(BOLD "========= [던전 탐험 선택] =========" RESET, 60);
+    print_divider(60, CYAN);
+    print_box_line("1. 헤네시스 (요구 CP: 0)", 60, CYAN);
+    print_box_line("2. 슬리피우드 (요구 CP: 500)", 60, CYAN);
+    print_box_line("3. 시간의 신전 (요구 CP: 2000)", 60, CYAN);
+    print_box_line("0. 마을로 돌아가기", 60, CYAN);
+    print_divider(60, CYAN);
     printf("선택: ");
 
     int choice;
