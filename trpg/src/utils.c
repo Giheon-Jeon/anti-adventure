@@ -22,18 +22,15 @@ void clear_input_buffer() {
 
 void wait_for_enter() {
     printf("\n" CYAN ">> 엔터를 누르면 계속합니다..." RESET);
-    getchar();
+    // 입력 버퍼에 남아있는 문자가 있을 수 있으므로, \n을 만날 때까지 비우거나 대기
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
 }
 
-void draw_hp_bar(const char* label, int current, int max, int width, const char* color) {
-    float percent = (float)current / max;
-    if (percent < 0) percent = 0;
-    int filled_len = (int)(percent * width);
-    
-    // 한글 가독성 및 정렬을 위한 실제 출력 너비 계산
+int get_visual_width(const char* text) {
     int visual_width = 0;
-    for (int i = 0; label[i] != '\0'; ) {
-        unsigned char c = (unsigned char)label[i];
+    for (int i = 0; text[i] != '\0'; ) {
+        unsigned char c = (unsigned char)text[i];
         if (c < 0x80) { // ASCII
             visual_width += 1;
             i += 1;
@@ -47,9 +44,18 @@ void draw_hp_bar(const char* label, int current, int max, int width, const char*
             visual_width += 2;
             i += 4;
         } else {
-            i += 1; // 정의되지 않은 경우
+            i += 1;
         }
     }
+    return visual_width;
+}
+
+void draw_hp_bar(const char* label, int current, int max, int width, const char* color) {
+    float percent = (float)current / max;
+    if (percent < 0) percent = 0;
+    int filled_len = (int)(percent * width);
+    
+    int visual_width = get_visual_width(label);
 
     // 최소 12칸 맞춤을 위한 공백 계산
     int padding = 12 - visual_width;
@@ -67,17 +73,30 @@ void draw_hp_bar(const char* label, int current, int max, int width, const char*
 }
 
 void print_centered(const char* text, int width) {
-    int len = strlen(text);
-    int padding = (width - len) / 2;
+    int v_width = get_visual_width(text);
+    int padding = (width - v_width) / 2;
+    if (padding < 0) padding = 0;
     for (int i = 0; i < padding; i++) printf(" ");
     printf("%s\n", text);
 }
 
 void print_divider(int width, const char* color) {
     if (color != NULL) printf("%s", color);
-    for (int i = 0; i < width; i++) printf("━");
+    for (int i = 0; i < width / 2; i++) printf("━"); // '━'는 보통 2칸 차지
     if (color != NULL) printf(RESET "\n");
     else printf("\n");
+}
+
+void print_box_line(const char* text, int width, const char* color) {
+    int v_width = get_visual_width(text);
+    int padding = width - v_width - 4; // 테두리 '|  ' 와 '  |' 제외
+    if (padding < 0) padding = 0;
+
+    if (color != NULL) printf("%s", color);
+    printf("┃  " RESET "%s", text);
+    for (int i = 0; i < padding; i++) printf(" ");
+    if (color != NULL) printf("%s", color);
+    printf("  ┃\n" RESET);
 }
 
 void show_title_screen() {

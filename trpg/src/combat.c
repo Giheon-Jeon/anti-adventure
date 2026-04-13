@@ -178,14 +178,14 @@ void start_combat(Player* p, Dungeon* d) {
     int turn = 0;
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
-        printf("\n[Turn %d] Player HP: %d/%d | %s HP: %d/%d\n", turn, p->hp, p->max_hp, enemy.name, enemy.hp, enemy.max_hp);
-        printf("1. 공격  2. 도망\n선택: ");
-        int choice; scanf("%d", &choice);
-        if (choice == 2) {
-            printf("성공적으로 도망쳤습니다!\n");
-            wait_for_enter();
-            return;
-        }
+        printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" RESET);
+        printf("\n[Turn %d] " GREEN "%s HP: %d/%d" RESET " | " RED "%s HP: %d/%d" RESET "\n", 
+               turn, p->name, p->hp, p->max_hp, enemy.name, enemy.hp, enemy.max_hp);
+        printf(BOLD ">> [엔터] 공격하기" RESET);
+        
+        // 입력 대기 (엔터)
+        int any_char;
+        while ((any_char = getchar()) != '\n' && any_char != EOF);
 
         // 플레이어 공격
         int p_dice[5];
@@ -202,8 +202,20 @@ void start_combat(Player* p, Dungeon* d) {
 
         if (enemy.hp <= 0) {
             int exp_gain = (enemy_rank + 1) * 100;
+            int gold_gain = (enemy_rank + 1) * 50 + (rand() % 50);
             p->exp += exp_gain;
-            printf(GREEN "\n★ 승리! %d의 경험치를 획득했습니다.\n" RESET, exp_gain);
+            p->gold += gold_gain;
+            
+            clear_screen();
+            printf("\n" GREEN_BG BLACK "         ✨ 전투 승리! ✨         " RESET "\n\n");
+            printf(BOLD "  대상: " RESET "%s\n", enemy.name);
+            printf(BOLD "  상태: " RESET "처치 완료\n");
+            printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            printf(YELLOW "  [보상 내역]\n" RESET);
+            printf("  - 획득 경험치: " CYAN "+%d EXP" RESET "\n", exp_gain);
+            printf("  - 획득 골드  : " YELLOW "+%d G" RESET "\n", gold_gain);
+            printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            
             check_level_up(p);
             wait_for_enter();
             return;
@@ -255,12 +267,14 @@ Dungeon get_dungeon_data(int index) {
 
 void select_dungeon(Player* p) {
     clear_screen();
-    printf("\n" BOLD "========= [던전 탐험 선택] =========" RESET "\n");
-    printf(" 1. 헤네시스 (요구 CP: 0)\n");
-    printf(" 2. 슬리피우드 (요구 CP: 500)\n");
-    printf(" 3. 시간의 신전 (요구 CP: 2000)\n");
-    printf(" 0. 마을로 돌아가기\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    print_divider(60, CYAN);
+    print_centered(BOLD "========= [던전 탐험 선택] =========" RESET, 60);
+    print_divider(60, CYAN);
+    print_box_line("1. 헤네시스 (요구 CP: 0)", 60, CYAN);
+    print_box_line("2. 슬리피우드 (요구 CP: 500)", 60, CYAN);
+    print_box_line("3. 시간의 신전 (요구 CP: 2000)", 60, CYAN);
+    print_box_line("0. 마을로 돌아가기", 60, CYAN);
+    print_divider(60, CYAN);
     printf("선택: ");
 
     int choice;
