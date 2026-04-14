@@ -21,7 +21,7 @@ void clear_input_buffer() {
 }
 
 void wait_for_enter() {
-    printf("\n" CYAN ">> 엔터를 누르면 계속합니다..." RESET);
+    printf("\n" CYAN ">> 엔터를 누르면 계속합니다...\n" RESET);
     // 입력 버퍼에 남아있는 문자가 있을 수 있으므로, \n을 만날 때까지 비우거나 대기
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
@@ -31,6 +31,14 @@ int get_visual_width(const char* text) {
     int visual_width = 0;
     for (int i = 0; text[i] != '\0'; ) {
         unsigned char c = (unsigned char)text[i];
+        
+        // ANSI escape sequence 건너뛰기
+        if (c == 0x1b) {
+            while (text[i] != '\0' && text[i] != 'm') i++;
+            if (text[i] == 'm') i++;
+            continue;
+        }
+
         if (c < 0x80) { // ASCII
             visual_width += 1;
             i += 1;

@@ -4,6 +4,7 @@
 #include "../include/combat.h"
 #include "../include/utils.h"
 #include "../include/generated_data.h"
+#include <windows.h>
 
 // 주사위 정렬 (오름차순)
 void sort_dice(int* dice, int count) {
@@ -26,13 +27,14 @@ void roll_dice(int* dice, int count) {
 }
 
 void print_dice_visual(int* dice, int count) {
-    printf("  ");
+    printf("\n"); // 이전 메시지와의 간격 확보
+    char* pad = "            "; // 중앙 정렬을 위한 여백 (약 12칸)
+    
+    printf("%s", pad);
     for (int i = 0; i < count; i++) printf("+-------+ ");
-    printf("\n");
-    printf("  ");
+    printf("\n%s", pad);
     for (int i = 0; i < count; i++) printf("|   %d   | ", dice[i]);
-    printf("\n");
-    printf("  ");
+    printf("\n%s", pad);
     for (int i = 0; i < count; i++) printf("+-------+ ");
     printf("\n");
 }
@@ -179,38 +181,42 @@ void start_combat(Player* p, Dungeon* d) {
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
         clear_screen();
-        printf("\n " RED BOLD "--- 전투 진행 중: %s ---" RESET "\n", enemy.name);
-        print_divider(80, CYAN);
-        print_centered(BOLD "[ 현재 교전 상황 ]" RESET, 80);
         
-        // 플레이어/몬스터 정보 (시각적 체력바)
+        char header_buf[128];
+        sprintf(header_buf, "\n" RED BOLD "--- 전투 진행 중: %s ---" RESET, enemy.name);
+        print_centered(header_buf, 80);
+        
+        print_divider(80, CYAN);
+        
+        char turn_buf[64];
+        sprintf(turn_buf, BOLD "[ 제 %d 턴 ]" RESET, turn);
+        print_centered(turn_buf, 80);
+        
+        // 상단 상태 정보
         draw_hp_bar(p->name, p->hp, p->max_hp, 35, GREEN); printf("\n");
         draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 35, RED); printf("\n");
         print_divider(80, CYAN);
         
-        printf("\n" BOLD ">> [엔터] 공격!!" RESET);
+        wait_for_enter();
         
-        // 입력 대기 (이전 버퍼 비우기 및 엔터 대기)
-        int any_char;
-        while ((any_char = getchar()) != '\n' && any_char != EOF);
-
-        // 플레이어 공격
+        // --- [플레이어의 공격] ---
         int p_dice[5];
         roll_dice(p_dice, 5);
         print_dice_visual(p_dice, 5);
         int yacht_score = calculate_yacht_damage(p, p_dice);
         int final_dmg = calculate_final_damage(p, &enemy, yacht_score);
-        printf(YELLOW ">> [공격] %s에게 %d의 데미지를 입혔습니다!\n" RESET, enemy.name, final_dmg);
-        enemy.hp -= final_dmg;
+        
+        printf(YELLOW "\n ⚔️  당신의 공격! %s에게 " RESET RED BOLD "%d" RESET YELLOW "의 대미지를 입혔습니다!" RESET "\n", enemy.name, final_dmg);
+        enemy.hp -= (enemy.hp < final_dmg) ? enemy.hp : final_dmg;
 
-        // 전투 중 내구도 소모 (무기)
+        // 무기 내구도 소모
         if (p->weapon_dur > 0) p->weapon_dur--; 
         if (p->c_weapon_dur > 0) p->c_weapon_dur--;
 
         if (enemy.hp <= 0) {
+            Sleep(800); // 승리 전 잠시 대기
             int exp_gain = (enemy_rank + 1) * 150;
             int gold_gain = (enemy_rank + 1) * 150 + (rand() % 100);
-            int last_exp = p->exp;
             p->exp += exp_gain;
             p->gold += gold_gain;
             
@@ -237,22 +243,27 @@ void start_combat(Player* p, Dungeon* d) {
             return;
         }
 
-        // 적의 공격 (방어구 내구도 적용)
+        Sleep(800); // 몬스터 공격 전 대기
+
+        // --- [적의 공격] ---
         int raw_e_atk = (rand() % 20 + 10) * (enemy_rank + 1);
         if (enemy.is_boss) raw_e_atk *= 2;
         int taken_dmg = calculate_player_taken_damage(p, raw_e_atk);
         
-        printf(RED "<< [방어] %s의 공격! %d의 데미지를 입었습니다.\n" RESET, enemy.name, taken_dmg);
-        p->hp -= taken_dmg;
+        printf(RED "\n 👿  %s의 반격! 당신에게 " RESET RED BOLD "%d" RESET RED "의 대미지를 입혔습니다..." RESET "\n", enemy.name, taken_dmg);
+        p->hp -= (p->hp < taken_dmg) ? p->hp : taken_dmg;
 
-        // 전투 중 내구도 소모 (방어구)
+        // 방어구 내구도 소모
         if (p->armor_dur > 0) p->armor_dur--;
         if (p->c_armor_dur > 0) p->c_armor_dur--;
 
         if (p->hp <= 0) {
+            Sleep(1000); // 패배 시 비장한 대기
             apply_death_penalty(p);
             return;
         }
+
+        wait_for_enter();
     }
 }
 
