@@ -215,7 +215,8 @@ const char* get_job_name(JobType job) {
 void show_status(Player* p) {
     update_combat_power(p);
     printf("\n====== [%s] 상태 (Level %d / %s) ======\n", p->name, p->level, get_job_name(p->job));
-    printf("HP: %d / %d | MP: %d / %d\n", p->hp, p->max_hp, p->mp, p->max_mp);
+    draw_hp_bar("HP", p->hp, p->max_hp, 30, GREEN);
+    printf("MP: %d / %d\n", p->mp, p->max_mp);
     printf("--------------------------\n");
     printf("STR: %d | DEX: %d\n", p->str, p->dex);
     printf("INT: %d | LUK: %d\n", p->intel, p->luk);
@@ -254,10 +255,11 @@ void show_status(Player* p) {
 
 void show_compact_status(Player* p) {
     update_combat_power(p);
-    printf("\n[ %s | %s LV %d | HP: %d/%d | CP: %d | Gold: %d G ]\n", 
-           p->name, get_job_name(p->job), p->level, p->hp, p->max_hp, p->combat_power, p->gold);
+    printf("\n[ %s | %s LV %d | CP: %d | Gold: %d G ]\n", 
+           p->name, get_job_name(p->job), p->level, p->combat_power, p->gold);
+    draw_hp_bar("PHYSICAL", p->hp, p->max_hp, 20, CYAN);
     int req_exp = (p->level * p->level * 40) + (p->level * 50);
-    draw_exp_bar(p->exp, req_exp, 25);
+    draw_exp_bar(p->exp, req_exp, 20);
     printf("[ 기본T:%d/%d/%d | 제작T:%d/%d/%d ]\n", 
            p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
     printf("[ STR:%d DEX:%d INT:%d LUK:%d ]", p->str, p->dex, p->intel, p->luk);

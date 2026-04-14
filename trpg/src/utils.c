@@ -50,23 +50,26 @@ int get_visual_width(const char* text) {
     return visual_width;
 }
 
-void draw_hp_bar(const char* label, int current, int max, int width, const char* color) {
+void draw_hp_bar(const char* label, int current, int max, int width, const char* default_color) {
+    if (current < 0) current = 0;
     float percent = (float)current / max;
-    if (percent < 0) percent = 0;
     int filled_len = (int)(percent * width);
     
-    int visual_width = get_visual_width(label);
+    // 체력 비율에 따른 색상 결정 (20% 이하 빨강, 50% 이하 노랑, 그 외 초록)
+    const char* bar_color = GREEN;
+    if (percent <= 0.2f) bar_color = RED;
+    else if (percent <= 0.5f) bar_color = YELLOW;
 
-    // 최소 12칸 맞춤을 위한 공백 계산
+    int visual_width = get_visual_width(label);
     int padding = 12 - visual_width;
     if (padding < 0) padding = 0;
 
-    printf("%s%s" RESET, color, label);
+    printf("%s%s" RESET, default_color, label);
     for (int i = 0; i < padding; i++) printf(" ");
     printf(" [");
 
     for (int i = 0; i < width; i++) {
-        if (i < filled_len) printf("█");
+        if (i < filled_len) printf("%s█" RESET, bar_color);
         else printf("░");
     }
     printf("] %d/%d (%d%%)\n", current, max, (int)(percent * 100));

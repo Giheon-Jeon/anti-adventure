@@ -178,11 +178,14 @@ void start_combat(Player* p, Dungeon* d) {
     int turn = 0;
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
-        printf("\n" CYAN "━━━━━━━━━━━━━━━━━━━━━━━ [ Turn %d ] ━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n", turn);
+        clear_screen();
+        printf("\n" RED BOLD "--- 전투 진행 중: %s ---" RESET "\n", enemy.name);
+        printf(CYAN "━━━━━━━━━━━━━━━━━━━━━━━ [ Turn %d ] ━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n", turn);
         
-        // 플레이어/몬스터 정보 (체력바 포함)
-        draw_hp_bar(p->name, p->hp, p->max_hp, 30, GREEN);
-        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 30, RED);
+        // 플레이어/몬스터 정보 (시각적 체력바)
+        draw_hp_bar(p->name, p->hp, p->max_hp, 35, GREEN);
+        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 35, RED);
+        printf(CYAN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n");
         
         printf("\n" BOLD ">> [엔터] 공격!!" RESET);
         
