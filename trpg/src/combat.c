@@ -184,8 +184,8 @@ void start_combat(Player* p, Dungeon* d) {
         print_centered(BOLD "[ 현재 교전 상황 ]" RESET, 80);
         
         // 플레이어/몬스터 정보 (시각적 체력바)
-        draw_hp_bar(p->name, p->hp, p->max_hp, 35, GREEN);
-        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 35, RED);
+        draw_hp_bar(p->name, p->hp, p->max_hp, 35, GREEN); printf("\n");
+        draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 35, RED); printf("\n");
         print_divider(80, CYAN);
         
         printf("\n" BOLD ">> [엔터] 공격!!" RESET);
@@ -230,7 +230,7 @@ void start_combat(Player* p, Dungeon* d) {
             print_divider(80, YELLOW);
             printf("\n" BOLD "성장 현황:" RESET "\n");
             int req_exp = (p->level * p->level * 40) + (p->level * 50);
-            draw_exp_bar(p->exp, req_exp, 40);
+            draw_exp_bar(p->exp, req_exp, 40); printf("\n");
             
             check_level_up(p);
             wait_for_enter();

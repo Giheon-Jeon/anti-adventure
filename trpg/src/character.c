@@ -256,39 +256,54 @@ void show_status(Player* p) {
 void show_compact_status(Player* p) {
     update_combat_power(p);
     int box_width = 80;
+    char line[512];
     
+    // 테두리 상단
     printf("\n" CYAN "┌"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┐" RESET "\n");
     
-    // 1행: 기본 정보
-    printf(CYAN "│ " RESET YELLOW BOLD "%-14s" RESET " | " CYAN "%-14s" RESET " | " WHITE "LV %-3d" RESET " | " GREEN "CP: %-8d" RESET " | " YELLOW "Gold: %-8d" RESET CYAN "   │" RESET "\n", 
+    // 1행: 기본 정보 (이름, 직업, 레벨, CP, 골드)
+    sprintf(line, " %-14s | %-14s | LV %-3d | CP: %-8d | Gold: %-8d", 
            p->name, get_job_name(p->job), p->level, p->combat_power, p->gold);
+    int v1 = get_visual_width(line);
+    printf(CYAN "│" RESET "%s", line);
+    for(int i=0; i < (box_width - 2 - v1); i++) printf(" ");
+    printf(CYAN "│" RESET "\n");
     
     printf(CYAN "├"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┤" RESET "\n");
     
     // 2행: HP 바
     printf(CYAN "│ " RESET);
     draw_hp_bar("PHYSICAL", p->hp, p->max_hp, 30, CYAN);
+    for(int i=0; i<11; i++) printf(" "); // (80 - 2 - 66 - 1) 보정
+    printf(CYAN "│" RESET "\n");
     
     // 3행: EXP 바
     printf(CYAN "│ " RESET);
     int req_exp = (p->level * p->level * 40) + (p->level * 50);
     draw_exp_bar(p->exp, req_exp, 30);
+    for(int i=0; i<11; i++) printf(" ");
+    printf(CYAN "│" RESET "\n");
     
     printf(CYAN "├"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┤" RESET "\n");
     
     // 4행: 스탯 정보
-    printf(CYAN "│ " RESET "STR:%-4d DEX:%-4d INT:%-4d LUK:%-4d | IED:%.0f%% Boss:%.0f%% Dmg:%.1f%%" RESET "   ", 
+    sprintf(line, " STR:%-4d DEX:%-4d INT:%-4d LUK:%-4d | IED:%.0f%% Boss:%.0f%% Dmg:%.1f%%", 
            p->str, p->dex, p->intel, p->luk, p->ied * 100, p->boss_dmg * 100, p->dmg_percent * 100);
-    
+    int v4 = get_visual_width(line);
+    printf(CYAN "│" RESET "%s", line);
+    for(int i=0; i < (box_width - 2 - v4); i++) printf(" ");
     printf(CYAN "│" RESET "\n");
     
-    // 5행: 장비 티어
-    printf(CYAN "│ " RESET "기본[T%d/T%d/T%d] | 제작[T%d/T%d/T%d] | 내구도[W:%d%%/A:%d%%]" RESET "               ", 
+    // 5행: 장비 및 내구도
+    sprintf(line, " 기본[T%d/T%d/T%d] | 제작[T%d/T%d/T%d] | 내구도[W:%d%%/A:%d%%]", 
            p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier,
            (p->weapon_dur > p->c_weapon_dur ? p->weapon_dur : p->c_weapon_dur),
            (p->armor_dur > p->c_armor_dur ? p->armor_dur : p->c_armor_dur));
-    
+    int v5 = get_visual_width(line);
+    printf(CYAN "│" RESET "%s", line);
+    for(int i=0; i < (box_width - 2 - v5); i++) printf(" ");
     printf(CYAN "│" RESET "\n");
+    
     printf(CYAN "└"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┘" RESET "\n");
 }
 

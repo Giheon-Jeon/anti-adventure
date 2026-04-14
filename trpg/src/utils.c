@@ -60,14 +60,19 @@ void draw_hp_bar(const char* label, int current, int max, int width, const char*
     if (percent <= 0.2f) bar_color = RED;
     else if (percent <= 0.5f) bar_color = YELLOW;
 
-    // 라벨을 10칸 고정 너비로 출력 (왼쪽 정렬)
-    printf("%s%-10s" RESET " [", default_color, label);
+    // 라벨 출력 및 정교한 정렬 (기준 너비: 12)
+    printf("%s%s", default_color, label);
+    int v_width = get_visual_width(label);
+    for (int i = 0; i < 12 - v_width; i++) printf(" ");
+    printf(RESET " [");
 
     for (int i = 0; i < width; i++) {
         if (i < filled_len) printf("%s█" RESET, bar_color);
         else printf("░");
     }
-    printf("] %d/%d (%d%%)\n", current, max, (int)(percent * 100));
+    char stat_buf[64];
+    sprintf(stat_buf, "%d/%d (%d%%)", current, max, (int)(percent * 100));
+    printf("] %-20s", stat_buf);
 }
 
 void draw_exp_bar(int current_exp, int required_exp, int width) {
@@ -75,13 +80,17 @@ void draw_exp_bar(int current_exp, int required_exp, int width) {
     if (percent > 1.0f) percent = 1.0f;
     int filled_len = (int)(percent * width);
 
-    // HP바와 맞추기 위해 10칸 고정 너비 사용
-    printf(MAGENTA "%-10s" RESET " [", "EXP");
+    // HP바와 맞추기 위해 12칸 고정 너비 사용
+    printf(MAGENTA "EXP" RESET);
+    for (int i = 0; i < 12 - 3; i++) printf(" "); // 'EXP'는 3칸
+    printf(" [");
     for (int i = 0; i < width; i++) {
         if (i < filled_len) printf(MAGENTA "█" RESET);
         else printf("░");
     }
-    printf("] %.1f%% (%d/%d)\n", percent * 100, current_exp, required_exp);
+    char stat_buf[64];
+    sprintf(stat_buf, "%.1f%% (%d/%d)", percent * 100, current_exp, required_exp);
+    printf("] %-20s", stat_buf);
 }
 
 void print_centered(const char* text, int width) {
