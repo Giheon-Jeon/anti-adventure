@@ -179,13 +179,14 @@ void start_combat(Player* p, Dungeon* d) {
     while (p->hp > 0 && enemy.hp > 0) {
         turn++;
         clear_screen();
-        printf("\n" RED BOLD "--- 전투 진행 중: %s ---" RESET "\n", enemy.name);
-        printf(CYAN "━━━━━━━━━━━━━━━━━━━━━━━ [ Turn %d ] ━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n", turn);
+        printf("\n " RED BOLD "--- 전투 진행 중: %s ---" RESET "\n", enemy.name);
+        print_divider(80, CYAN);
+        print_centered(BOLD "[ 현재 교전 상황 ]" RESET, 80);
         
         // 플레이어/몬스터 정보 (시각적 체력바)
         draw_hp_bar(p->name, p->hp, p->max_hp, 35, GREEN);
         draw_hp_bar(enemy.name, enemy.hp, enemy.max_hp, 35, RED);
-        printf(CYAN "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" RESET "\n");
+        print_divider(80, CYAN);
         
         printf("\n" BOLD ">> [엔터] 공격!!" RESET);
         
@@ -214,19 +215,19 @@ void start_combat(Player* p, Dungeon* d) {
             p->gold += gold_gain;
             
             clear_screen();
-            print_divider(60, YELLOW);
-            print_centered(YELLOW_BG BLACK "         ⚔️ 전투 결과 보고서 ⚔️         " RESET, 60);
-            print_divider(60, YELLOW);
+            print_divider(80, YELLOW);
+            print_centered(YELLOW_BG BLACK "         ⚔️ 전투 결과 보고서 ⚔️         " RESET, 80);
+            print_divider(80, YELLOW);
             
             char buf[128];
             sprintf(buf, "처치한 적: %s", enemy.name);
-            print_box_line(buf, 60, YELLOW);
+            print_box_line(buf, 80, YELLOW);
             sprintf(buf, "획득 보상: %d 골드 (Gold)", gold_gain);
-            print_box_line(buf, 60, YELLOW);
+            print_box_line(buf, 80, YELLOW);
             sprintf(buf, "획득 경험: %d EXP", exp_gain);
-            print_box_line(buf, 60, YELLOW);
+            print_box_line(buf, 80, YELLOW);
             
-            print_divider(60, YELLOW);
+            print_divider(80, YELLOW);
             printf("\n" BOLD "성장 현황:" RESET "\n");
             int req_exp = (p->level * p->level * 40) + (p->level * 50);
             draw_exp_bar(p->exp, req_exp, 40);

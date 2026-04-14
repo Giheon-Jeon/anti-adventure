@@ -94,7 +94,9 @@ void print_centered(const char* text, int width) {
 
 void print_divider(int width, const char* color) {
     if (color != NULL) printf("%s", color);
-    for (int i = 0; i < width / 2; i++) printf("━"); // '━'는 보통 2칸 차지
+    // 너비를 꽉 채우기 위해 1칸짜리 '═' 또는 '━'를 width만큼 반복
+    // 터미널 환경(CMD)에서 '━'가 1칸인 경우가 많으므로 width만큼 루프
+    for (int i = 0; i < width; i++) printf("━"); 
     if (color != NULL) printf(RESET "\n");
     else printf("\n");
 }
@@ -113,13 +115,17 @@ void print_box_line(const char* text, int width, const char* color) {
 
 void show_title_screen() {
     clear_screen();
-    int term_width = 76; // 표준 터미널 안전 너비
+    int term_width = 80; // 80칸으로 표준화
     printf("\n\n");
     printf(YELLOW BOLD);
-    print_centered("   ___   _  _  _____  ___  ___   ___   _   _  ___  _  _  _____  _   _  ___  ", term_width);
-    print_centered("  / _ \\ | \\| ||_   _||_ _|/ __| | _ \\ /_\\ | _ \\| \\| ||_   _|| | | || _ \\ ", term_width);
-    print_centered(" |  _  || .  |  | |   | || (_ | |   // _ \\|   /| .  |  | |  | |_| ||   / ", term_width);
-    print_centered(" |_| |_||_|\\_|  |_|  |___|\\___| |_|_/_/ \\_\\|_|_\\|_|\\_|  |_|   \\___/ |_|_\\ ", term_width);
+    // ASCII 아트의 길이를 term_width에 맞춰 재조정
+    print_centered("  _______  __    _  _______  ___   _______  ______   _______  _______  _______", term_width);
+    print_centered(" |   _   ||  |  | ||       ||   | |       ||   _  | |   _   ||       ||       |", term_width);
+    print_centered(" |  |_|  ||   |_| ||_     _||   | |    ___||  | |  ||  |_|  ||_     _||    ___|", term_width);
+    print_centered(" |       ||       |  |   |  |   | |   | __ |  |_|  ||       |  |   |  |   |___ ", term_width);
+    print_centered(" |       ||  _    |  |   |  |   | |   ||  ||      _||       |  |   |  |    ___|", term_width);
+    print_centered(" |   _   || | |   |  |   |  |   | |   |_| ||  | |  ||   _   |  |   |  |   |___ ", term_width);
+    print_centered(" |__| |__||_|  |__|  |___|  |___| |_______||__| |__||__| |__|  |___|  |_______|", term_width);
     printf(RESET);
     
     printf("\n\n");

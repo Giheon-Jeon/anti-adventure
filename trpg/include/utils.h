@@ -13,7 +13,11 @@
 #define RED_BG  "\033[41m"
 #define GREEN_BG "\033[42m"
 #define YELLOW_BG "\033[43m"
-#define WHITE   "\033[37m"
+#define MAGENTA_BG "\033[45m"
+#define CYAN_BG   "\033[46m"
+#define BLUE_BG   "\033[44m"
+#define WHITE_BG  "\033[47m"
+#define WHITE     "\033[37m"
 
 
 // 난수 생성 함수 (min ~ max 사이의 정수 반환)
