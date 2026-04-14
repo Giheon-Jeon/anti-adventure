@@ -90,21 +90,26 @@ void open_ability_menu(Player* p) {
     while (1) {
         clear_screen();
         show_compact_status(p);
-        printf("\n========= [신비한 재단 - 어빌리티] =========\n");
-        printf("캐릭터의 잠재력을 일깨워 강력한 능력을 얻습니다.\n\n");
+        print_divider(80, MAGENTA);
+        print_centered(MAGENTA_BG BLACK " [ ✨ 신비한 재단 - 어빌리티 ] " RESET, 80);
+        print_divider(80, MAGENTA);
         
+        print_box_line("캐릭터의 잠재력을 일깨워 강력한 능력을 얻습니다.", 80, MAGENTA);
+        print_divider(80, MAGENTA);
+        
+        char buf[256];
         for (int i = 0; i < ABILITY_COUNT; i++) {
-            printf("[%d번 슬롯] ", i + 1);
             if (p->abilities[i].type == ABILITY_TYPE_NONE) {
-                printf("비어 있음\n");
+                sprintf(buf, "[%d번 슬롯] 비어 있음", i + 1);
             } else {
                 const char* r_name = get_ability_rank_name(p->abilities[i].rank);
                 const char* t_name = get_ability_type_name(p->abilities[i].type);
-                printf("[%s] %s +%.0f%s %s\n", 
-                       r_name, t_name, p->abilities[i].value, 
-                       (p->abilities[i].type >= ABILITY_TYPE_STR_PER ? "%" : ""),
-                       (p->ability_locked[i] ? "🔒" : "🔓"));
+                sprintf(buf, "[%d번 슬롯] [%s] %s +%.0f%s %s", 
+                        i + 1, r_name, t_name, p->abilities[i].value, 
+                        (p->abilities[i].type >= ABILITY_TYPE_STR_PER ? "%%" : ""),
+                        (p->ability_locked[i] ? "🔒" : "🔓"));
             }
+            print_box_line(buf, 80, MAGENTA);
         }
         
         int locked_count = 0;
@@ -114,16 +119,18 @@ void open_ability_menu(Player* p) {
         if (locked_count == 1) cost = 2000;
         else if (locked_count == 2) cost = 4000;
         
-        printf("\n------------------------------------------\n");
-        printf("1~3. 슬롯 잠금/해제\n");
+        print_divider(80, MAGENTA);
+        print_box_line("1~3. 슬롯 잠금/해제", 80, MAGENTA);
         if (locked_count < 3) {
-            printf("4. 어빌리티 재설정 (%d G 소모)\n", cost);
+            sprintf(buf, "4. 어빌리티 재설정 (%d G 소모)", cost);
+            print_box_line(buf, 80, MAGENTA);
         } else {
-            printf("4. 모든 슬롯이 잠겨 재설정 불가\n");
+            print_box_line("4. 모든 슬롯이 잠겨 재설정 불가", 80, MAGENTA);
         }
-        printf("0. 나가기\n");
-        printf("------------------------------------------\n");
-        printf("선택: ");
+        print_box_line("0. 나가기", 80, MAGENTA);
+        print_divider(80, MAGENTA);
+        
+        printf("\n 선택: ");
         
         if (scanf("%d", &choice) != 1) {
             clear_input_buffer();

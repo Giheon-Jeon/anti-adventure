@@ -25,8 +25,9 @@ int main() {
         clear_screen();
         show_compact_status(&player);
         
-        printf(CYAN BOLD "  [ 메인 메뉴 ]  \n" RESET);
-        print_divider(40, CYAN);
+        printf("\n " CYAN " [ 메인 메뉴 ] " RESET "\n");
+        print_divider(80, CYAN);
+        
         printf("  1. " GREEN "사냥하기 " RESET "(던전 선택)\n");
         printf("  2. " YELLOW "모험하기 " RESET "(무작위 이벤트)\n");
         printf("  3. " WHITE "상점 방문 " RESET "\n");
@@ -35,8 +36,8 @@ int main() {
         printf("  6. " BOLD "캐릭터 상세정보" RESET "\n");
         printf("  7. " MAGENTA BOLD "스킬 트리 " RESET "\n");
         printf("  8. " RED "게임 종료" RESET "\n");
-        print_divider(40, CYAN);
         
+        print_divider(80, CYAN);
         printf("\n  선택: ");
         if (scanf("%d", &choice) != 1) {
             clear_input_buffer();

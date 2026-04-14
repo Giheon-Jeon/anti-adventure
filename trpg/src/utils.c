@@ -21,7 +21,7 @@ void clear_input_buffer() {
 }
 
 void wait_for_enter() {
-    printf("\n" CYAN ">> 엔터를 누르면 계속합니다..." RESET);
+    printf("\n" CYAN ">> 엔터를 누르면 계속합니다...\n" RESET);
     // 입력 버퍼에 남아있는 문자가 있을 수 있으므로, \n을 만날 때까지 비우거나 대기
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
@@ -31,6 +31,14 @@ int get_visual_width(const char* text) {
     int visual_width = 0;
     for (int i = 0; text[i] != '\0'; ) {
         unsigned char c = (unsigned char)text[i];
+        
+        // ANSI escape sequence 건너뛰기
+        if (c == 0x1b) {
+            while (text[i] != '\0' && text[i] != 'm') i++;
+            if (text[i] == 'm') i++;
+            continue;
+        }
+
         if (c < 0x80) { // ASCII
             visual_width += 1;
             i += 1;
@@ -50,26 +58,29 @@ int get_visual_width(const char* text) {
     return visual_width;
 }
 
-void draw_hp_bar(const char* label, int current, int max, int width, const char* color) {
+void draw_hp_bar(const char* label, int current, int max, int width, const char* default_color) {
+    if (current < 0) current = 0;
     float percent = (float)current / max;
-    if (percent < 0) percent = 0;
     int filled_len = (int)(percent * width);
     
-    int visual_width = get_visual_width(label);
+    // 체력 비율에 따른 색상 결정 (20% 이하 빨강, 50% 이하 노랑, 그 외 초록)
+    const char* bar_color = GREEN;
+    if (percent <= 0.2f) bar_color = RED;
+    else if (percent <= 0.5f) bar_color = YELLOW;
 
-    // 최소 12칸 맞춤을 위한 공백 계산
-    int padding = 12 - visual_width;
-    if (padding < 0) padding = 0;
-
-    printf("%s%s" RESET, color, label);
-    for (int i = 0; i < padding; i++) printf(" ");
-    printf(" [");
+    // 라벨 출력 및 정교한 정렬 (기준 너비: 12)
+    printf("%s%s", default_color, label);
+    int v_width = get_visual_width(label);
+    for (int i = 0; i < 12 - v_width; i++) printf(" ");
+    printf(RESET " [");
 
     for (int i = 0; i < width; i++) {
-        if (i < filled_len) printf("█");
+        if (i < filled_len) printf("%s█" RESET, bar_color);
         else printf("░");
     }
-    printf("] %d/%d (%d%%)\n", current, max, (int)(percent * 100));
+    char stat_buf[64];
+    sprintf(stat_buf, "%d/%d (%d%%)", current, max, (int)(percent * 100));
+    printf("] %-20s", stat_buf);
 }
 
 void draw_exp_bar(int current_exp, int required_exp, int width) {
@@ -77,12 +88,17 @@ void draw_exp_bar(int current_exp, int required_exp, int width) {
     if (percent > 1.0f) percent = 1.0f;
     int filled_len = (int)(percent * width);
 
-    printf(CYAN "EXP [" RESET);
+    // HP바와 맞추기 위해 12칸 고정 너비 사용
+    printf(MAGENTA "EXP" RESET);
+    for (int i = 0; i < 12 - 3; i++) printf(" "); // 'EXP'는 3칸
+    printf(" [");
     for (int i = 0; i < width; i++) {
         if (i < filled_len) printf(MAGENTA "█" RESET);
         else printf("░");
     }
-    printf(CYAN "] %.1f%%" RESET " (%d/%d)\n", percent * 100, current_exp, required_exp);
+    char stat_buf[64];
+    sprintf(stat_buf, "%.1f%% (%d/%d)", percent * 100, current_exp, required_exp);
+    printf("] %-20s", stat_buf);
 }
 
 void print_centered(const char* text, int width) {
@@ -95,7 +111,9 @@ void print_centered(const char* text, int width) {
 
 void print_divider(int width, const char* color) {
     if (color != NULL) printf("%s", color);
-    for (int i = 0; i < width / 2; i++) printf("━"); // '━'는 보통 2칸 차지
+    // 너비를 꽉 채우기 위해 1칸짜리 '═' 또는 '━'를 width만큼 반복
+    // 터미널 환경(CMD)에서 '━'가 1칸인 경우가 많으므로 width만큼 루프
+    for (int i = 0; i < width; i++) printf("━"); 
     if (color != NULL) printf(RESET "\n");
     else printf("\n");
 }
@@ -114,37 +132,42 @@ void print_box_line(const char* text, int width, const char* color) {
 
 void show_title_screen() {
     clear_screen();
+    int term_width = 80; // 80칸으로 표준화
     printf("\n\n");
     printf(YELLOW BOLD);
-    print_centered("   ___   _  _  _____  ___  ___   ___   _   _  ___  _  _  _____  _   _  ___   ___  ", 80);
-    print_centered("  / _ \\ | \\| ||_   _||_ _|/ __| | _ \\ /_\\ | _ \\| \\| ||_   _|| | | || _ \\ | __| ", 80);
-    print_centered(" |  _  || .  |  | |   | || (_ | |   // _ \\|   /| .  |  | |  | |_| ||   / | _|  ", 80);
-    print_centered(" |_| |_||_|\\_|  |_|  |___|\\___| |_|_/_/ \\_\\|_|_\\|_|\\_|  |_|   \\___/ |_|_\\ |___| ", 80);
+    // ASCII 아트의 길이를 term_width에 맞춰 재조정
+    print_centered("  _______  __    _  _______  ___   _______  ______   _______  _______  _______", term_width);
+    print_centered(" |   _   ||  |  | ||       ||   | |       ||   _  | |   _   ||       ||       |", term_width);
+    print_centered(" |  |_|  ||   |_| ||_     _||   | |    ___||  | |  ||  |_|  ||_     _||    ___|", term_width);
+    print_centered(" |       ||       |  |   |  |   | |   | __ |  |_|  ||       |  |   |  |   |___ ", term_width);
+    print_centered(" |       ||  _    |  |   |  |   | |   ||  ||      _||       |  |   |  |    ___|", term_width);
+    print_centered(" |   _   || | |   |  |   |  |   | |   |_| ||  | |  ||   _   |  |   |  |   |___ ", term_width);
+    print_centered(" |__| |__||_|  |__|  |___|  |___| |_______||__| |__||__| |__|  |___|  |_______|", term_width);
     printf(RESET);
     
     printf("\n\n");
-    print_divider(80, CYAN);
+    print_divider(term_width, CYAN);
     printf(WHITE BOLD);
-    print_centered("Welcome to the World of Anti-Adventure", 80);
+    print_centered("Welcome to the World of Anti-Adventure", term_width);
     printf(RESET);
-    print_divider(80, CYAN);
+    print_divider(term_width, CYAN);
     
     printf("\n\n");
     printf(CYAN);
-    print_centered("- Explore Dungeons, Defeat Monsters -", 80);
-    print_centered("- Craft Legendary Gear, Master Powerful Skills -", 80);
+    print_centered("- Explore Dungeons, Defeat Monsters -", term_width);
+    print_centered("- Craft Legendary Gear, Master Powerful Skills -", term_width);
     printf(RESET);
 
     printf("\n\n\n");
     printf(BOLD YELLOW);
-    print_centered(">> PRESS ENTER TO START YOUR LEGACY <<", 80);
+    print_centered(">> PRESS ENTER TO START YOUR LEGACY <<", term_width);
     printf(RESET);
     
     printf("\n\n");
-    print_divider(80, RED);
+    print_divider(term_width, RED);
     printf(WHITE);
-    print_centered("(C) 2026 Anti-Adventure Team. All rights reserved.", 80);
+    print_centered("(C) 2026 Anti-Adventure Team. All rights reserved.", term_width);
     printf(RESET);
     
-    getchar(); // 타이틀 화면 대기
+    getchar();
 }

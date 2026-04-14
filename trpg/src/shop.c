@@ -7,40 +7,49 @@ void open_shop(Player* p) {
     while (1) {
         clear_screen();
         show_compact_status(p);
-        printf("\n========= [마을 상점 - 리부트] =========\n");
+        print_divider(80, YELLOW);
+        print_centered(YELLOW_BG BLACK " [ 🛒 마을 상점 - 리부트 ] " RESET, 80);
+        print_divider(80, YELLOW);
         
+        char buf[256];
         // 1. 무기 슬롯
-        if (p->weapon_tier == 0) printf("1. [무기] 훈련용 목검 (STR +10, DEX +5) - 100 G\n");
-        else if (p->weapon_tier == 1) printf("1. [무기] 강철 세이버 (STR +40, DEX +20) - 500 G\n");
-        else if (p->weapon_tier == 2) printf("1. [무기] 앱솔랩스 소드 (STR +120, DEX +60) - 2500 G\n");
-        else if (p->weapon_tier == 3) printf("1. [무기] 아케인셰이드 소드 (STR +300, DEX +150, 마력 +20) - 10000 G\n");
-        else if (p->weapon_tier == 4) printf("1. [무기] 제네시스 소드 (STR +800, DEX +400, 마력 +50, 보뎀 +10%%) - 50000 G\n");
-        else printf("1. [무기] 품절\n");
+        if (p->weapon_tier == 0) sprintf(buf, "1. [무기] 훈련용 목검 (STR+10, DEX+5) - 100 G");
+        else if (p->weapon_tier == 1) sprintf(buf, "1. [무기] 강철 세이버 (STR+40, DEX+20) - 500 G");
+        else if (p->weapon_tier == 2) sprintf(buf, "1. [무기] 앱솔랩스 소드 (STR+120, DEX+60) - 2500 G");
+        else if (p->weapon_tier == 3) sprintf(buf, "1. [무기] 아케인셰이드 (STR+300, DEX+150, 마력+20) - 10000 G");
+        else if (p->weapon_tier == 4) sprintf(buf, "1. [무기] 제네시스 소드 (STR+800, DEX+400, 마력+50, 보뎀+10%%) - 50000 G");
+        else sprintf(buf, "1. [무기] 품절");
+        print_box_line(buf, 80, YELLOW);
 
         // 2. 방어구 슬롯
-        if (p->armor_tier == 0) printf("2. [방어구] 수습 도복 (HP +200, MP +100) - 150 G\n");
-        else if (p->armor_tier == 1) printf("2. [방어구] 네크로 아머 (HP +1000, MP +400) - 800 G\n");
-        else if (p->armor_tier == 2) printf("2. [방어구] 카루타 상하의 (HP +4000, MP +2000) - 3000 G\n");
-        else if (p->armor_tier == 3) printf("2. [방어구] 앱솔랩스 숄더/신발 (HP +12000, MP +6000) - 15000 G\n");
-        else if (p->armor_tier == 4) printf("2. [방어구] 에테르넬 세트 (HP +40000, MP +20000, 뎀퍼 +5%%) - 60000 G\n");
-        else printf("2. [방어구] 품절\n");
+        if (p->armor_tier == 0) sprintf(buf, "2. [방어구] 수습 도복 (HP+200, MP+100) - 150 G");
+        else if (p->armor_tier == 1) sprintf(buf, "2. [방어구] 네크로 아머 (HP+1000, MP+400) - 800 G");
+        else if (p->armor_tier == 2) sprintf(buf, "2. [방어구] 카루타 세트 (HP+4000, MP+2000) - 3000 G");
+        else if (p->armor_tier == 3) sprintf(buf, "2. [방어구] 앱솔랩스 세트 (HP+12000, MP+6000) - 15000 G");
+        else if (p->armor_tier == 4) sprintf(buf, "2. [방어구] 에테르넬 세트 (HP+40000, MP+20000, 뎀퍼+5%%) - 60000 G");
+        else sprintf(buf, "2. [방어구] 품절");
+        print_box_line(buf, 80, YELLOW);
 
         // 3. 장신구 슬롯
-        if (p->accessory_tier == 0) printf("3. [장신구] 실버블라썸 링 (AllStat +5) - 300 G\n");
-        else if (p->accessory_tier == 1) printf("3. [장신구] 보스 장신구 세트 (AllStat +20) - 1200 G\n");
-        else if (p->accessory_tier == 2) printf("3. [장신구] 마이스터링 (AllStat +100) - 5000 G\n");
-        else if (p->accessory_tier == 3) printf("3. [장신구] 칠흑의 보스 세트 (AllStat +300, 방무 +5%%) - 20000 G\n");
-        else if (p->accessory_tier == 4) printf("3. [장신구] 여명의 보스 세트 (AllStat +800, 방무 +10%%) - 80000 G\n");
-        else printf("3. [장신구] 품절\n");
+        if (p->accessory_tier == 0) sprintf(buf, "3. [장신구] 실버블라썸 링 (AllStat+5) - 300 G");
+        else if (p->accessory_tier == 1) sprintf(buf, "3. [장신구] 보스 장신구 세트 (AllStat+20) - 1200 G");
+        else if (p->accessory_tier == 2) sprintf(buf, "3. [장신구] 마이스터링 (AllStat+100) - 5000 G");
+        else if (p->accessory_tier == 3) sprintf(buf, "3. [장신구] 칠흑의 보스 세트 (AllStat+300, 방무+5%%) - 20000 G");
+        else if (p->accessory_tier == 4) sprintf(buf, "3. [장신구] 여명의 보스 세트 (AllStat+800, 방무+10%%) - 80000 G");
+        else sprintf(buf, "3. [장신구] 품절");
+        print_box_line(buf, 80, YELLOW);
 
-        // 4, 5. 소비 아이템
-        printf("4. [포션] 빨간 포션 (HP 50%% 회복) - 30 G\n");
-        printf("5. [포션] 파란 포션 (MP 50%% 회복) - 30 G\n");
+        print_box_line("4. [소비] 빨간 포션 (HP 50%% 회복) - 30 G", 80, YELLOW);
+        print_box_line("5. [소비] 파란 포션 (MP 50%% 회복) - 30 G", 80, YELLOW);
+        print_box_line("0. 나가기", 80, YELLOW);
+        print_divider(80, YELLOW);
 
-        printf("0. 나가기\n");
-        printf("선택: ");
-        scanf("%d", &choice);
-        clear_input_buffer(); // 여기서 버퍼를 비워줌
+        printf("\n 선택: ");
+        if (scanf("%d", &choice) != 1) {
+            clear_input_buffer();
+            continue;
+        }
+        clear_input_buffer();
 
         if (choice == 0) break;
 

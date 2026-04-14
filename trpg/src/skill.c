@@ -144,25 +144,32 @@ void grant_event_skill(Player* p, const char* name, const char* desc, float mult
 void show_skill_tree(Player* p) {
     while (1) {
         clear_screen();
-        printf("\n" CYAN BOLD "┌──────────────────────────────────────────────────────────────┐" RESET "\n");
-        printf(CYAN "│" RESET "  " YELLOW BOLD "🌲 스킬 트리 창 (Points: %d)" RESET "                                " CYAN "│" RESET "\n", p->skill_points);
-        printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
-        printf(CYAN "│" RESET "  현재 직업: [ " GREEN BOLD "%-14s" RESET " ]                          " CYAN "│" RESET "\n", get_job_name(p->job));
-        printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
+        int box_width = 76; // 더 안전한 너비로 조정
+        char line[512];
+        
+        printf("\n" CYAN "┌"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┐" RESET "\n");
+        
+        sprintf(line, "  [ 스킬 트리 메뉴 ] (보유 포인트: %d)", p->skill_points);
+        int v_title = get_visual_width(line);
+        printf(CYAN "│" RESET YELLOW BOLD "%s", line);
+        for(int i=0; i < (box_width - 2 - v_title); i++) printf(" ");
+        printf(CYAN "│" RESET "\n");
+        
+        printf(CYAN "├"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┤" RESET "\n");
+        
+        sprintf(line, "  현재 직업: [ %s ]", get_job_name(p->job));
+        int v_job = get_visual_width(line);
+        printf(CYAN "│" RESET GREEN BOLD "%s", line);
+        for(int i=0; i < (box_width - 2 - v_job); i++) printf(" ");
+        printf(CYAN "│" RESET "\n");
+        
+        printf(CYAN "├"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┤" RESET "\n");
 
         int visible_indices[ALL_SKILLS_COUNT];
         int visible_count = 0;
-
-        // 표시 가능한 스킬 필터링
         for (int i = 0; i < skill_db_count; i++) {
             Skill* s = &skill_db[i];
-            if (s->type == SKILL_TYPE_COMBO) continue; // 콤보는 자동 습득
-
-            // 공통 스킬이거나, 자신의 직업 계열 스킬인 경우만 표시
-            if (s->required_job != JOB_NONE && p->job != s->required_job) {
-                // 부모 직업 개념이 필요할 수 있으나, 일단은 단순하게 구현
-            }
-
+            if (s->type == SKILL_TYPE_COMBO) continue;
             if (s->required_job == JOB_NONE || p->job == s->required_job) {
                 visible_indices[visible_count++] = i;
             }
@@ -172,43 +179,53 @@ void show_skill_tree(Player* p) {
             int db_idx = visible_indices[i];
             Skill* s = &skill_db[db_idx];
             
-            // 플레이어가 이미 해당 스킬을 배웠는지 확인
             int learned_idx = -1;
             for (int k = 0; k < p->skill_count; k++) {
-                if (p->learned_skills[k].id == s->id) {
-                    learned_idx = k;
-                    break;
-                }
+                if (p->learned_skills[k].id == s->id) { learned_idx = k; break; }
             }
-
             int current_lv = (learned_idx == -1) ? 0 : p->learned_skills[learned_idx].level;
             
-            // 해금 여부 확인
             int is_locked = 0;
             if (s->prereq_id != -1) {
                 int prereq_lv = 0;
                 for (int k = 0; k < p->skill_count; k++) {
-                    if (p->learned_skills[k].id == s->prereq_id) {
-                        prereq_lv = p->learned_skills[k].level;
-                        break;
-                    }
+                    if (p->learned_skills[k].id == s->prereq_id) { prereq_lv = p->learned_skills[k].level; break; }
                 }
                 if (prereq_lv < 5) is_locked = 1;
             }
 
             if (is_locked) {
-                printf(CYAN "│" RESET "  %2d. [🔒] %-18s (Prereq ID %d Lv.5 필요)        " CYAN "│" RESET "\n", 
-                       i + 1, s->name, s->prereq_id);
+                sprintf(line, "  %2d. [X] %-18s (ID:%d LV.5 필요)", i + 1, s->name, s->prereq_id);
+                int v_lock = get_visual_width(line);
+                printf(CYAN "│" RESET RED "%s", line);
+                for(int j=0; j < (box_width - 2 - v_lock); j++) printf(" ");
+                printf(CYAN "│" RESET "\n");
             } else {
                 const char* type_tag = (s->is_active && s->is_passive) ? "A+P" : (s->is_active ? "ACT" : "PAS");
-                printf(CYAN "│" RESET "  %2d. [%-3s] " WHITE BOLD "%-18s" RESET " (Lv.%2d/%2d)                " CYAN "│" RESET "\n", 
-                       i+1, type_tag, s->name, current_lv, s->max_level);
+                sprintf(line, "  %2d. [%-3s] %-18s (LV.%2d/%2d)", i+1, type_tag, s->name, current_lv, s->max_level);
+                int v_skill = get_visual_width(line);
+                printf(CYAN "│" RESET WHITE BOLD "%s", line);
+                for(int j=0; j < (box_width - 2 - v_skill); j++) printf(" ");
+                printf(CYAN "│" RESET "\n");
+                
+                sprintf(line, "      - %s", s->description);
+                int v_desc = get_visual_width(line);
+                printf(CYAN "│" RESET WHITE "%s", line);
+                for(int j=0; j < (box_width - 2 - v_desc); j++) printf(" "); 
+                printf(CYAN "│" RESET "\n");
+            }
+            if (i < visible_count - 1) {
+                printf(CYAN "│" RESET); for(int k=0; k<box_width-2; k++) printf(" "); printf(CYAN "│" RESET "\n");
             }
         }
 
-        printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
-        printf(CYAN "│" RESET "  " WHITE "0. 뒤로 가기" RESET "                                             " CYAN "│" RESET "\n");
-        printf(CYAN "└──────────────────────────────────────────────────────────────┘" RESET "\n");
+        printf(CYAN "├"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┤" RESET "\n");
+        sprintf(line, "  0. 뒤로 가기");
+        int v_back = get_visual_width(line);
+        printf(CYAN "│" RESET "%s", line);
+        for(int i=0; i < (box_width - 2 - v_back); i++) printf(" ");
+        printf(CYAN "│" RESET "\n");
+        printf(CYAN "└"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┘" RESET "\n");
 
         printf("\n  투자할 스킬 번호 선택: ");
         int choice;
@@ -305,18 +322,24 @@ void select_level_up_skill(Player* p) {
 }
 
 void show_skills(Player* p) {
-    printf("\n========= [연마된 스킬] (%d / %d) =========\n", p->skill_count, MAX_LEARNED_SKILLS);
+    print_divider(80, MAGENTA);
+    print_centered(MAGENTA_BG BLACK " [ 📜 연마된 스킬 리스트 ] " RESET, 80);
+    print_divider(80, MAGENTA);
+    
     if (p->skill_count == 0) {
-        printf("아직 연마한 기술이 없습니다.\n");
+        print_box_line("아직 연마한 기술이 없습니다.", 80, MAGENTA);
     } else {
+        char buf[256];
         for (int i = 0; i < p->skill_count; i++) {
             Skill* s = &p->learned_skills[i];
             const char* extra = (s->is_active && s->is_passive) ? "[Active+Passive]" : (s->is_active ? "[Active]" : "[Passive]");
-            printf("%d. %s (Lv.%d/%d) %s\n", i + 1, s->name, s->level, s->max_level, extra);
-            printf("   - %s\n", s->description);
+            sprintf(buf, "%d. %s (Lv.%d/%d) %s", i + 1, s->name, s->level, s->max_level, extra);
+            print_box_line(buf, 80, MAGENTA);
+            sprintf(buf, "   ↳ %s", s->description);
+            print_box_line(buf, 80, MAGENTA);
         }
     }
-    printf("========================================\n");
+    print_divider(80, MAGENTA);
 }
 
 void grant_combo_skill_if_eligible(Player* p) {

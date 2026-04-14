@@ -10,21 +10,21 @@
 // --- 대장간 메뉴 (장비 수리 기능 신규 추가) ---
 void open_blacksmith_menu(Player* p) {
     clear_screen();
-    print_divider(60, YELLOW);
-    print_centered(YELLOW_BG BLACK " [ ⚒️ 대장간 - 수리 서비스 ] " RESET, 60);
-    print_divider(60, YELLOW);
+    print_divider(80, YELLOW);
+    print_centered(YELLOW_BG BLACK " [ ⚒️ 대장간 - 수리 서비스 ] " RESET, 80);
+    print_divider(80, YELLOW);
     
     char buf[128];
     sprintf(buf, "일반 무기 내구도:   [%3d / 100]", p->weapon_dur);
-    print_box_line(buf, 60, YELLOW);
+    print_box_line(buf, 80, YELLOW);
     sprintf(buf, "일반 방어구 내구도: [%3d / 100]", p->armor_dur);
-    print_box_line(buf, 60, YELLOW);
+    print_box_line(buf, 80, YELLOW);
     sprintf(buf, "제작 무기 내구도:   [%3d / 100]", p->c_weapon_dur);
-    print_box_line(buf, 60, YELLOW);
+    print_box_line(buf, 80, YELLOW);
     sprintf(buf, "제작 방어구 내구도: [%3d / 100]", p->c_armor_dur);
-    print_box_line(buf, 60, YELLOW);
+    print_box_line(buf, 80, YELLOW);
     
-    print_divider(60, YELLOW);
+    print_divider(80, YELLOW);
 
     int cost = (100 - p->weapon_dur) * 10 + (100 - p->armor_dur) * 10 + (100 - p->accessory_dur) * 10;
     cost += (100 - p->c_weapon_dur) * 20 + (100 - p->c_armor_dur) * 20 + (100 - p->c_accessory_dur) * 20;
@@ -62,19 +62,18 @@ void open_village_menu(Player* p) {
     int choice;
     while (1) {
         clear_screen();
-        clear_screen();
         show_compact_status(p);
-        print_divider(60, CYAN);
-        print_centered(BOLD "========= [마을 활동 센터] =========" RESET, 60);
-        print_divider(60, CYAN);
-        print_box_line("1. 파트타임 알바 (무작위 보상)", 60, CYAN);
-        print_box_line("2. 주사위 도박 (하이/로우)", 60, CYAN);
-        print_box_line("3. 장비 제작 (대장간)", 60, CYAN);
-        print_box_line("4. 어빌리티 잠재력 (신비한 재단)", 60, CYAN);
-        print_box_line("5. 몬스터 도감 (지식의 기록)", 60, CYAN);
-        print_box_line("6. 장비 수리 (대장간)", 60, CYAN);
-        print_box_line("0. 뒤로 가기", 60, CYAN);
-        print_divider(60, CYAN);
+        print_divider(80, CYAN);
+        print_centered(BOLD "========= [마을 활동 센터] =========" RESET, 80);
+        print_divider(80, CYAN);
+        print_box_line("1. 파트타임 알바 (무작위 보상)", 80, CYAN);
+        print_box_line("2. 주사위 도박 (하이/로우)", 80, CYAN);
+        print_box_line("3. 장비 제작 (대장간)", 80, CYAN);
+        print_box_line("4. 어빌리티 잠재력 (신비한 재단)", 80, CYAN);
+        print_box_line("5. 몬스터 도감 (지식의 기록)", 80, CYAN);
+        print_box_line("6. 장비 수리 (대장간)", 80, CYAN);
+        print_box_line("0. 뒤로 가기", 80, CYAN);
+        print_divider(80, CYAN);
         printf("선택: ");
         
         if (scanf("%d", &choice) != 1) {
