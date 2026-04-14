@@ -60,13 +60,8 @@ void draw_hp_bar(const char* label, int current, int max, int width, const char*
     if (percent <= 0.2f) bar_color = RED;
     else if (percent <= 0.5f) bar_color = YELLOW;
 
-    int visual_width = get_visual_width(label);
-    int padding = 12 - visual_width;
-    if (padding < 0) padding = 0;
-
-    printf("%s%s" RESET, default_color, label);
-    for (int i = 0; i < padding; i++) printf(" ");
-    printf(" [");
+    // 라벨을 10칸 고정 너비로 출력 (왼쪽 정렬)
+    printf("%s%-10s" RESET " [", default_color, label);
 
     for (int i = 0; i < width; i++) {
         if (i < filled_len) printf("%s█" RESET, bar_color);
@@ -80,12 +75,13 @@ void draw_exp_bar(int current_exp, int required_exp, int width) {
     if (percent > 1.0f) percent = 1.0f;
     int filled_len = (int)(percent * width);
 
-    printf(CYAN "EXP [" RESET);
+    // HP바와 맞추기 위해 10칸 고정 너비 사용
+    printf(MAGENTA "%-10s" RESET " [", "EXP");
     for (int i = 0; i < width; i++) {
         if (i < filled_len) printf(MAGENTA "█" RESET);
         else printf("░");
     }
-    printf(CYAN "] %.1f%%" RESET " (%d/%d)\n", percent * 100, current_exp, required_exp);
+    printf("] %.1f%% (%d/%d)\n", percent * 100, current_exp, required_exp);
 }
 
 void print_centered(const char* text, int width) {
@@ -117,37 +113,38 @@ void print_box_line(const char* text, int width, const char* color) {
 
 void show_title_screen() {
     clear_screen();
+    int term_width = 76; // 표준 터미널 안전 너비
     printf("\n\n");
     printf(YELLOW BOLD);
-    print_centered("   ___   _  _  _____  ___  ___   ___   _   _  ___  _  _  _____  _   _  ___   ___  ", 80);
-    print_centered("  / _ \\ | \\| ||_   _||_ _|/ __| | _ \\ /_\\ | _ \\| \\| ||_   _|| | | || _ \\ | __| ", 80);
-    print_centered(" |  _  || .  |  | |   | || (_ | |   // _ \\|   /| .  |  | |  | |_| ||   / | _|  ", 80);
-    print_centered(" |_| |_||_|\\_|  |_|  |___|\\___| |_|_/_/ \\_\\|_|_\\|_|\\_|  |_|   \\___/ |_|_\\ |___| ", 80);
+    print_centered("   ___   _  _  _____  ___  ___   ___   _   _  ___  _  _  _____  _   _  ___  ", term_width);
+    print_centered("  / _ \\ | \\| ||_   _||_ _|/ __| | _ \\ /_\\ | _ \\| \\| ||_   _|| | | || _ \\ ", term_width);
+    print_centered(" |  _  || .  |  | |   | || (_ | |   // _ \\|   /| .  |  | |  | |_| ||   / ", term_width);
+    print_centered(" |_| |_||_|\\_|  |_|  |___|\\___| |_|_/_/ \\_\\|_|_\\|_|\\_|  |_|   \\___/ |_|_\\ ", term_width);
     printf(RESET);
     
     printf("\n\n");
-    print_divider(80, CYAN);
+    print_divider(term_width, CYAN);
     printf(WHITE BOLD);
-    print_centered("Welcome to the World of Anti-Adventure", 80);
+    print_centered("Welcome to the World of Anti-Adventure", term_width);
     printf(RESET);
-    print_divider(80, CYAN);
+    print_divider(term_width, CYAN);
     
     printf("\n\n");
     printf(CYAN);
-    print_centered("- Explore Dungeons, Defeat Monsters -", 80);
-    print_centered("- Craft Legendary Gear, Master Powerful Skills -", 80);
+    print_centered("- Explore Dungeons, Defeat Monsters -", term_width);
+    print_centered("- Craft Legendary Gear, Master Powerful Skills -", term_width);
     printf(RESET);
 
     printf("\n\n\n");
     printf(BOLD YELLOW);
-    print_centered(">> PRESS ENTER TO START YOUR LEGACY <<", 80);
+    print_centered(">> PRESS ENTER TO START YOUR LEGACY <<", term_width);
     printf(RESET);
     
     printf("\n\n");
-    print_divider(80, RED);
+    print_divider(term_width, RED);
     printf(WHITE);
-    print_centered("(C) 2026 Anti-Adventure Team. All rights reserved.", 80);
+    print_centered("(C) 2026 Anti-Adventure Team. All rights reserved.", term_width);
     printf(RESET);
     
-    getchar(); // 타이틀 화면 대기
+    getchar();
 }

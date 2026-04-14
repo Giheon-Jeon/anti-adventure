@@ -255,24 +255,42 @@ void show_status(Player* p) {
 
 void show_compact_status(Player* p) {
     update_combat_power(p);
-    printf("\n[ %s | %s LV %d | CP: %d | Gold: %d G ]\n", 
-           p->name, get_job_name(p->job), p->level, p->combat_power, p->gold);
-    draw_hp_bar("PHYSICAL", p->hp, p->max_hp, 20, CYAN);
-    int req_exp = (p->level * p->level * 40) + (p->level * 50);
-    draw_exp_bar(p->exp, req_exp, 20);
-    printf("[ 기본T:%d/%d/%d | 제작T:%d/%d/%d ]\n", 
-           p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
-    printf("[ STR:%d DEX:%d INT:%d LUK:%d ]", p->str, p->dex, p->intel, p->luk);
+    int box_width = 76;
     
-    // 추가: 특수 능력치가 있을 경우만 표시
-    if (p->ied > 0 || p->boss_dmg > 0 || p->dmg_percent > 0) {
-        printf(" [ ");
-        if (p->ied > 0) printf("IED:%.0f%% ", p->ied * 100);
-        if (p->boss_dmg > 0) printf("Boss:%.0f%% ", p->boss_dmg * 100);
-        if (p->dmg_percent > 0) printf("Dmg:%.0f%% ", p->dmg_percent * 100);
-        printf("]");
-    }
-    printf("\n------------------------------------------------------------\n");
+    printf("\n" CYAN "┌──────────────────────────────────────────────────────────────────────────┐" RESET "\n");
+    
+    // 1행: 기본 정보 (이름, 직업, 레벨)
+    printf(CYAN "│ " RESET YELLOW BOLD "%-14s" RESET " | " CYAN "%-14s" RESET " | " WHITE "LV %-3d" RESET " | " GREEN "CP: %-8d" RESET " | " YELLOW "Gold: %-8d" RESET CYAN " │" RESET "\n", 
+           p->name, get_job_name(p->job), p->level, p->combat_power, p->gold);
+    
+    printf(CYAN "├──────────────────────────────────────────────────────────────────────────┤" RESET "\n");
+    
+    // 2행: HP 바
+    printf(CYAN "│ " RESET);
+    draw_hp_bar("PHYSICAL", p->hp, p->max_hp, 30, CYAN);
+    
+    // 3행: EXP 바
+    printf(CYAN "│ " RESET);
+    int req_exp = (p->level * p->level * 40) + (p->level * 50);
+    draw_exp_bar(p->exp, req_exp, 30);
+    
+    printf(CYAN "├──────────────────────────────────────────────────────────────────────────┤" RESET "\n");
+    
+    // 4행: 스탯 정보
+    printf(CYAN "│ " RESET "STR:%-4d DEX:%-4d INT:%-4d LUK:%-4d | IED:%.0f%% Boss:%.0f%% Dmg:%.0f%%" RESET " ", 
+           p->str, p->dex, p->intel, p->luk, p->ied * 100, p->boss_dmg * 100, p->dmg_percent * 100);
+    
+    // 오른쪽 여백 채우기 (정확한 칸 계산이 어려우므로 시각적 너비로 조정)
+    printf(CYAN "    │" RESET "\n");
+    
+    // 5행: 장비 티어
+    printf(CYAN "│ " RESET "기본장비[T%d/T%d/T%d] | 제작장비[T%d/T%d/T%d] | 내구도[W:%d%%/A:%d%%]" RESET " ", 
+           p->weapon_tier, p->armor_tier, p->accessory_tier, p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier,
+           (p->weapon_dur > p->c_weapon_dur ? p->weapon_dur : p->c_weapon_dur),
+           (p->armor_dur > p->c_armor_dur ? p->armor_dur : p->c_armor_dur));
+    
+    printf(CYAN "        │" RESET "\n");
+    printf(CYAN "└──────────────────────────────────────────────────────────────────────────┘" RESET "\n");
 }
 
 void show_inventory(const Player* p) {

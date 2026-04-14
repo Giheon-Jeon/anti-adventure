@@ -1,28 +1,28 @@
 @echo off
 setlocal
 echo ========================================
-echo [🛠 빌드 시작] 변경 사항을 반영 중입니다...
+echo [BUILD] Rebuilding TRPG Game...
 echo ========================================
 
-:: 1. 기존 프로세스 종료 (실행 중일 경우)
+:: 1. Terminate existing process if running
 taskkill /IM trpg.exe /F >nul 2>&1
 
-:: 2. 컴파일 (모든 .c 파일 포함)
-gcc -o trpg.exe src/*.c -Iinclude
+:: 2. Compile (Explicitly listing core source files)
+gcc -o trpg.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c src/ability.c src/skill.c src/encyclopedia.c -Iinclude
 
 if %errorlevel% neq 0 (
     echo.
-    echo ❌ [오류] 컴파일에 실패했습니다! 코드를 확인해주세요.
+    echo [ERROR] Compilation failed! Please check your code.
     echo ========================================
     pause
     exit /b %errorlevel%
 )
 
 echo.
-echo ✅ [성공] 빌드가 완료되었습니다!
-echo 🚀 게임을 실행합니다...
+echo [SUCCESS] Build completed!
+echo [RUN] Launching trpg.exe...
 echo ========================================
 
-:: 3. 게임 실행
+:: 3. Run the game
 start trpg.exe
 exit /b 0
