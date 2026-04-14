@@ -4,7 +4,12 @@
 #include "../include/combat.h"
 #include "../include/utils.h"
 #include "../include/generated_data.h"
-#include <windows.h>
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <unistd.h>
+    #define Sleep(ms) usleep((ms) * 1000)
+#endif
 
 // 주사위 정렬 (오름차순)
 void sort_dice(int* dice, int count) {
