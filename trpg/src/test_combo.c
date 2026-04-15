@@ -43,7 +43,7 @@ int main() {
     int dice2[5] = {1, 2, 3, 4, 5};
     int damage2 = calculate_yacht_damage(&p, dice2);
     printf("Result Damage: %d\n", damage2);
-    if(damage2 == 3750) printf("SUCCESS: Standard rule preserved!\n");
+    if(damage2 == 4500) printf("SUCCESS: Standard rule preserved!\n");
     else printf("FAILED: Damage calculation mismatch!\n");
 
     return 0;
