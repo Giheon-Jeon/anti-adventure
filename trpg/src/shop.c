@@ -39,8 +39,8 @@ void open_shop(Player* p) {
         else sprintf(buf, "3. [장신구] 품절");
         print_box_line(buf, 80, YELLOW);
 
-        print_box_line("4. [소비] 빨간 포션 (HP 50%% 회복) - 30 G", 80, YELLOW);
-        print_box_line("5. [소비] 파란 포션 (MP 50%% 회복) - 30 G", 80, YELLOW);
+        print_box_line("4. [소비] 빨간 포션 (HP 50% 회복) - 30 G", 80, YELLOW);
+        print_box_line("5. [소비] 파란 포션 (MP 50% 회복) - 30 G", 80, YELLOW);
         print_box_line("0. 나가기", 80, YELLOW);
         print_divider(80, YELLOW);
 
@@ -79,18 +79,23 @@ void open_shop(Player* p) {
             case 2:
                 if (p->armor_tier == 0 && p->gold >= 150) {
                     p->gold -= 150; p->max_hp += 200; p->max_mp += 100; p->armor_tier++;
+                    p->hp = p->max_hp; p->mp = p->max_mp; // 전회복
                     printf("[구매] 수습 도복을 구매했습니다!\n");
                 } else if (p->armor_tier == 1 && p->gold >= 800) {
                     p->gold -= 800; p->max_hp += 1000; p->max_mp += 400; p->armor_tier++;
+                    p->hp = p->max_hp; p->mp = p->max_mp;
                     printf("[구매] 네크로 아머를 구매했습니다!\n");
                 } else if (p->armor_tier == 2 && p->gold >= 3000) {
                     p->gold -= 3000; p->max_hp += 4000; p->max_mp += 2000; p->armor_tier++;
+                    p->hp = p->max_hp; p->mp = p->max_mp;
                     printf("[구매] 카루타 상하의를 구매했습니다!\n");
                 } else if (p->armor_tier == 3 && p->gold >= 15000) {
                     p->gold -= 15000; p->max_hp += 12000; p->max_mp += 6000; p->armor_tier++;
+                    p->hp = p->max_hp; p->mp = p->max_mp;
                     printf("[구매] 앱솔랩스 숄더/신발을 구매했습니다!\n");
                 } else if (p->armor_tier == 4 && p->gold >= 60000) {
                     p->gold -= 60000; p->max_hp += 40000; p->max_mp += 20000; p->dmg_percent += 0.05f; p->armor_tier++;
+                    p->hp = p->max_hp; p->mp = p->max_mp;
                     printf("[구매] 에테르넬 세트를 구매했습니다!\n");
                 } else if (p->armor_tier >= 5) {
                     printf("[알림] 더 이상 업그레이드할 수 없습니다.\n");
@@ -144,6 +149,9 @@ void open_shop(Player* p) {
                 printf("[알림] 잘못된 선택이거나 품절된 상품입니다.\n");
                 break;
         }
+        
+        // 구매 후 전투력 갱신
+        update_combat_power(p);
         
         if (choice != 0) {
             wait_for_enter();

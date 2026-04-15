@@ -7,8 +7,8 @@ echo ========================================
 :: 1. Terminate existing process if running
 taskkill /IM trpg.exe /F >nul 2>&1
 
-:: 2. Compile (Explicitly listing core source files)
-gcc -o trpg.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c src/ability.c src/skill.c src/encyclopedia.c -Iinclude
+:: 2. Compile (All source files with warnings enabled)
+gcc -Wall -Wextra -o trpg.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c src/ability.c src/skill.c src/encyclopedia.c -Iinclude
 
 if %errorlevel% neq 0 (
     echo.
