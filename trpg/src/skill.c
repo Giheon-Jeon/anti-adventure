@@ -9,13 +9,13 @@
 static Skill skill_db[ALL_SKILLS_COUNT];
 static int skill_db_count = 0;
 
-void add_to_db(int id, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost, SkillType type, JobType job, int tier, int prereq, int is_p, int is_a) {
+static void add_to_db(int id, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost, SkillType type, JobType job, int tier, int prereq, int is_p, int is_a) {
     if (skill_db_count >= ALL_SKILLS_COUNT) return;
     Skill* s = &skill_db[skill_db_count];
     s->id = id;
     strcpy(s->name, name);
     strcpy(s->description, desc);
-    s->level = 0; // 초기 레벨은 0 (투자 전)
+    s->level = 0;
     s->max_level = MAX_SKILL_LEVEL;
     s->multiplier = mult;
     s->base_atk_bonus = atk;
@@ -42,13 +42,13 @@ void init_skill_system() {
     // --- 공통 스킬 (Tier 0) ---
     add_to_db(1, "기초 체력 단련", "영구적으로 공격력이 상승합니다.", 0.0f, 5, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE, 0, -1, 1, 0);
     add_to_db(2, "집중력 강화", "주사위 데미지 배수가 상승합니다.", 0.1f, 0, 0, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE, 0, -1, 1, 0);
-    add_to_db(3, "운수 좋은 날", "공격력과 행운(LUK)이 상승합니다.", 0.0f, 2, 5, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE, 0, 1, 1, 0); // 1번 5렙 필요(논리적으로)
+    add_to_db(3, "운수 좋은 날", "공격력과 행운(LUK)이 상승합니다.", 0.0f, 2, 5, 0, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE, 0, 1, 1, 0);
     add_to_db(4, "강인한 신체", "최대 HP가 상승합니다.", 0.0f, 0, 0, 50, 0, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE, 0, 1, 1, 0);
     add_to_db(5, "끝없는 마력", "최대 MP가 상승합니다.", 0.0f, 0, 0, 0, 30, 0, 0, 0, 0, SKILL_TYPE_COMMON, JOB_NONE, 0, 1, 1, 0);
 
     // --- 전사 계열 (ID 11~) ---
     add_to_db(11, "파워 스트라이크", "전사의 기본 공격 스킬입니다.", 1.2f, 10, 0, 0, 0, 5, 0, 0, 10, SKILL_TYPE_JOB, JOB_WARRIOR, 1, -1, 0, 1);
-    add_to_db(12, "가드 브레이크", "적의 방어를 무시하는 일격입니다.", 1.0f, 15, 0, 0, 0, 5, 0, 0, 15, SKILL_TYPE_JOB, JOB_WARRIOR, 1, 11, 1, 1); // 11번 5렙 필요
+    add_to_db(12, "가드 브레이크", "적의 방어를 무시하는 일격입니다.", 1.0f, 15, 0, 0, 0, 5, 0, 0, 15, SKILL_TYPE_JOB, JOB_WARRIOR, 1, 11, 1, 1);
     add_to_db(13, "소드 댄스", "검투사의 화려한 연속 공격입니다.", 2.0f, 20, 0, 0, 0, 10, 5, 0, 25, SKILL_TYPE_JOB, JOB_GLADIATOR, 2, 11, 0, 1);
     add_to_db(14, "피의 갈증", "HP를 소모해 폭발적인 힘을 얻습니다.", 3.5f, 50, 0, -30, 0, 20, 0, 0, 0, SKILL_TYPE_JOB, JOB_BERSERKER, 2, 11, 1, 1);
 
@@ -84,11 +84,6 @@ const char* get_skill_type_name(SkillType type) {
     }
 }
 
-void apply_skill_effects(Player* p) {
-    // 이 함수는 전투 시작 전이나 스탯 갱신 시 호출됨
-    // 실제 데미지 계산 로직(combat.c)에서 스킬 목록을 순회하여 사용함
-}
-
 void grant_event_skill(Player* p, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost) {
     if (p->skill_count >= MAX_LEARNED_SKILLS) {
         printf("\n[알림] 스킬 칸이 부족하여 [%s] 스킬을 배울 수 없습니다.\n", name);
@@ -100,7 +95,6 @@ void grant_event_skill(Player* p, const char* name, const char* desc, float mult
         if (strcmp(p->learned_skills[i].name, name) == 0) {
             // 이미 있으면 레벨업 처리
             p->learned_skills[i].level++;
-            // 기존 스탯 보너스 재적용 (누적)
             p->max_hp += hp; p->hp += hp;
             p->max_mp += mp; p->mp += mp;
             p->str += str;
@@ -116,6 +110,7 @@ void grant_event_skill(Player* p, const char* name, const char* desc, float mult
     strcpy(s->name, name);
     strcpy(s->description, desc);
     s->level = 1;
+    s->max_level = MAX_SKILL_LEVEL;
     s->multiplier = mult;
     s->base_atk_bonus = atk;
     s->luk_bonus = luk;
@@ -125,8 +120,12 @@ void grant_event_skill(Player* p, const char* name, const char* desc, float mult
     s->dex_bonus = dex;
     s->int_bonus = intel;
     s->mp_cost = cost;
-    s->type = SKILL_TYPE_COMMON; // 고유 스킬도 공통 타입으로 취급
+    s->type = SKILL_TYPE_COMMON;
     s->required_job = JOB_NONE;
+    s->tier = 0;
+    s->prereq_id = -1;
+    s->is_passive = 0;
+    s->is_active = 1;
 
     // 즉시 스탯 반영
     p->max_hp += hp; p->hp += hp;
@@ -144,7 +143,7 @@ void grant_event_skill(Player* p, const char* name, const char* desc, float mult
 void show_skill_tree(Player* p) {
     while (1) {
         clear_screen();
-        int box_width = 76; // 더 안전한 너비로 조정
+        int box_width = 80;
         char line[512];
         
         printf("\n" CYAN "┌"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┐" RESET "\n");
@@ -244,7 +243,7 @@ void show_skill_tree(Player* p) {
         int selected_db_idx = visible_indices[choice - 1];
         Skill* sel = &skill_db[selected_db_idx];
 
-        // 해금 체크 다시 한번
+        // 해금 체크
         if (sel->prereq_id != -1) {
             int prereq_lv = 0;
             for (int k = 0; k < p->skill_count; k++) {
@@ -301,7 +300,7 @@ void show_skill_tree(Player* p) {
             // 레벨업
             p->learned_skills[learned_idx].level++;
             
-            // 레벨업 시 추가 스탯 반영 (현재 구조상 매 레벨 보너스가 누적됨)
+            // 레벨업 시 추가 스탯 반영
             p->max_hp += sel->hp_bonus; p->hp += sel->hp_bonus;
             p->max_mp += sel->mp_bonus; p->mp += sel->mp_bonus;
             p->str += sel->str_bonus;
@@ -314,11 +313,6 @@ void show_skill_tree(Player* p) {
         update_combat_power(p);
         wait_for_enter();
     }
-}
-
-void select_level_up_skill(Player* p) {
-    // 이제 스킬 트리를 통해 직접 올리므로, 단순히 안내만 출력함
-    printf("\n[알림] 스킬 포인트를 획득했습니다! '스킬 트리' 메뉴에서 원하는 기술을 연마하세요.\n");
 }
 
 void show_skills(Player* p) {
@@ -347,7 +341,6 @@ void grant_combo_skill_if_eligible(Player* p) {
 
     const char* combo_name = NULL;
     
-    // 직업별 적합한 콤보 스킬 결정
     switch (p->job) {
         case JOB_WARRIOR: case JOB_GLADIATOR: case JOB_BERSERKER: case JOB_CHAMPION: case JOB_JUDGE:
             combo_name = "[진·용참선]";
@@ -377,6 +370,7 @@ void grant_combo_skill_if_eligible(Player* p) {
         if (strcmp(skill_db[i].name, combo_name) == 0) {
             if (p->skill_count < MAX_LEARNED_SKILLS) {
                 p->learned_skills[p->skill_count] = skill_db[i];
+                p->learned_skills[p->skill_count].level = 1;
                 p->skill_count++;
                 printf("\n" MAGENTA BOLD "🌟 [습득] 레벨 20 달성 기념! 직업 비기 [%s]를 터득했습니다! 🌟" RESET "\n", combo_name);
                 printf("   - %s\n", skill_db[i].description);
@@ -386,4 +380,3 @@ void grant_combo_skill_if_eligible(Player* p) {
         }
     }
 }
-

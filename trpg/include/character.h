@@ -2,48 +2,15 @@
 #define CHARACTER_H
 
 #include "item.h"
+#include "job.h"
+#include "skill.h"
 #include <time.h>
 
-#include "job.h"
-
-#define MAX_LEARNED_SKILLS 50
-#define MAX_SKILL_LEVEL 10
 #define MAX_BOOK_ENTRIES 20
 
-typedef enum {
-    SKILL_TYPE_COMMON,
-    SKILL_TYPE_JOB,
-    SKILL_TYPE_ULTIMATE,
-    SKILL_TYPE_COMBO
-} SkillType;
-
-typedef struct {
-    int id;             // 고유 ID
-    char name[50];
-    char description[100];
-    int level;          // 현재 스킬 레벨 (투자된 포인트)
-    int max_level;      // 최대 레벨 (기본 10)
-    
-    float multiplier;
-    int base_atk_bonus;
-    int luk_bonus;
-    int hp_bonus;
-    int mp_bonus;
-    int str_bonus;
-    int dex_bonus;
-    int int_bonus;
-    int mp_cost;
-    
-    SkillType type;
-    JobType required_job;
-    
-    int tier;           // 계층 (0:공통, 1:기본, 2:대가)
-    int prereq_id;      // 선행 스킬 ID (-1이면 없음)
-    int is_passive;     // 패시브 효과 존재 여부
-    int is_active;      // 액티브 효과 존재 여부
-} Skill;
-
 #define JOB_ADVANCEMENT_LEVEL 10
+
+// --- 어빌리티 시스템 타입 ---
 
 typedef enum {
     ABILITY_RANK_NORMAL = 0,
@@ -75,6 +42,8 @@ typedef struct {
     float value;
 } Ability;
 
+// --- 도감 시스템 타입 ---
+
 typedef struct {
     int id;             // 몬스터 ID
     int is_registered;  // 등록 여부
@@ -82,6 +51,8 @@ typedef struct {
 } MonsterBookEntry;
 
 #define ABILITY_COUNT 3
+
+// --- 플레이어 구조체 ---
 
 typedef struct {
     char name[50];
@@ -139,8 +110,6 @@ typedef struct {
     
     Skill learned_skills[MAX_LEARNED_SKILLS];
     int skill_count;
-    Skill ultimate_skill;
-    int has_ultimate;
 
     MonsterBookEntry encyclopedia[MAX_BOOK_ENTRIES];
 } Player;
@@ -157,13 +126,11 @@ void show_inventory(const Player* p);
 void check_level_up(Player* p);
 
 // 스킬 시스템 관련 함수
-void select_level_up_skill(Player* p);
 void grant_event_skill(Player* p, const char* name, const char* desc, float mult, int atk, int luk, int hp, int mp, int str, int dex, int intel, int cost);
 void show_skills(Player* p);
-void show_skill_tree(Player* p); // 새 스킬 트리 UI
+void show_skill_tree(Player* p);
 void init_skill_system();
 const char* get_skill_type_name(SkillType type);
-void apply_skill_effects(Player* p);
 void grant_combo_skill_if_eligible(Player* p);
 
 // 사망 패널티 적용 함수
@@ -174,5 +141,8 @@ void update_combat_power(Player* p);
 
 // 도감 관련 함수
 void show_monster_encyclopedia(Player* p);
+
+// 경험치 요구량 계산 헬퍼
+int get_required_exp(int level);
 
 #endif

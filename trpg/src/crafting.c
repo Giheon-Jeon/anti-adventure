@@ -5,7 +5,7 @@
 #include <string.h>
 
 // 재료 보유량 확인 함수
-int get_material_count(Player* p, const char* name) {
+static int get_material_count(Player* p, const char* name) {
     int count = 0;
     for (int i = 0; i < p->inventory.count; i++) {
         if (strcmp(p->inventory.items[i].name, name) == 0) {
@@ -16,15 +16,13 @@ int get_material_count(Player* p, const char* name) {
 }
 
 // 재료 소비 함수 (loss_rate 확률로 소실)
-void consume_materials_logic(Player* p, const char* name, int required, int loss_rate, int is_success) {
+static void consume_materials_logic(Player* p, const char* name, int required, int loss_rate, int is_success) {
     int consumed = 0;
     for (int i = 0; i < p->inventory.count && consumed < required; ) {
         if (strcmp(p->inventory.items[i].name, name) == 0) {
-            // 성공하면 무조건 소비, 실패하면 loss_rate 확률로 소실
             int should_remove = is_success || (rand() % 100 < loss_rate);
             
             if (should_remove) {
-                // 아이템 제거 (배열 앞당기기)
                 for (int j = i; j < p->inventory.count - 1; j++) {
                     p->inventory.items[j] = p->inventory.items[j + 1];
                 }
@@ -32,7 +30,7 @@ void consume_materials_logic(Player* p, const char* name, int required, int loss
                 if (!is_success) printf("  - [소실] 재료 '%s'(을)를 잃었습니다.\n", name);
             } else {
                 if (!is_success) printf("  - [보존] 재료 '%s'(은)는 무사합니다.\n", name);
-                i++; // 제거 안 했으므로 다음 인덱스로
+                i++;
             }
             consumed++;
         } else {
@@ -41,7 +39,7 @@ void consume_materials_logic(Player* p, const char* name, int required, int loss
     }
 }
 
-void attempt_craft(Player* p, Recipe recipe) {
+static void attempt_craft(Player* p, Recipe recipe) {
     // 1. 재료 확인
     for (int i = 0; i < recipe.material_count; i++) {
         if (get_material_count(p, recipe.materials[i].material_name) < recipe.materials[i].count) {
@@ -60,12 +58,10 @@ void attempt_craft(Player* p, Recipe recipe) {
     if (is_success) {
         printf("\n✨ [성공] 아이템 제작에 성공했습니다! ✨\n");
         
-        // 재료 소비 (성공 시엔 100% 소비)
         for (int i = 0; i < recipe.material_count; i++) {
             consume_materials_logic(p, recipe.materials[i].material_name, recipe.materials[i].count, 100, 1);
         }
 
-        // 스탯 적용 및 티어 상승 (특수 스탯 중심)
         if (recipe.craft_type == CRAFT_TYPE_WEAPON) {
             if (recipe.target_tier == 1) { printf(">> [거인의 철검] 제작! (보뎀 +5%%)\n"); p->boss_dmg += 0.05f; }
             else if (recipe.target_tier == 2) { printf(">> [저주받은 오닉스 블레이드] 제작! (보뎀 +15%%, 뎀퍼 +5%%)\n"); p->boss_dmg += 0.15f; p->dmg_percent += 0.05f; }
@@ -86,6 +82,7 @@ void attempt_craft(Player* p, Recipe recipe) {
             p->c_accessory_tier++;
         }
         printf("장비 등급이 Tier %d로 상승했습니다!\n", recipe.target_tier);
+        update_combat_power(p);
 
     } else {
         printf("\n💀 [실패] 제작에 실패했습니다... 💀\n");
@@ -102,13 +99,22 @@ void open_crafting_menu(Player* p) {
     while (1) {
         clear_screen();
         show_compact_status(p);
-        printf("\n========= [마을 대장간] =========\n");
-        printf("몬스터의 전리품을 모아 장비를 제작할 수 있습니다.\n\n");
         
-        printf("1. 무기 연구/제작 (현재 Craft T%d)\n", p->c_weapon_tier);
-        printf("2. 방어구 연구/제작 (현재 Craft T%d)\n", p->c_armor_tier);
-        printf("3. 장신구 연구/제작 (현재 Craft T%d)\n", p->c_accessory_tier);
-        printf("0. 나가기\n");
+        print_divider(80, YELLOW);
+        print_centered(YELLOW_BG BLACK " [ ⚒️ 마을 대장간 - 장비 제작 ] " RESET, 80);
+        print_divider(80, YELLOW);
+        print_box_line("몬스터의 전리품을 모아 장비를 제작할 수 있습니다.", 80, YELLOW);
+        print_divider(80, YELLOW);
+        
+        char buf[128];
+        sprintf(buf, "1. 무기 연구/제작 (현재 Craft T%d)", p->c_weapon_tier);
+        print_box_line(buf, 80, YELLOW);
+        sprintf(buf, "2. 방어구 연구/제작 (현재 Craft T%d)", p->c_armor_tier);
+        print_box_line(buf, 80, YELLOW);
+        sprintf(buf, "3. 장신구 연구/제작 (현재 Craft T%d)", p->c_accessory_tier);
+        print_box_line(buf, 80, YELLOW);
+        print_box_line("0. 나가기", 80, YELLOW);
+        print_divider(80, YELLOW);
         printf("선택: ");
         
         if (scanf("%d", &choice) != 1) {
@@ -166,16 +172,24 @@ void open_crafting_menu(Player* p) {
             recipe.material_count = 3;
         }
 
-        printf("\n--- 레시피 [Tier %d] ---\n", recipe.target_tier);
+        printf("\n");
+        print_divider(80, YELLOW);
+        char title_buf[64];
+        sprintf(title_buf, "  레시피 [Tier %d]", recipe.target_tier);
+        print_box_line(title_buf, 80, YELLOW);
+        print_divider(80, YELLOW);
         for (int i = 0; i < recipe.material_count; i++) {
             int owned = get_material_count(p, recipe.materials[i].material_name);
-            printf("- %s: %d / %d\n", recipe.materials[i].material_name, owned, recipe.materials[i].count);
+            sprintf(buf, "  - %s: %d / %d", recipe.materials[i].material_name, owned, recipe.materials[i].count);
+            print_box_line(buf, 80, YELLOW);
         }
-        printf("성공 확률: %d%% | 실패 시 재료 손실 확률: %d%%\n", recipe.success_rate, recipe.failure_loss_rate);
+        sprintf(buf, "  성공 확률: %d%% | 실패 시 재료 손실: %d%%", recipe.success_rate, recipe.failure_loss_rate);
+        print_box_line(buf, 80, YELLOW);
+        print_divider(80, YELLOW);
         
         printf("\n1. 제작 시작\n0. 취소\n선택: ");
         int craft_choice;
-        scanf("%d", &craft_choice);
+        if (scanf("%d", &craft_choice) != 1) { clear_input_buffer(); continue; }
         clear_input_buffer();
         
         if (craft_choice == 1) {

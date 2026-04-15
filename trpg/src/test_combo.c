@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "character.h"
-#include "combat.h"
+#include "../include/character.h"
+#include "../include/combat.h"
 
 int main() {
     Player p;
-    // Mock init_player partially
     memset(&p, 0, sizeof(Player));
     strcpy(p.name, "TestPlayer");
     p.job = JOB_WARRIOR;
@@ -36,7 +35,6 @@ int main() {
     int dice[5] = {4, 5, 6, 4, 5};
     int damage = calculate_yacht_damage(&p, dice);
     
-    // Sum = 24. Multiplier = 80. Result = 24 * 10 * 80 = 19200
     printf("Result Damage: %d\n", damage);
     if(damage == 19200) printf("SUCCESS: Combo triggered correctly!\n");
     else printf("FAILED: Combo trigger failed or wrong damage!\n");
@@ -44,7 +42,6 @@ int main() {
     printf("\n[Test 3] No Combo Check (Dice: 1, 2, 3, 4, 5 - Large Straight)...\n");
     int dice2[5] = {1, 2, 3, 4, 5};
     int damage2 = calculate_yacht_damage(&p, dice2);
-    // Sum = 15. Large Straight = 25x. Result = 15 * 10 * 25 = 3750
     printf("Result Damage: %d\n", damage2);
     if(damage2 == 3750) printf("SUCCESS: Standard rule preserved!\n");
     else printf("FAILED: Damage calculation mismatch!\n");

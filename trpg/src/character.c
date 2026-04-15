@@ -4,6 +4,22 @@
 #include "../include/ability.h"
 #include "../include/utils.h"
 
+// --- 직업 이름 반환 ---
+const char* get_job_name(JobType job) {
+    static const char* names[] = {
+        "초보자", "전사", "궁수", "마법사", "도적",
+        "검투사", "성기사", "광전사", "레인저", "암살자", "현자",
+        "초인", "심판자", "성궤사", "대마법사", "아바타"
+    };
+    return names[job];
+}
+
+// --- 경험치 요구량 헬퍼 ---
+int get_required_exp(int level) {
+    return (level * level * 40) + (level * 50);
+}
+
+// --- 플레이어 초기화 ---
 void init_player(Player* p) {
     printf("--- 캐릭터 생성 ---\n");
     printf("이름을 입력하세요: ");
@@ -57,7 +73,6 @@ void init_player(Player* p) {
     p->inventory.count = 0;
     
     p->skill_count = 0;
-    p->has_ultimate = 0;
     
     for (int i = 0; i < MAX_BOOK_ENTRIES; i++) {
         p->encyclopedia[i].id = 0;
@@ -71,11 +86,107 @@ void init_player(Player* p) {
     printf("\n'%s'님, 모험을 시작합니다!\n", p->name);
 }
 
-// distribute_stats 함수는 더 이상 사용되지 않음 (사용자 규칙: 자동/랜덤 성장)
+// --- 전직 판정 (check_level_up에서 분리) ---
+static void try_job_advancement(Player* p) {
+    if (p->job != JOB_NONE || p->level < JOB_ADVANCEMENT_LEVEL) return;
 
+    printf("\n✨ 운명에 따라 당신의 길이 결정됩니다... ✨\n");
+    
+    int s = p->str, d = p->dex, i = p->intel, l = p->luk;
+    int max_v = s;
+    if (d > max_v) max_v = d;
+    if (i > max_v) max_v = i;
+    if (l > max_v) max_v = l;
+
+    int is_s = (s == max_v), is_d = (d == max_v), is_i = (i == max_v), is_l = (l == max_v);
+    int count = is_s + is_d + is_i + is_l;
+
+    if (count == 4) p->job = JOB_AVATAR;
+    else if (count == 3) {
+        if (!is_l) p->job = JOB_CHAMPION;
+        else if (!is_i) p->job = JOB_JUDGE;
+        else if (!is_d) p->job = JOB_PALADIN;
+        else p->job = JOB_GRANDMAGE;
+    } else if (count == 2) {
+        if (is_s && is_d) p->job = JOB_GLADIATOR;
+        else if (is_s && is_i) p->job = JOB_CRUSADER;
+        else if (is_s && is_l) p->job = JOB_BERSERKER;
+        else if (is_d && is_i) p->job = JOB_RANGER;
+        else if (is_d && is_l) p->job = JOB_ASSASSIN;
+        else p->job = JOB_SAGE;
+    } else {
+        if (is_s) p->job = JOB_WARRIOR;
+        else if (is_d) p->job = JOB_ARCHER;
+        else if (is_i) p->job = JOB_MAGE;
+        else p->job = JOB_THIEF;
+    }
+
+    printf("가장 높은 능력치에 따른 조율 결과, [ %s ](으)로 결정되었습니다!\n", get_job_name(p->job));
+}
+
+// --- 스탯 포인트 자동 분배 (check_level_up에서 분리) ---
+static void distribute_stat_points(Player* p) {
+    int pts = p->stat_points;
+    p->stat_points = 0;
+    
+    if (p->job == JOB_NONE) {
+        printf("능력치 5포인트가 무작위로 분배됩니다.\n");
+        for(int k=0; k<pts; k++) {
+            int r = rand() % 4;
+            if(r==0) { p->str++; printf("STR +1 "); }
+            else if(r==1) { p->dex++; printf("DEX +1 "); }
+            else if(r==2) { p->intel++; printf("INT +1 "); }
+            else { p->luk++; printf("LUK +1 "); }
+        }
+        printf("\n");
+    } else {
+        // 전직 후: 해당 직업의 주력 스탯들 사이에서 무작위 분배
+        int targets[4] = {0};
+        int t_count = 0;
+        
+        switch(p->job) {
+            case JOB_WARRIOR: targets[0]=1; t_count=1; break;
+            case JOB_ARCHER:  targets[1]=1; t_count=1; break;
+            case JOB_MAGE:    targets[2]=1; t_count=1; break;
+            case JOB_THIEF:   targets[3]=1; t_count=1; break;
+            case JOB_GLADIATOR: targets[0]=targets[1]=1; t_count=2; break;
+            case JOB_CRUSADER:  targets[0]=targets[2]=1; t_count=2; break;
+            case JOB_BERSERKER: targets[0]=targets[3]=1; t_count=2; break;
+            case JOB_RANGER:    targets[1]=targets[2]=1; t_count=2; break;
+            case JOB_ASSASSIN:  targets[1]=targets[3]=1; t_count=2; break;
+            case JOB_SAGE:      targets[2]=targets[3]=1; t_count=2; break;
+            case JOB_CHAMPION:  targets[0]=targets[1]=targets[2]=1; t_count=3; break;
+            case JOB_JUDGE:     targets[0]=targets[1]=targets[3]=1; t_count=3; break;
+            case JOB_PALADIN:   targets[0]=targets[2]=targets[3]=1; t_count=3; break;
+            case JOB_GRANDMAGE: targets[1]=targets[2]=targets[3]=1; t_count=3; break;
+            case JOB_AVATAR:    targets[0]=targets[1]=targets[2]=targets[3]=1; t_count=4; break;
+            default: break;
+        }
+        
+        printf("직업 특성에 따라 주력 능력치가 상승합니다.\n");
+        for(int k=0; k<pts; k++) {
+            int r_idx = rand() % t_count;
+            int current = 0;
+            for(int j=0; j<4; j++) {
+                if(targets[j]) {
+                    if(current == r_idx) {
+                        if(j==0) { p->str++; printf("STR +1 "); }
+                        else if(j==1) { p->dex++; printf("DEX +1 "); }
+                        else if(j==2) { p->intel++; printf("INT +1 "); }
+                        else { p->luk++; printf("LUK +1 "); }
+                        break;
+                    }
+                    current++;
+                }
+            }
+        }
+        printf("\n");
+    }
+}
+
+// --- 레벨업 체크 ---
 void check_level_up(Player* p) {
-    // 경험치 공식 수정: 레벨업 속도를 체감할 수 있게 하향 조정
-    int required_exp = (p->level * p->level * 40) + (p->level * 50);
+    int required_exp = get_required_exp(p->level);
 
     if (p->exp >= required_exp) {
         p->level++;
@@ -94,165 +205,99 @@ void check_level_up(Player* p) {
         printf("   (보너스: 스탯 포인트 5, 스킬 포인트 3 획득!)\n");
 
         // 1. 전직 체크
-        if (p->job == JOB_NONE && p->level >= JOB_ADVANCEMENT_LEVEL) {
-            printf("\n✨ 운명에 따라 당신의 길이 결정됩니다... ✨\n");
-            
-            int s = p->str, d = p->dex, i = p->intel, l = p->luk;
-            int max_v = s;
-            if (d > max_v) max_v = d;
-            if (i > max_v) max_v = i;
-            if (l > max_v) max_v = l;
-
-            int is_s = (s == max_v), is_d = (d == max_v), is_i = (i == max_v), is_l = (l == max_v);
-            int count = is_s + is_d + is_i + is_l;
-
-            if (count == 4) p->job = JOB_AVATAR;
-            else if (count == 3) {
-                if (!is_l) p->job = JOB_CHAMPION;
-                else if (!is_i) p->job = JOB_JUDGE;
-                else if (!is_d) p->job = JOB_PALADIN;
-                else p->job = JOB_GRANDMAGE;
-            } else if (count == 2) {
-                if (is_s && is_d) p->job = JOB_GLADIATOR;
-                else if (is_s && is_i) p->job = JOB_CRUSADER;
-                else if (is_s && is_l) p->job = JOB_BERSERKER;
-                else if (is_d && is_i) p->job = JOB_RANGER;
-                else if (is_d && is_l) p->job = JOB_ASSASSIN;
-                else p->job = JOB_SAGE;
-            } else {
-                if (is_s) p->job = JOB_WARRIOR;
-                else if (is_d) p->job = JOB_ARCHER;
-                else if (is_i) p->job = JOB_MAGE;
-                else p->job = JOB_THIEF;
-            }
-
-            const char* j_names[] = {
-                "초보자", "전사", "궁수", "마법사", "도적",
-                "검투사", "성기사", "광전사", "레인저", "암살자", "현자",
-                "초인", "심판자", "성궤사", "대마법사", "아바타"
-            };
-            printf("가장 높은 능력치에 따른 조율 결과, [ %s ](으)로 결정되었습니다!\n", j_names[p->job]);
-        }
+        try_job_advancement(p);
 
         // 2. 능력치 무작위 분배
-        int pts = p->stat_points;
-        p->stat_points = 0;
-        
-        if (p->job == JOB_NONE) {
-            printf("능력치 5포인트가 무작위로 분배됩니다.\n");
-            for(int k=0; k<pts; k++) {
-                int r = rand() % 4;
-                if(r==0) { p->str++; printf("STR +1 "); }
-                else if(r==1) { p->dex++; printf("DEX +1 "); }
-                else if(r==2) { p->intel++; printf("INT +1 "); }
-                else { p->luk++; printf("LUK +1 "); }
-            }
-            printf("\n");
-        } else {
-            // 전직 후: 해당 직업의 주력 스탯들 사이에서 무작위 분배
-            int targets[4] = {0};
-            int t_count = 0;
-            
-            switch(p->job) {
-                case JOB_WARRIOR: targets[0]=1; t_count=1; break;
-                case JOB_ARCHER:  targets[1]=1; t_count=1; break;
-                case JOB_MAGE:    targets[2]=1; t_count=1; break;
-                case JOB_THIEF:   targets[3]=1; t_count=1; break;
-                case JOB_GLADIATOR: targets[0]=targets[1]=1; t_count=2; break;
-                case JOB_CRUSADER:  targets[0]=targets[2]=1; t_count=2; break;
-                case JOB_BERSERKER: targets[0]=targets[3]=1; t_count=2; break;
-                case JOB_RANGER:    targets[1]=targets[2]=1; t_count=2; break;
-                case JOB_ASSASSIN:  targets[1]=targets[3]=1; t_count=2; break;
-                case JOB_SAGE:      targets[2]=targets[3]=1; t_count=2; break;
-                case JOB_CHAMPION:  targets[0]=targets[1]=targets[2]=1; t_count=3; break;
-                case JOB_JUDGE:     targets[0]=targets[1]=targets[3]=1; t_count=3; break;
-                case JOB_PALADIN:   targets[0]=targets[2]=targets[3]=1; t_count=3; break;
-                case JOB_GRANDMAGE: targets[1]=targets[2]=targets[3]=1; t_count=3; break;
-                case JOB_AVATAR:    targets[0]=targets[1]=targets[2]=targets[3]=1; t_count=4; break;
-                default: break;
-            }
-            
-            printf("직업 특성에 따라 주력 능력치가 상승합니다.\n");
-            for(int k=0; k<pts; k++) {
-                int r_idx = rand() % t_count;
-                int current = 0;
-                for(int j=0; j<4; j++) {
-                    if(targets[j]) {
-                        if(current == r_idx) {
-                            if(j==0) { p->str++; printf("STR +1 "); }
-                            else if(j==1) { p->dex++; printf("DEX +1 "); }
-                            else if(j==2) { p->intel++; printf("INT +1 "); }
-                            else { p->luk++; printf("LUK +1 "); }
-                            break;
-                        }
-                        current++;
-                    }
-                }
-            }
-            printf("\n");
-        }
-        
-        // 3. 스킬 포인트 시스템 도입으로 기존 무작위 선택 제거
-        // select_level_up_skill(p);
+        distribute_stat_points(p);
 
-        // 4. 콤보 스킬 체크 (자동 습득)
+        // 3. 콤보 스킬 체크 (자동 습득)
         grant_combo_skill_if_eligible(p);
 
         update_combat_power(p);
-        check_level_up(p); 
+        check_level_up(p); // 연속 레벨업 체크
     }
 }
 
-const char* get_job_name(JobType job) {
-    static const char* names[] = {
-        "초보자", "전사", "궁수", "마법사", "도적",
-        "검투사", "성기사", "광전사", "레인저", "암살자", "현자",
-        "초인", "심판자", "성궤사", "대마법사", "아바타"
-    };
-    return names[job];
-}
-
+// --- 상태 출력 (80칸 박스 UI 통일) ---
 void show_status(Player* p) {
     update_combat_power(p);
-    printf("\n====== [%s] 상태 (Level %d / %s) ======\n", p->name, p->level, get_job_name(p->job));
+    int box_width = 80;
+    char line[512];
+
+    printf("\n");
+    print_divider(box_width, CYAN);
+    sprintf(line, "  📋 [%s] 상태 (Level %d / %s)", p->name, p->level, get_job_name(p->job));
+    print_box_line(line, box_width, CYAN);
+    print_divider(box_width, CYAN);
+
+    // HP/MP 바
+    printf(CYAN "┃ " RESET);
     draw_hp_bar("HP", p->hp, p->max_hp, 30, GREEN);
-    printf("MP: %d / %d\n", p->mp, p->max_mp);
-    printf("--------------------------\n");
-    printf("STR: %d | DEX: %d\n", p->str, p->dex);
-    printf("INT: %d | LUK: %d\n", p->intel, p->luk);
-    printf("--------------------------\n");
-    printf("마력: %d | 방무: %.1f%%\n", p->magic_atk, p->ied * 100.0f);
-    printf("보뎀: %.1f%% | 뎀퍼: %.1f%%\n", p->boss_dmg * 100.0f, p->dmg_percent * 100.0f);
-    printf("--------------------------\n");
-    printf("--------------------------\n");
-    int req_exp = (p->level * p->level * 40) + (p->level * 50);
-    printf("Gold: %d G\n", p->gold);
-    draw_exp_bar(p->exp, req_exp, 30);
-    printf("--------------------------\n");
-    printf("--------------------------\n");
-    printf("장비 등급 (상점): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->weapon_tier, p->armor_tier, p->accessory_tier);
-    printf("장비 등급 (연구): [무기 T%d] [방어구 T%d] [장신구 T%d]\n", p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
+    int hp_pad = box_width - 2 - 66;
+    for(int i=0; i<hp_pad; i++) printf(" ");
+    printf(CYAN "┃" RESET "\n");
+
+    printf(CYAN "┃ " RESET);
+    sprintf(line, "MP: %d / %d", p->mp, p->max_mp);
+    int v_mp = get_visual_width(line);
+    printf("%s", line);
+    for(int i=0; i < box_width - 4 - v_mp; i++) printf(" ");
+    printf(CYAN "  ┃" RESET "\n");
+
+    print_divider(box_width, CYAN);
     
-    printf("--------------------------\n");
-    printf("[어빌리티 능력]\n");
+    // 스탯 정보
+    sprintf(line, "  STR: %d | DEX: %d | INT: %d | LUK: %d", p->str, p->dex, p->intel, p->luk);
+    print_box_line(line, box_width, CYAN);
+    sprintf(line, "  마력: %d | 방무: %.1f%% | 보뎀: %.1f%% | 뎀퍼: %.1f%%", 
+            p->magic_atk, p->ied * 100.0f, p->boss_dmg * 100.0f, p->dmg_percent * 100.0f);
+    print_box_line(line, box_width, CYAN);
+    
+    print_divider(box_width, CYAN);
+    
+    // 경험치/골드
+    int req_exp = get_required_exp(p->level);
+    sprintf(line, "  Gold: %d G", p->gold);
+    print_box_line(line, box_width, CYAN);
+    printf(CYAN "┃ " RESET);
+    draw_exp_bar(p->exp, req_exp, 30);
+    for(int i=0; i<hp_pad; i++) printf(" ");
+    printf(CYAN "┃" RESET "\n");
+    
+    print_divider(box_width, CYAN);
+    
+    // 장비 정보
+    sprintf(line, "  장비 등급 (상점): [무기 T%d] [방어구 T%d] [장신구 T%d]", p->weapon_tier, p->armor_tier, p->accessory_tier);
+    print_box_line(line, box_width, CYAN);
+    sprintf(line, "  장비 등급 (제작): [무기 T%d] [방어구 T%d] [장신구 T%d]", p->c_weapon_tier, p->c_armor_tier, p->c_accessory_tier);
+    print_box_line(line, box_width, CYAN);
+    
+    print_divider(box_width, CYAN);
+    
+    // 어빌리티
+    print_box_line("  [어빌리티 능력]", box_width, CYAN);
     int has_ability = 0;
     for (int i = 0; i < ABILITY_COUNT; i++) {
         if (p->abilities[i].type != ABILITY_TYPE_NONE) {
-            printf("- %d번: [%s] 수치: %.0f%s\n", 
-                   i + 1, get_ability_rank_name(p->abilities[i].rank), p->abilities[i].value,
+            sprintf(line, "  - %d번: [%s] %s +%.0f%s", 
+                   i + 1, get_ability_rank_name(p->abilities[i].rank),
+                   get_ability_type_name(p->abilities[i].type), p->abilities[i].value,
                    (p->abilities[i].type >= ABILITY_TYPE_STR_PER ? "%" : ""));
+            print_box_line(line, box_width, CYAN);
             has_ability = 1;
         }
     }
-    if (!has_ability) printf("- 개방된 능력이 없습니다.\n");
+    if (!has_ability) print_box_line("  - 개방된 능력이 없습니다.", box_width, CYAN);
 
-    printf("--------------------------\n");
+    print_divider(box_width, CYAN);
     show_skills(p);
 
-    printf("전투력: %d\n", p->combat_power);
-    printf("========================\n");
+    sprintf(line, "  전투력: %d", p->combat_power);
+    print_box_line(line, box_width, CYAN);
+    print_divider(box_width, CYAN);
 }
 
+// --- 간략 상태 바 ---
 void show_compact_status(Player* p) {
     update_combat_power(p);
     int box_width = 80;
@@ -274,14 +319,15 @@ void show_compact_status(Player* p) {
     // 2행: HP 바
     printf(CYAN "│ " RESET);
     draw_hp_bar("PHYSICAL", p->hp, p->max_hp, 30, CYAN);
-    for(int i=0; i<11; i++) printf(" "); // (80 - 2 - 66 - 1) 보정
+    int hp_pad = box_width - 2 - 66;
+    for(int i=0; i<hp_pad; i++) printf(" ");
     printf(CYAN "│" RESET "\n");
     
     // 3행: EXP 바
     printf(CYAN "│ " RESET);
-    int req_exp = (p->level * p->level * 40) + (p->level * 50);
+    int req_exp = get_required_exp(p->level);
     draw_exp_bar(p->exp, req_exp, 30);
-    for(int i=0; i<11; i++) printf(" ");
+    for(int i=0; i<hp_pad; i++) printf(" ");
     printf(CYAN "│" RESET "\n");
     
     printf(CYAN "├"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┤" RESET "\n");
@@ -307,37 +353,43 @@ void show_compact_status(Player* p) {
     printf(CYAN "└"); for(int i=0; i<box_width-2; i++) printf("─"); printf("┘" RESET "\n");
 }
 
+// --- 인벤토리 (80칸 박스 통일) ---
 void show_inventory(const Player* p) {
     clear_screen();
-    printf("\n" CYAN "┌──────────────────────────────────────────────────────────────┐" RESET "\n");
-    printf(CYAN "│" RESET "  " YELLOW BOLD "🎒 인벤토리 창" RESET "                                       " CYAN "│" RESET "\n");
-    printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
-    printf(CYAN "│" RESET "  현재 소지량: [ " GREEN BOLD "%2d" RESET " / " WHITE "%2d" RESET " ]                                " CYAN "│" RESET "\n", p->inventory.count, MAX_INVENTORY_SIZE);
-    printf(CYAN "├──────────────────────────────────────────────────────────────┤" RESET "\n");
+    int box_width = 80;
+    char line[512];
+
+    print_divider(box_width, CYAN);
+    print_box_line("  🎒 인벤토리 창", box_width, CYAN);
+    print_divider(box_width, CYAN);
+
+    sprintf(line, "  현재 소지량: [ %d / %d ]", p->inventory.count, MAX_INVENTORY_SIZE);
+    print_box_line(line, box_width, CYAN);
+    print_divider(box_width, CYAN);
 
     if (p->inventory.count == 0) {
-        printf(CYAN "│" RESET "                                                              " CYAN "│" RESET "\n");
-        printf(CYAN "│" RESET "  " WHITE "비어 있습니다. 모험을 통해 아이템을 획득하세요!" RESET "           " CYAN "│" RESET "\n");
-        printf(CYAN "│" RESET "                                                              " CYAN "│" RESET "\n");
+        print_box_line("", box_width, CYAN);
+        print_box_line("  비어 있습니다. 모험을 통해 아이템을 획득하세요!", box_width, CYAN);
+        print_box_line("", box_width, CYAN);
     } else {
         for (int i = 0; i < p->inventory.count; i++) {
-            printf(CYAN "│" RESET "  " BOLD "%2d." RESET " [" GREEN "%-14s" RESET "]                                    " CYAN "│" RESET "\n", 
-                   i + 1, p->inventory.items[i].name);
-            printf(CYAN "│" RESET "      " WHITE "↳ %-42s" RESET " " YELLOW "%5d G" RESET " " CYAN "│" RESET "\n", 
-                   p->inventory.items[i].description, p->inventory.items[i].value);
+            sprintf(line, "  %2d. [%-14s]  %5d G", i + 1, p->inventory.items[i].name, p->inventory.items[i].value);
+            print_box_line(line, box_width, CYAN);
+            sprintf(line, "      ↳ %s", p->inventory.items[i].description);
+            print_box_line(line, box_width, CYAN);
             
             if (i < p->inventory.count - 1) {
-                printf(CYAN "│" RESET "  " WHITE "----------------------------------------------------------" RESET "  " CYAN "│" RESET "\n");
+                print_box_line("  ──────────────────────────────────────────────────────────", box_width, CYAN);
             }
         }
     }
 
-    printf(CYAN "└──────────────────────────────────────────────────────────────┘" RESET "\n");
+    print_divider(box_width, CYAN);
     printf("\n  " BOLD "계속하려면 엔터를 누르세요..." RESET);
-    
-    // 버퍼 비우기 및 입력 대기 (utils.h의 함수 활용)
     wait_for_enter();
 }
+
+// --- 사망 패널티 ---
 void apply_death_penalty(Player* p) {
     printf("\n💀 [사망] 전투에서 패배했습니다! 💀\n");
     printf("강력한 사망 패널티가 적용됩니다.\n");
@@ -355,8 +407,6 @@ void apply_death_penalty(Player* p) {
     if (p->weapon_tier > 0 && (rand() % 100 < 20)) {
         p->weapon_tier--;
         printf("- [경고] 무기가 손상되어 등급이 하락했습니다! (Tier %d)\n", p->weapon_tier);
-        // 실제 스탯 차감을 위해 장비 효과는 상점에서 다시 사거나...
-        // 여기서는 그냥 티어만 낮춤 (상점 로직상 티어가 낮으면 스탯이 낮음)
     }
     if (p->armor_tier > 0 && (rand() % 100 < 20)) {
         p->armor_tier--;
@@ -390,6 +440,7 @@ void apply_death_penalty(Player* p) {
     update_combat_power(p);
 }
 
+// --- 전투력 계산 ---
 void update_combat_power(Player* p) {
     float str_bonus = 0, dex_bonus = 0, int_bonus = 0, luk_bonus = 0;
     float str_per = 1.0f, dex_per = 1.0f, int_per = 1.0f, luk_per = 1.0f;
@@ -439,4 +490,3 @@ void update_combat_power(Player* p) {
     
     p->combat_power = (int)(cp * dur_eff);
 }
-
