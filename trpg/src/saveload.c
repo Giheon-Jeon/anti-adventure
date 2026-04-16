@@ -1,14 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <direct.h>   // _mkdir (Windows)
-#include <io.h>        // _findfirst, _findnext (Windows)
+
+#ifdef _WIN32
+    #include <direct.h>   // _mkdir (Windows)
+    #include <io.h>        // _findfirst, _findnext (Windows)
+#else
+    #include <sys/stat.h>  // mkdir (POSIX)
+    #include <sys/types.h>
+    #include <dirent.h>    // opendir, readdir (POSIX)
+#endif
+
 #include "../include/saveload.h"
 #include "../include/utils.h"
 
 // --- saves 디렉터리 존재 확인 및 생성 ---
 static void ensure_save_dir() {
-    _mkdir(SAVE_DIR);  // 이미 존재하면 무시됨
+#ifdef _WIN32
+    _mkdir(SAVE_DIR);
+#else
+    mkdir(SAVE_DIR, 0755);
+#endif
 }
 
 // ============================================================
@@ -366,7 +378,9 @@ int show_load_menu(Player* p) {
     
     char filenames[MAX_SAVE_SLOTS][128];
     int file_count = 0;
-    
+
+#ifdef _WIN32
+    // Windows: _findfirst / _findnext
     struct _finddata_t fileinfo;
     intptr_t handle;
     char search_path[MAX_FILENAME_LEN];
@@ -378,42 +392,59 @@ int show_load_menu(Player* p) {
             if (file_count < MAX_SAVE_SLOTS) {
                 strncpy(filenames[file_count], fileinfo.name, 127);
                 filenames[file_count][127] = '\0';
-                
-                // 파일 미리보기: 첫 줄 읽어서 캐릭터 이름 표시
-                char preview_path[512];
-                snprintf(preview_path, sizeof(preview_path), "%s/%s", SAVE_DIR, fileinfo.name);
-                FILE* pf = fopen(preview_path, "r");
-                char preview_name[50] = "???";
-                char preview_info[128] = "";
-                if (pf) {
-                    char buf[2048];
-                    // [PLAYER] 헤더 건너뛰기
-                    if (fgets(buf, sizeof(buf), pf)) {
-                        // 컬럼 헤더 건너뛰기
-                        if (fgets(buf, sizeof(buf), pf)) {
-                            // 데이터 줄 읽기
-                            if (fgets(buf, sizeof(buf), pf)) {
-                                buf[strcspn(buf, "\r\n")] = '\0';
-                                // 이름,직업,레벨 파싱
-                                const char* ptr = buf;
-                                char pname[50];
-                                parse_quoted_field(pname, sizeof(pname), &ptr);
-                                int pjob = parse_int_field(&ptr);
-                                int plevel = parse_int_field(&ptr);
-                                strncpy(preview_name, pname, 49);
-                                sprintf(preview_info, "Lv.%d %s", plevel, get_job_name((JobType)pjob));
-                            }
-                        }
-                    }
-                    fclose(pf);
-                }
-                
-                printf("  " GREEN "%2d." RESET " %-30s  " CYAN "[%s - %s]" RESET "\n", 
-                       file_count + 1, fileinfo.name, preview_name, preview_info);
                 file_count++;
             }
         } while (_findnext(handle, &fileinfo) == 0);
         _findclose(handle);
+    }
+#else
+    // POSIX: opendir / readdir
+    DIR* dir = opendir(SAVE_DIR);
+    if (dir) {
+        struct dirent* entry;
+        while ((entry = readdir(dir)) != NULL && file_count < MAX_SAVE_SLOTS) {
+            // .csv 확장자 필터링
+            const char* ext = strrchr(entry->d_name, '.');
+            if (ext && strcmp(ext, ".csv") == 0) {
+                strncpy(filenames[file_count], entry->d_name, 127);
+                filenames[file_count][127] = '\0';
+                file_count++;
+            }
+        }
+        closedir(dir);
+    }
+#endif
+
+    // 파일 미리보기 출력
+    for (int i = 0; i < file_count; i++) {
+        char preview_path[512];
+        snprintf(preview_path, sizeof(preview_path), "%s/%s", SAVE_DIR, filenames[i]);
+        FILE* pf = fopen(preview_path, "r");
+        char preview_name[50] = "???";
+        char preview_info[128] = "";
+        if (pf) {
+            char buf[2048];
+            // [PLAYER] 헤더 건너뛰기
+            if (fgets(buf, sizeof(buf), pf)) {
+                // 컬럼 헤더 건너뛰기
+                if (fgets(buf, sizeof(buf), pf)) {
+                    // 데이터 줄 읽기
+                    if (fgets(buf, sizeof(buf), pf)) {
+                        buf[strcspn(buf, "\r\n")] = '\0';
+                        const char* ptr = buf;
+                        char pname[50];
+                        parse_quoted_field(pname, sizeof(pname), &ptr);
+                        int pjob = parse_int_field(&ptr);
+                        int plevel = parse_int_field(&ptr);
+                        strncpy(preview_name, pname, 49);
+                        sprintf(preview_info, "Lv.%d %s", plevel, get_job_name((JobType)pjob));
+                    }
+                }
+            }
+            fclose(pf);
+        }
+        printf("  " GREEN "%2d." RESET " %-30s  " CYAN "[%s - %s]" RESET "\n",
+               i + 1, filenames[i], preview_name, preview_info);
     }
     
     if (file_count == 0) {
