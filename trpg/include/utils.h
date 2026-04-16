@@ -53,6 +53,7 @@ void print_divider(int width, const char* color);
 void print_box_line(const char* text, int width, const char* color);
 
 // 타이틀 화면 (Game Start Screen)
-void show_title_screen();
+// 반환값: 1 = 새로 시작, 2 = 이어하기
+int show_title_screen();
 
 #endif

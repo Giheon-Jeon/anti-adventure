@@ -8,7 +8,7 @@ echo ========================================
 taskkill /IM trpg.exe /F >nul 2>&1
 
 :: 2. Compile (All source files with warnings enabled)
-gcc -Wall -Wextra -o trpg.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c src/ability.c src/skill.c src/encyclopedia.c -Iinclude
+gcc -Wall -Wextra -o trpg.exe src/main.c src/character.c src/combat.c src/event.c src/shop.c src/utils.c src/village.c src/crafting.c src/ability.c src/skill.c src/encyclopedia.c src/saveload.c -Iinclude
 
 if %errorlevel% neq 0 (
     echo.

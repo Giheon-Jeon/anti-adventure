@@ -130,7 +130,7 @@ void print_box_line(const char* text, int width, const char* color) {
     printf("  ┃\n" RESET);
 }
 
-void show_title_screen() {
+int show_title_screen() {
     clear_screen();
     int term_width = 80; // 80칸으로 표준화
     printf("\n\n");
@@ -158,16 +158,42 @@ void show_title_screen() {
     print_centered("- Craft Legendary Gear, Master Powerful Skills -", term_width);
     printf(RESET);
 
-    printf("\n\n\n");
-    printf(BOLD YELLOW);
-    print_centered(">> PRESS ENTER TO START YOUR LEGACY <<", term_width);
-    printf(RESET);
-    
     printf("\n\n");
     print_divider(term_width, RED);
     printf(WHITE);
     print_centered("(C) 2026 Anti-Adventure Team. All rights reserved.", term_width);
     printf(RESET);
+
+    // --- 새로 시작 / 이어하기 선택 메뉴 ---
+    printf("\n\n");
+    print_divider(term_width, YELLOW);
+    printf("\n");
+    print_centered(GREEN BOLD "1. 🆕  새로운 모험 시작" RESET, term_width);
+    printf("\n");
+    print_centered(CYAN BOLD "2. 📂  이어하기 (저장 파일 불러오기)" RESET, term_width);
+    printf("\n\n");
+    print_divider(term_width, YELLOW);
     
-    getchar();
+    printf("\n");
+    print_centered(BOLD "선택: " RESET, term_width);
+    
+    int choice = 0;
+    while (choice != 1 && choice != 2) {
+        printf("  >> ");
+        if (scanf("%d", &choice) != 1) {
+            // 잘못된 입력 처리
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+            choice = 0;
+        } else {
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF);
+        }
+        
+        if (choice != 1 && choice != 2) {
+            printf(RED "  잘못된 입력입니다. 1 또는 2를 입력하세요." RESET "\n");
+        }
+    }
+    
+    return choice;
 }
