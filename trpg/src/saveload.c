@@ -331,88 +331,21 @@ int load_game(Player* p, const char* filepath) {
 }
 
 // ============================================================
-//  저장 메뉴 UI
+//  즉시 저장 (캐릭터 이름 기반 자동 파일명)
 // ============================================================
-void show_save_menu(Player* p) {
-    clear_screen();
-    int box_width = 80;
-    char filename[128];
-    char filepath[MAX_FILENAME_LEN];
+void quick_save(Player* p) {
+    ensure_save_dir();
 
-    print_divider(box_width, CYAN);
-    print_box_line("  💾 게임 저장", box_width, CYAN);
-    print_divider(box_width, CYAN);
-    
-    printf("\n");
-    printf("  현재 캐릭터: " BOLD "%s" RESET " (Lv.%d %s)\n", 
-           p->name, p->level, get_job_name(p->job));
-    printf("\n");
-    
-    // 기존 세이브 파일 목록 표시
-    printf("  " YELLOW "[ 기존 저장 파일 ]" RESET "\n");
-    
-    struct _finddata_t fileinfo;
-    intptr_t handle;
-    char search_path[MAX_FILENAME_LEN];
-    sprintf(search_path, "%s/*.csv", SAVE_DIR);
-    
-    int file_count = 0;
-    handle = _findfirst(search_path, &fileinfo);
-    if (handle != -1) {
-        do {
-            printf("    %d. %s\n", ++file_count, fileinfo.name);
-        } while (_findnext(handle, &fileinfo) == 0);
-        _findclose(handle);
-    }
-    
-    if (file_count == 0) {
-        printf("    (저장된 파일이 없습니다)\n");
-    }
-    
-    printf("\n");
-    print_divider(box_width, CYAN);
-    printf("  저장할 파일 이름을 입력하세요 (.csv 자동 추가)\n");
-    printf("  (취소: 0 입력)\n");
-    printf("\n  파일명: ");
-    
-    scanf("%127s", filename);
-    clear_input_buffer();
-    
-    if (strcmp(filename, "0") == 0) {
-        printf("\n  " YELLOW "저장이 취소되었습니다." RESET "\n");
-        wait_for_enter();
-        return;
-    }
-    
-    // .csv 확장자가 없으면 자동 추가
-    if (strstr(filename, ".csv") == NULL) {
-        sprintf(filepath, "%s/%s.csv", SAVE_DIR, filename);
-    } else {
-        sprintf(filepath, "%s/%s", SAVE_DIR, filename);
-    }
-    
-    // 기존 파일 존재 시 덮어쓰기 확인
-    FILE* check = fopen(filepath, "r");
-    if (check) {
-        fclose(check);
-        printf("\n  " YELLOW "⚠ 동일한 이름의 파일이 이미 존재합니다." RESET "\n");
-        printf("  덮어쓰시겠습니까? (Y/N): ");
-        char confirm;
-        scanf(" %c", &confirm);
-        clear_input_buffer();
-        if (confirm != 'Y' && confirm != 'y') {
-            printf("\n  " YELLOW "저장이 취소되었습니다." RESET "\n");
-            wait_for_enter();
-            return;
-        }
-    }
-    
+    char filepath[MAX_FILENAME_LEN];
+    snprintf(filepath, sizeof(filepath), "%s/%s.csv", SAVE_DIR, p->name);
+
     if (save_game(p, filepath)) {
-        printf("\n  " GREEN "✅ 저장 완료!" RESET " → %s\n", filepath);
+        printf("\n  " GREEN "✅ 저장 완료!" RESET " → %s (Lv.%d %s)\n",
+               filepath, p->level, get_job_name(p->job));
     } else {
         printf("\n  " RED "❌ 저장 실패!" RESET "\n");
     }
-    
+
     wait_for_enter();
 }
 

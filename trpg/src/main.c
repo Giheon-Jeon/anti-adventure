@@ -86,7 +86,7 @@ int main() {
                 show_skill_tree(&player);
                 break;
             case 8:
-                show_save_menu(&player);
+                quick_save(&player);
                 break;
             case 9: {
                 // 종료 전 저장 확인
@@ -95,7 +95,7 @@ int main() {
                 scanf(" %c", &save_confirm);
                 clear_input_buffer();
                 if (save_confirm == 'Y' || save_confirm == 'y') {
-                    show_save_menu(&player);
+                    quick_save(&player);
                 }
                 printf("\n" YELLOW BOLD "  게임을 종료합니다. 안녕히 가세요!" RESET "\n");
                 return 0;
