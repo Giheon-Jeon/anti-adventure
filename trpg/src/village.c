@@ -26,8 +26,8 @@ void open_blacksmith_menu(Player* p) {
     
     print_divider(80, YELLOW);
 
-    int cost = (100 - p->weapon_dur) * 10 + (100 - p->armor_dur) * 10 + (100 - p->accessory_dur) * 10;
-    cost += (100 - p->c_weapon_dur) * 20 + (100 - p->c_armor_dur) * 20 + (100 - p->c_accessory_dur) * 20;
+    int cost = (100 - p->weapon_dur) * 2 + (100 - p->armor_dur) * 2 + (100 - p->accessory_dur) * 2;
+    cost += (100 - p->c_weapon_dur) * 5 + (100 - p->c_armor_dur) * 5 + (100 - p->c_accessory_dur) * 5;
 
     if (cost == 0) {
         printf(GREEN "\n이미 모든 장비가 최상의 상태입니다!\n" RESET);
@@ -96,9 +96,9 @@ void open_village_menu(Player* p) {
                         printf("\n[알바 중...] 마을 광장을 열심히 청소합니다... ✨\n");
                         int roll = rand() % 100;
                         int gold = 0, hp = 0;
-                        if (roll < 10) { gold = 20; hp = 10; printf("✨ [대성공!] 사람들에게 칭찬을 들었습니다! ✨\n"); }
-                        else if (roll < 60) { gold = 15; hp = 5; printf("✅ [성공] 무난하게 청소를 마쳤습니다.\n"); }
-                        else if (roll < 90) { gold = 5; hp = 0; printf("❓ [실패] 청소가 덜 된 곳이 있습니다.\n"); }
+                        if (roll < 10) { gold = 40; hp = 10; printf("✨ [대성공!] 사람들에게 칭찬을 들었습니다! ✨\n"); }
+                        else if (roll < 60) { gold = 25; hp = 5; printf("✅ [성공] 무난하게 청소를 마쳤습니다.\n"); }
+                        else if (roll < 90) { gold = 10; hp = 0; printf("❓ [실패] 청소가 덜 된 곳이 있습니다.\n"); }
                         else { gold = 0; hp = -5; printf("💀 [대실패] 허리를 삐끗했습니다! 💀\n"); }
                         p->gold += gold; p->hp += hp;
                         if (p->hp > p->max_hp) p->hp = p->max_hp;

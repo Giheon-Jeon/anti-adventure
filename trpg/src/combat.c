@@ -325,7 +325,7 @@ void start_combat(Player* p, Dungeon* d) {
             
             // 보상 계산 (몬스터 스탯 기반)
             int exp_gain = (enemy.max_hp / 50) + (enemy.def * 2);
-            int gold_gain = (enemy.max_hp / 30) + (rand() % 100);
+            int gold_gain = (enemy.max_hp / 20) + (rand() % 120) + 30;
             p->exp += exp_gain;
             p->gold += gold_gain;
             
