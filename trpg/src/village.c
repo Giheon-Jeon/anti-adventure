@@ -26,8 +26,8 @@ void open_blacksmith_menu(Player* p) {
     
     print_divider(80, YELLOW);
 
-    int cost = (100 - p->weapon_dur) * 10 + (100 - p->armor_dur) * 10 + (100 - p->accessory_dur) * 10;
-    cost += (100 - p->c_weapon_dur) * 20 + (100 - p->c_armor_dur) * 20 + (100 - p->c_accessory_dur) * 20;
+    int cost = (100 - p->weapon_dur) * 2 + (100 - p->armor_dur) * 2 + (100 - p->accessory_dur) * 2;
+    cost += (100 - p->c_weapon_dur) * 5 + (100 - p->c_armor_dur) * 5 + (100 - p->c_accessory_dur) * 5;
 
     if (cost == 0) {
         printf(GREEN "\n이미 모든 장비가 최상의 상태입니다!\n" RESET);
