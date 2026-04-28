@@ -1,0 +1,55 @@
+name: C and Python Build CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Set up Build Tools
+      run: |
+        sudo apt-get update 
+        sudo apt-get install -y build-essential doxygen graphviz
+
+    - name: Install Python dependencies
+      run: |
+        cd trpg
+        pip install -r requirements.txt
+
+    - name: Data Validation (Pydantic)
+      run: |
+        cd trpg
+        python3 scripts/validate_data.py
+
+    - name: Generate Data (Python)
+      run: |
+        cd trpg
+        python3 scripts/generate_data.py
+
+    - name: Build with Makefile
+      run: |
+        cd trpg
+        make
+
+    - name: Generate Documentation (Doxygen)
+      run: |
+        cd trpg
+        doxygen Doxyfile
+    
+    - name: Upload Documentation Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-documentation
+        path: trpg/docs/html
