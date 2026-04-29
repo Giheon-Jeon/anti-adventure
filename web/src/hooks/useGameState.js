@@ -59,7 +59,7 @@ export function useGameState() {
 
   const dispatch = useCallback((action) => {
     setGameState((prev) => {
-      let newState = { ...prev };
+      let newState = JSON.parse(JSON.stringify(prev));
       
       switch (action.type) {
         
@@ -117,8 +117,13 @@ export function useGameState() {
           break;
           
         case 'REPAIR_ALL':
+          if (!newState.player.needsRepair) {
+             newState.logs = ['수리할 장비가 없습니다.', ...newState.logs].slice(0, 50);
+             break;
+          }
           if (newState.player.gold >= action.payload.cost) {
             newState.player.gold -= action.payload.cost;
+            newState.player.needsRepair = false;
             newState.logs = [`모든 장비가 완벽하게 수리되었습니다! (-${action.payload.cost}G)`, ...newState.logs].slice(0, 50);
           } else {
             newState.logs = ['수리비가 부족합니다!', ...newState.logs].slice(0, 50);
@@ -211,6 +216,9 @@ export function useGameState() {
           newState.player.hp -= action.payload;
           if (newState.player.hp <= 0) {
             newState.player.hp = 1; // Don't die completely for demo
+          }
+          if (Math.random() < 0.2) {
+            newState.player.needsRepair = true;
           }
           break;
           

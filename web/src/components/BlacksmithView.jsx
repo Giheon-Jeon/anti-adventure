@@ -23,8 +23,15 @@ export default function BlacksmithView({ state, dispatch, onBack }) {
           <div className="stat-header">
             <h3><Hammer size={16} style={{marginRight: '5px'}}/>모든 장비 수리</h3>
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>손상된 장비의 내구도를 완전히 복구합니다.</p>
-          <button className="btn btn-primary" style={{ marginTop: '15px' }} onClick={repairAll}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>
+            {state.player.needsRepair ? '장비가 손상되었습니다. 수리가 필요합니다.' : '현재 모든 장비의 상태가 완벽합니다.'}
+          </p>
+          <button 
+            className="btn btn-primary" 
+            style={{ marginTop: '15px' }} 
+            onClick={repairAll}
+            disabled={!state.player.needsRepair}
+          >
             100G 수리
           </button>
         </motion.div>

@@ -20,6 +20,24 @@ export default function DungeonView({ state, dispatch }) {
     const possibleMonsters = monsters[dungeon.id] || monsters['field'];
     const randomMonster = possibleMonsters[Math.floor(Math.random() * possibleMonsters.length)];
     
+    const entry = state.encyclopedia.find(e => e.name === randomMonster);
+    if (entry && entry.kills >= 30) {
+      const earnedGold = dungeon.recLevel * 10 + Math.floor(Math.random() * 10);
+      const earnedExp = dungeon.recLevel * 20;
+      dispatch({ type: 'ADD_LOG', payload: `[도감 마스터] ${randomMonster}의 약점을 간파하여 즉시 처치했습니다! (+${earnedGold}G, +${earnedExp}EXP)` });
+      dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: randomMonster } });
+      
+      setSelectedDungeon(dungeon);
+      setMonster({ name: randomMonster, instantKilled: true, hp: 0, maxHp: dungeon.recLevel * 30 });
+      setInCombat(true);
+      
+      setTimeout(() => {
+        setInCombat(false);
+        setMonster(null);
+      }, 2000);
+      return;
+    }
+
     setMonster({
       name: randomMonster,
       hp: dungeon.recLevel * 30,
@@ -34,7 +52,7 @@ export default function DungeonView({ state, dispatch }) {
   };
 
   const attack = () => {
-    if (!monster || isRolling) return;
+    if (!monster || isRolling || monster.instantKilled) return;
     setIsRolling(true);
 
     // Get skill levels
@@ -151,64 +169,74 @@ export default function DungeonView({ state, dispatch }) {
           >
             <div style={{ textAlign: 'center', width: '100%' }}>
               <h2 style={{ fontSize: '2rem', color: 'var(--danger)', marginBottom: '10px' }}>{monster.name}</h2>
-              <div style={{ width: '100%', maxWidth: '300px', margin: '0 auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '5px' }}>
-                  <span>HP</span>
-                  <span>{monster.hp} / {monster.maxHp}</span>
+              {monster.instantKilled ? (
+                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ color: '#34d399', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  ⚡ 약점 간파! 즉시 처치! ⚡
+                </motion.div>
+              ) : (
+                <div style={{ width: '100%', maxWidth: '300px', margin: '0 auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '5px' }}>
+                    <span>HP</span>
+                    <span>{monster.hp} / {monster.maxHp}</span>
+                  </div>
+                  <div className="progress-bar-bg" style={{ height: '12px' }}>
+                    <div className="progress-bar-fill hp-fill" style={{ width: `${(monster.hp / monster.maxHp) * 100}%` }} />
+                  </div>
                 </div>
-                <div className="progress-bar-bg" style={{ height: '12px' }}>
-                  <div className="progress-bar-fill hp-fill" style={{ width: `${(monster.hp / monster.maxHp) * 100}%` }} />
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Battle Visuals Area */}
-            <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-              <AnimatePresence>
-                {battleResult && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', width: '100%' }}
-                  >
-                    {battleResult.phase === 'rolling' ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}
+            {!monster.instantKilled && (
+              <>
+                <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                  <AnimatePresence>
+                    {battleResult && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', width: '100%' }}
                       >
-                        <Dices size={48} color="var(--primary)" />
+                        {battleResult.phase === 'rolling' ? (
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}
+                          >
+                            <Dices size={48} color="var(--primary)" />
+                          </motion.div>
+                        ) : (
+                          <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', maxWidth: '400px' }}>
+                            {/* Player side */}
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ textAlign: 'center', background: 'rgba(52,211,153,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(52,211,153,0.3)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>내 주사위</div>
+                              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#34d399' }}>🎲 {battleResult.playerDice}</div>
+                              <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>피해: <strong style={{ color: 'var(--danger)' }}>{battleResult.playerDamage}</strong></div>
+                            </motion.div>
+                            
+                            {/* Monster side */}
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} style={{ textAlign: 'center', background: 'rgba(248,113,113,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.3)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>적 주사위</div>
+                              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f87171' }}>🎲 {battleResult.monsterDice}</div>
+                              <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>반격: <strong style={{ color: 'var(--danger)' }}>{battleResult.monsterDamage}</strong></div>
+                            </motion.div>
+                          </div>
+                        )}
                       </motion.div>
-                    ) : (
-                      <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', maxWidth: '400px' }}>
-                        {/* Player side */}
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ textAlign: 'center', background: 'rgba(52,211,153,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(52,211,153,0.3)' }}>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>내 주사위</div>
-                          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#34d399' }}>🎲 {battleResult.playerDice}</div>
-                          <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>피해: <strong style={{ color: 'var(--danger)' }}>{battleResult.playerDamage}</strong></div>
-                        </motion.div>
-                        
-                        {/* Monster side */}
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} style={{ textAlign: 'center', background: 'rgba(248,113,113,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.3)' }}>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>적 주사위</div>
-                          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f87171' }}>🎲 {battleResult.monsterDice}</div>
-                          <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>반격: <strong style={{ color: 'var(--danger)' }}>{battleResult.monsterDamage}</strong></div>
-                        </motion.div>
-                      </div>
                     )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  </AnimatePresence>
+                </div>
 
-            <div style={{ display: 'flex', gap: '20px', marginTop: 'auto' }}>
-              <button className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '1.2rem', opacity: isRolling ? 0.5 : 1 }} onClick={attack} disabled={isRolling}>
-                <Sword size={24} /> {isRolling ? '전투 중...' : '공격 (Enter)'}
-              </button>
-              <button className="btn" style={{ padding: '15px 30px', fontSize: '1.2rem' }} onClick={runAway} disabled={isRolling}>
-                도망치기
-              </button>
-            </div>
+                <div style={{ display: 'flex', gap: '20px', marginTop: 'auto' }}>
+                  <button className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '1.2rem', opacity: isRolling ? 0.5 : 1 }} onClick={attack} disabled={isRolling}>
+                    <Sword size={24} /> {isRolling ? '전투 중...' : '공격 (Enter)'}
+                  </button>
+                  <button className="btn" style={{ padding: '15px 30px', fontSize: '1.2rem' }} onClick={runAway} disabled={isRolling}>
+                    도망치기
+                  </button>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
