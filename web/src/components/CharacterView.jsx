@@ -1,7 +1,7 @@
 import { Activity, Shield, Zap, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function CharacterView({ state }) {
+export default function CharacterView({ state, dispatch }) {
   const { player } = state;
   const { stats } = player;
 
