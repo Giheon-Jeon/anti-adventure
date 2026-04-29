@@ -159,6 +159,23 @@ export function useGameState() {
           newState.player.exp += exp;
           newState.logs = [`${monsterName} 처치! +${gold}G, +${exp}EXP`, ...newState.logs].slice(0, 50);
           
+          let levelUpBattle = false;
+          while (newState.player.exp >= newState.player.maxExp) {
+            newState.player.level += 1;
+            newState.player.exp -= newState.player.maxExp;
+            newState.player.maxExp = Math.floor(newState.player.maxExp * 1.5);
+            newState.player.maxHp += 20;
+            newState.player.hp = newState.player.maxHp;
+            newState.player.stats.str += 2;
+            newState.player.stats.dex += 2;
+            newState.player.stats.int += 2;
+            newState.player.stats.luk += 2;
+            levelUpBattle = true;
+          }
+          if (levelUpBattle) {
+            newState.logs = [`레벨업! 현재 레벨: ${newState.player.level}`, ...newState.logs].slice(0, 50);
+          }
+          
           // Encyclopedia update
           const entry = newState.encyclopedia.find(e => e.name === monsterName);
           if (entry) {
@@ -170,13 +187,8 @@ export function useGameState() {
           
         case 'TRAIN':
           const stat = action.payload;
-          if (newState.player.hp > 10) {
-            newState.player.hp -= 10;
-            newState.player.stats[stat] += 1;
-            newState.logs = [`훈련을 통해 ${stat.toUpperCase()}이(가) 1 상승했습니다. (HP -10)`, ...newState.logs].slice(0, 50);
-          } else {
-            newState.logs = ['체력이 부족하여 훈련할 수 없습니다.', ...newState.logs].slice(0, 50);
-          }
+          newState.player.stats[stat] += 1;
+          newState.logs = [`훈련을 통해 ${stat.toUpperCase()}이(가) 1 상승했습니다. (-50G)`, ...newState.logs].slice(0, 50);
           break;
 
         case 'TAKE_DAMAGE':
