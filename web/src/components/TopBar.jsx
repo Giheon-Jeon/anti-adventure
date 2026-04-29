@@ -18,15 +18,24 @@ export default function TopBar({ player }) {
       </div>
 
       <div className="bars-container" style={{ flex: 1, margin: '0 30px' }}>
-        <div style={{ marginBottom: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-            <span>HP {player.hp}/{player.maxHp}</span>
-            <span>MP {player.mp}/{player.maxMp}</span>
+        <div style={{ display: 'flex', gap: '15px', marginBottom: '8px' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+              <span>HP</span>
+              <span>{player.hp}/{player.maxHp}</span>
+            </div>
+            <div className="progress-bar-bg">
+              <div className="progress-bar-fill hp-fill" style={{ width: `${hpPercent}%` }} />
+            </div>
           </div>
-          <div className="progress-bar-bg" style={{ display: 'flex' }}>
-            <div className="progress-bar-fill hp-fill" style={{ width: `${hpPercent}%` }} />
-            <div style={{ flex: 1 }} />
-            <div className="progress-bar-fill mp-fill" style={{ width: `${mpPercent}%` }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+              <span>MP</span>
+              <span>{player.mp}/{player.maxMp}</span>
+            </div>
+            <div className="progress-bar-bg">
+              <div className="progress-bar-fill mp-fill" style={{ width: `${mpPercent}%`, background: '#3b82f6' }} />
+            </div>
           </div>
         </div>
         

@@ -44,7 +44,18 @@ export default function ShopView({ state, dispatch, onBack }) {
       <p style={{ color: 'var(--text-muted)' }}>필요한 장비와 포션을 구매하세요. 현재 소지 골드: <strong style={{color: '#fbbf24'}}>{state.player.gold}G</strong></p>
 
       <div className="card-grid">
-        {shopItems.map(item => {
+        {shopItems.filter(item => {
+          let currentTier = 0;
+          if (item.type === 'weapon') currentTier = state.player.weapon_tier || 0;
+          if (item.type === 'armor') currentTier = state.player.armor_tier || 0;
+          if (item.type === 'accessory') currentTier = state.player.accessory_tier || 0;
+          
+          const maxTiers = { weapon: 3, armor: 3, accessory: 2 };
+          if (currentTier >= maxTiers[item.type]) {
+            return item.tier === maxTiers[item.type];
+          }
+          return item.tier === currentTier + 1;
+        }).map(item => {
           let currentTier = 0;
           if (item.type === 'weapon') currentTier = state.player.weapon_tier || 0;
           if (item.type === 'armor') currentTier = state.player.armor_tier || 0;
