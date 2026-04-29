@@ -72,7 +72,12 @@ export default function ShopView({ state, dispatch, onBack }) {
                 </h3>
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>{item.desc}</p>
-              <button className="btn btn-primary" style={{ marginTop: '15px' }} onClick={() => buyItem(item)} disabled={isBought}>
+              <button 
+                className={`btn ${state.player.gold >= item.cost ? 'btn-primary' : 'btn-danger'}`} 
+                style={{ marginTop: '15px' }} 
+                onClick={() => buyItem(item)} 
+                disabled={isBought}
+              >
                 {item.cost}G 구매
               </button>
             </motion.div>
@@ -84,7 +89,7 @@ export default function ShopView({ state, dispatch, onBack }) {
             <h3><Heart size={16} style={{ color: 'red', marginRight: '5px' }} />빨간 포션</h3>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>HP 50% 회복</p>
-          <button className="btn" style={{ marginTop: '15px' }} onClick={() => buyPotion('hp')}>
+          <button className={`btn ${state.player.gold >= 30 ? '' : 'btn-danger'}`} style={{ marginTop: '15px' }} onClick={() => buyPotion('hp')}>
             30G 구매
           </button>
         </motion.div>
@@ -94,7 +99,7 @@ export default function ShopView({ state, dispatch, onBack }) {
             <h3><Heart size={16} style={{ color: 'blue', marginRight: '5px' }} />파란 포션</h3>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '10px' }}>MP 50% 회복</p>
-          <button className="btn" style={{ marginTop: '15px' }} onClick={() => buyPotion('mp')}>
+          <button className={`btn ${state.player.gold >= 30 ? '' : 'btn-danger'}`} style={{ marginTop: '15px' }} onClick={() => buyPotion('mp')}>
             30G 구매
           </button>
         </motion.div>

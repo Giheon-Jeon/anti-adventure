@@ -83,7 +83,7 @@ export default function VillageView({ state, dispatch, setActiveTab }) {
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>50G를 소모하여 무작위 스탯을 1 올립니다.</p>
           <button 
-            className="btn btn-primary" 
+            className={`btn ${state.player.gold >= 50 ? 'btn-primary' : 'btn-danger'}`} 
             style={{ marginTop: '10px', opacity: trainCooldown > 0 ? 0.5 : 1, cursor: trainCooldown > 0 ? 'not-allowed' : 'pointer' }} 
             onClick={handleTrain} 
             disabled={trainCooldown > 0}
@@ -125,7 +125,7 @@ export default function VillageView({ state, dispatch, setActiveTab }) {
             <h3><HeartPulse size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px', color: 'var(--danger)' }}/>여관</h3>
           </div>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>50G를 지불하고 체력과 마나를 모두 회복합니다.</p>
-          <button className="btn btn-primary" style={{ marginTop: '10px' }} onClick={handleHeal}>
+          <button className={`btn ${state.player.gold >= 50 ? 'btn-primary' : 'btn-danger'}`} style={{ marginTop: '10px' }} onClick={handleHeal}>
             휴식하기 (50G)
           </button>
         </motion.div>
@@ -184,7 +184,7 @@ export default function VillageView({ state, dispatch, setActiveTab }) {
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
             500G를 내면 전설적인 영웅들의 전직 비밀을 알려줍니다.
           </p>
-          <button className="btn" style={{ width: '100%', borderColor: 'var(--secondary)', color: 'var(--secondary)' }} onClick={() => dispatch({ type: 'BUY_HINT' })}>
+          <button className={`btn ${state.player.gold >= 500 ? '' : 'btn-danger'}`} style={{ width: '100%', borderColor: 'var(--secondary)', color: 'var(--secondary)' }} onClick={() => dispatch({ type: 'BUY_HINT' })}>
             힌트 듣기 (500G)
           </button>
         </motion.div>

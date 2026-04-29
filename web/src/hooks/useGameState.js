@@ -174,6 +174,8 @@ export function useGameState() {
             if (char && !char.statistics) char.statistics = { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 };
           });
         }
+        
+        parsed.dungeons = initialState.dungeons; // Always update to latest dungeons
 
         return parsed;
       } catch (e) { return initialState; }
@@ -354,8 +356,8 @@ export function useGameState() {
           }
           if (levelUp) {
             newState.logs = [`레벨업! 현재 레벨: ${player.level} (+스킬포인트 1)`, ...newState.logs].slice(0, 50);
-            checkJobAdvancement();
           }
+          checkJobAdvancement();
           break;
           
         case 'COMBAT_WIN':
@@ -381,8 +383,8 @@ export function useGameState() {
           }
           if (levelUpBattle) {
             newState.logs = [`레벨업! 현재 레벨: ${player.level} (+스킬포인트 1)`, ...newState.logs].slice(0, 50);
-            checkJobAdvancement();
           }
+          checkJobAdvancement();
           
           const entry = newState.encyclopedia.find(e => e.name === monsterName);
           if (entry) {
