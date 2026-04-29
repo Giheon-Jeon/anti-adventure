@@ -12,6 +12,9 @@ const initialState = {
     exp: 0,
     maxExp: 100,
     gold: 500,
+    weapon_tier: 0,
+    armor_tier: 0,
+    accessory_tier: 0,
     stats: {
       str: 10,
       dex: 10,
@@ -47,6 +50,67 @@ export function useGameState() {
       let newState = { ...prev };
       
       switch (action.type) {
+        
+        case 'WORK_JOB':
+          if (newState.player.hp > 15) {
+            const roll = Math.floor(Math.random() * 100);
+            let gold = 0, hpLoss = 0, msg = '';
+            if (roll < 10) { gold = 40; hpLoss = -10; msg = '✨ [대성공!] 사람들에게 칭찬을 들었습니다! (+40G, HP회복 10)'; }
+            else if (roll < 60) { gold = 25; hpLoss = 5; msg = '✅ [성공] 무난하게 청소를 마쳤습니다. (+25G, HP감소 5)'; }
+            else if (roll < 90) { gold = 10; hpLoss = 15; msg = '❓ [실패] 청소가 덜 된 곳이 있습니다. (+10G, HP감소 15)'; }
+            else { gold = 0; hpLoss = 25; msg = '💀 [대실패] 허리를 삐끗했습니다! (+0G, HP감소 25)'; }
+            
+            newState.player.gold += gold;
+            newState.player.hp -= hpLoss;
+            if (newState.player.hp > newState.player.maxHp) newState.player.hp = newState.player.maxHp;
+            if (newState.player.hp < 1) newState.player.hp = 1;
+            newState.logs = [msg, ...newState.logs].slice(0, 50);
+          } else {
+            newState.logs = ['체력이 부족하여 알바를 할 수 없습니다. (HP 15 초과 필요)', ...newState.logs].slice(0, 50);
+          }
+          break;
+
+        case 'BUY_ITEM':
+          const { cost, statIncreases, newTier, type } = action.payload;
+          if (newState.player.gold >= cost) {
+            newState.player.gold -= cost;
+            if (statIncreases.str) newState.player.stats.str += statIncreases.str;
+            if (statIncreases.dex) newState.player.stats.dex += statIncreases.dex;
+            if (statIncreases.int) newState.player.stats.int += statIncreases.int;
+            if (statIncreases.luk) newState.player.stats.luk += statIncreases.luk;
+            if (statIncreases.maxHp) { newState.player.maxHp += statIncreases.maxHp; newState.player.hp = newState.player.maxHp; }
+            if (statIncreases.maxMp) { newState.player.maxMp += statIncreases.maxMp; newState.player.mp = newState.player.maxMp; }
+            if (type === 'weapon') newState.player.weapon_tier = newTier;
+            if (type === 'armor') newState.player.armor_tier = newTier;
+            if (type === 'accessory') newState.player.accessory_tier = newTier;
+            newState.logs = [`상점에서 장비를 구매했습니다! (-${cost}G)`, ...newState.logs].slice(0, 50);
+          }
+          break;
+
+        case 'BUY_POTION':
+          if (newState.player.gold >= 30) {
+            newState.player.gold -= 30;
+            if (action.payload === 'hp') {
+              newState.player.hp = Math.min(newState.player.maxHp, newState.player.hp + Math.floor(newState.player.maxHp / 2));
+              newState.logs = ['빨간 포션을 마셔 체력을 회복했습니다.', ...newState.logs].slice(0, 50);
+            } else {
+              newState.player.mp = Math.min(newState.player.maxMp, newState.player.mp + Math.floor(newState.player.maxMp / 2));
+              newState.logs = ['파란 포션을 마셔 마나를 회복했습니다.', ...newState.logs].slice(0, 50);
+            }
+          } else {
+            newState.logs = ['포션을 살 골드가 부족합니다! (30G 필요)', ...newState.logs].slice(0, 50);
+          }
+          break;
+          
+        case 'REPAIR_ALL':
+          if (newState.player.gold >= action.payload.cost) {
+            newState.player.gold -= action.payload.cost;
+            newState.logs = [`모든 장비가 완벽하게 수리되었습니다! (-${action.payload.cost}G)`, ...newState.logs].slice(0, 50);
+          } else {
+            newState.logs = ['수리비가 부족합니다!', ...newState.logs].slice(0, 50);
+          }
+          break;
+
         case 'ADD_LOG':
           newState.logs = [action.payload, ...newState.logs].slice(0, 50);
           break;

@@ -5,6 +5,8 @@ import './App.css';
 
 // We will implement individual views in separate components
 import VillageView from './components/VillageView';
+import ShopView from './components/ShopView';
+import BlacksmithView from './components/BlacksmithView';
 import DungeonView from './components/DungeonView';
 import CharacterView from './components/CharacterView';
 import EncyclopediaView from './components/EncyclopediaView';
@@ -38,7 +40,9 @@ function App() {
             className="view-container"
           >
             {activeTab === 'character' && <CharacterView state={gameState} dispatch={dispatch} />}
-            {activeTab === 'village' && <VillageView state={gameState} dispatch={dispatch} />}
+            {activeTab === 'village' && <VillageView state={gameState} dispatch={dispatch} setActiveTab={setActiveTab} />}
+            {activeTab === 'shop' && <ShopView state={gameState} dispatch={dispatch} onBack={() => setActiveTab('village')} />}
+            {activeTab === 'blacksmith' && <BlacksmithView state={gameState} dispatch={dispatch} onBack={() => setActiveTab('village')} />}
             {activeTab === 'dungeon' && <DungeonView state={gameState} dispatch={dispatch} />}
             {activeTab === 'encyclopedia' && <EncyclopediaView state={gameState} dispatch={dispatch} />}
           </motion.div>

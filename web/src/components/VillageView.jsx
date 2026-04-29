@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Dumbbell, HeartPulse, Coins, Hammer } from 'lucide-react';
 
-export default function VillageView({ state, dispatch }) {
+export default function VillageView({ state, dispatch, setActiveTab }) {
   const handleTrain = (stat) => {
     dispatch({ type: 'TRAIN', payload: stat });
   };
