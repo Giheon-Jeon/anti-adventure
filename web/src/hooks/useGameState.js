@@ -17,7 +17,8 @@ const getInitialPlayer = (name = 'Adventurer') => ({
     { id: 'lucky_dice', name: '행운의 주사위', level: 0, maxLevel: 5, desc: '내 주사위 눈금이 레벨당 1씩 추가로 보정됩니다.' }
   ],
   inventory: [],
-  needsRepair: false
+  needsRepair: false,
+  statistics: { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 }
 });
 
 const initialState = {
@@ -36,6 +37,41 @@ const initialState = {
   ],
 };
 
+const evaluateJob = (player) => {
+  const { stats, weapon_tier, armor_tier, accessory_tier, statistics, gold } = player;
+  
+  // Legendary (레전더리)
+  if (stats.str >= 30 && stats.dex >= 30 && stats.int >= 30 && stats.luk >= 30 && weapon_tier === 3 && armor_tier === 3) {
+    return { job: '용사 (Legendary)', desc: '모든 분야에 통달한 세계의 구원자', bonus: { str: 20, dex: 20, int: 20, luk: 20 } };
+  }
+  if (stats.luk >= 50 && armor_tier === 0 && weapon_tier === 0) {
+    return { job: '타짜 (Legendary)', desc: '운에 모든 것을 건 전설의 도박사', bonus: { luk: 50, dex: 10 } };
+  }
+  
+  // Hero (영웅)
+  if (stats.str >= 40 && statistics.lowestHpPercent <= 10 && statistics.monstersKilled >= 20) {
+    return { job: '광전사 (Hero)', desc: '죽음의 문턱에서 각성한 전사', bonus: { str: 30, maxHp: 300 } };
+  }
+  if (stats.dex >= 30 && stats.luk >= 30 && gold >= 3000) {
+    return { job: '대도 (Hero)', desc: '돈과 운이 따르는 전설적인 도둑', bonus: { dex: 20, luk: 20 } };
+  }
+  if (stats.int >= 40 && statistics.potionsUsed >= 10 && statistics.monstersKilled >= 10) {
+    return { job: '정령술사 (Hero)', desc: '마력을 한계치까지 끌어올린 자', bonus: { int: 30, maxMp: 200 } };
+  }
+  
+  // Rare (희귀)
+  if (stats.str >= 30 && weapon_tier >= 2) return { job: '검투사 (Rare)', desc: '무기 다루는 법을 마스터한 투사', bonus: { str: 15 } };
+  if (stats.dex >= 30 && accessory_tier >= 2) return { job: '암살자 (Rare)', desc: '어둠 속에 숨어 적을 노리는 자', bonus: { dex: 15 } };
+  if (stats.str >= 25 && stats.int >= 25 && armor_tier >= 2) return { job: '성기사 (Rare)', desc: '신성한 힘을 다루는 기사', bonus: { str: 10, int: 10, maxHp: 100 } };
+  
+  // Common (일반)
+  if (stats.str >= 25) return { job: '전사 (Common)', desc: '힘을 바탕으로 싸우는 자', bonus: { str: 10 } };
+  if (stats.dex >= 25) return { job: '도적 (Common)', desc: '민첩함을 무기로 삼는 자', bonus: { dex: 10 } };
+  if (stats.int >= 25) return { job: '마법사 (Common)', desc: '마력을 다루는 자', bonus: { int: 10 } };
+  
+  return { job: '백수 (Common)', desc: '아무것도 하지 않은 자', bonus: { luk: 5 } };
+};
+
 export const getUnionBonus = (state) => {
   let bonus = { str: 0, dex: 0, int: 0, luk: 0, maxHp: 0, totalLevel: 0 };
   if (!state.characters) return bonus;
@@ -51,9 +87,11 @@ export const getUnionBonus = (state) => {
       bonus.maxHp += char.level * 5;
       
       // Job specific bonuses
-      if (char.job === 'Novice') {
-         bonus.maxHp += 10; // Extra HP for novice
-      }
+      if (char.job === 'Novice') bonus.maxHp += 10;
+      if (char.job.includes('Warrior') || char.job.includes('전사')) bonus.str += 5;
+      if (char.job.includes('Rogue') || char.job.includes('도적') || char.job.includes('대도')) bonus.dex += 5;
+      if (char.job.includes('Mage') || char.job.includes('마법사') || char.job.includes('정령술사')) bonus.int += 5;
+      if (char.job.includes('Gambler') || char.job.includes('타짜')) bonus.luk += 10;
     }
   });
   return bonus;
@@ -71,8 +109,14 @@ export function useGameState() {
           const oldPlayer = parsed.player || getInitialPlayer('Player 1');
           if (!oldPlayer.skills) oldPlayer.skills = getInitialPlayer().skills;
           if (oldPlayer.skill_points === undefined) oldPlayer.skill_points = 0;
+          if (!oldPlayer.statistics) oldPlayer.statistics = { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 };
           parsed.characters = [oldPlayer, null, null];
           parsed.activeSlot = 0;
+        } else {
+          // Migrate old slots
+          parsed.characters.forEach(char => {
+            if (char && !char.statistics) char.statistics = { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 };
+          });
         }
 
         return parsed;
@@ -90,6 +134,25 @@ export function useGameState() {
       let newState = JSON.parse(JSON.stringify(prev));
       let player = newState.characters[newState.activeSlot];
       
+      const checkJobAdvancement = () => {
+        if (player.level >= 10 && player.job === 'Novice') {
+          const jobResult = evaluateJob(player);
+          player.job = jobResult.job;
+          if (jobResult.bonus.str) player.stats.str += jobResult.bonus.str;
+          if (jobResult.bonus.dex) player.stats.dex += jobResult.bonus.dex;
+          if (jobResult.bonus.int) player.stats.int += jobResult.bonus.int;
+          if (jobResult.bonus.luk) player.stats.luk += jobResult.bonus.luk;
+          if (jobResult.bonus.maxHp) { player.maxHp += jobResult.bonus.maxHp; player.hp = player.maxHp + getUnionBonus(newState).maxHp; }
+          if (jobResult.bonus.maxMp) { player.maxMp += jobResult.bonus.maxMp; player.mp = player.maxMp; }
+          
+          newState.logs = [
+            `🎉 [전직 완료!] ${jobResult.desc}`,
+            `✨ 10레벨 달성! 새로운 직업 '${jobResult.job}'을(를) 얻었습니다!`, 
+            ...newState.logs
+          ].slice(0, 50);
+        }
+      };
+
       switch (action.type) {
         case 'WORK_JOB':
           if (player.hp > 15) {
@@ -105,6 +168,11 @@ export function useGameState() {
             const maxHpWithUnion = player.maxHp + getUnionBonus(newState).maxHp;
             if (player.hp > maxHpWithUnion) player.hp = maxHpWithUnion;
             if (player.hp < 1) player.hp = 1;
+            player.statistics.timesWorked += 1;
+            
+            const hpPct = (player.hp / maxHpWithUnion) * 100;
+            if (hpPct < player.statistics.lowestHpPercent) player.statistics.lowestHpPercent = hpPct;
+            
             newState.logs = [msg, ...newState.logs].slice(0, 50);
           } else {
             newState.logs = ['체력이 부족하여 알바를 할 수 없습니다. (HP 15 초과 필요)', ...newState.logs].slice(0, 50);
@@ -115,6 +183,7 @@ export function useGameState() {
           const { cost, statIncreases, newTier, type } = action.payload;
           if (player.gold >= cost) {
             player.gold -= cost;
+            player.statistics.moneySpent += cost;
             if (statIncreases.str) player.stats.str += statIncreases.str;
             if (statIncreases.dex) player.stats.dex += statIncreases.dex;
             if (statIncreases.int) player.stats.int += statIncreases.int;
@@ -136,6 +205,8 @@ export function useGameState() {
         case 'BUY_POTION':
           if (player.gold >= 30) {
             player.gold -= 30;
+            player.statistics.moneySpent += 30;
+            player.statistics.potionsUsed += 1;
             if (action.payload === 'hp') {
               const maxHpWithUnion = player.maxHp + getUnionBonus(newState).maxHp;
               player.hp = Math.min(maxHpWithUnion, player.hp + Math.floor(player.maxHp / 2));
@@ -146,6 +217,26 @@ export function useGameState() {
             }
           } else {
             newState.logs = ['포션을 살 골드가 부족합니다! (30G 필요)', ...newState.logs].slice(0, 50);
+          }
+          break;
+
+        case 'BUY_HINT':
+          if (player.gold >= 500) {
+            player.gold -= 500;
+            const hints = [
+              "광전사의 길: 죽음의 문턱(HP 10% 이하)을 경험하고 수많은 몬스터를 벤 강인한 투지(STR)가 필요합니다.",
+              "대도의 길: 민첩(DEX)과 행운(LUK)을 갈고닦아 3000G 이상의 부를 축적해야 합니다.",
+              "정령술사의 길: 쉴 새 없이 마나포션을 소모하며 지능(INT)의 극의에 달해야 합니다.",
+              "전설의 도박사: 아무런 방어구와 무기도 사지 않은 채 자신의 운(LUK 50)만을 믿어야 합니다.",
+              "세계의 구원자: 모든 분야(장비 3티어, 모든스탯 30)에 통달해야 전설이 됩니다."
+            ];
+            const randomHint = hints[Math.floor(Math.random() * hints.length)];
+            newState.logs = [
+              `📜 정보 상인: "${randomHint}"`,
+              ...newState.logs
+            ].slice(0, 50);
+          } else {
+            newState.logs = ['정보를 살 골드가 부족합니다! (500G 필요)', ...newState.logs].slice(0, 50);
           }
           break;
           
@@ -204,6 +295,7 @@ export function useGameState() {
           }
           if (levelUp) {
             newState.logs = [`레벨업! 현재 레벨: ${player.level} (+스킬포인트 1)`, ...newState.logs].slice(0, 50);
+            checkJobAdvancement();
           }
           break;
           
@@ -211,6 +303,7 @@ export function useGameState() {
           const { gold, exp, monsterName } = action.payload;
           player.gold += gold;
           player.exp += exp;
+          player.statistics.monstersKilled += 1;
           newState.logs = [`${monsterName} 처치! +${gold}G, +${exp}EXP`, ...newState.logs].slice(0, 50);
           
           let levelUpBattle = false;
@@ -229,6 +322,7 @@ export function useGameState() {
           }
           if (levelUpBattle) {
             newState.logs = [`레벨업! 현재 레벨: ${player.level} (+스킬포인트 1)`, ...newState.logs].slice(0, 50);
+            checkJobAdvancement();
           }
           
           const entry = newState.encyclopedia.find(e => e.name === monsterName);
@@ -242,6 +336,7 @@ export function useGameState() {
         case 'TRAIN':
           const stat = action.payload;
           player.stats[stat] += 1;
+          player.statistics.moneySpent += 50;
           newState.logs = [`훈련을 통해 ${stat.toUpperCase()}이(가) 1 상승했습니다. (-50G)`, ...newState.logs].slice(0, 50);
           break;
 
@@ -250,6 +345,10 @@ export function useGameState() {
           if (player.hp <= 0) {
             player.hp = 1; 
           }
+          const maxHpUnion = player.maxHp + getUnionBonus(newState).maxHp;
+          const hpPctDmg = (player.hp / maxHpUnion) * 100;
+          if (hpPctDmg < player.statistics.lowestHpPercent) player.statistics.lowestHpPercent = hpPctDmg;
+          
           if (Math.random() < 0.2) {
             player.needsRepair = true;
           }

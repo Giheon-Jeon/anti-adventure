@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, HeartPulse, Coins, Hammer, ShoppingCart, ArrowUpCircle } from 'lucide-react';
+import { Dumbbell, HeartPulse, Coins, Hammer, ShoppingCart, ArrowUpCircle, BookOpen } from 'lucide-react';
 
 export default function VillageView({ state, dispatch, setActiveTab }) {
   const [isWorking, setIsWorking] = useState(false);
@@ -174,6 +174,18 @@ export default function VillageView({ state, dispatch, setActiveTab }) {
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>장비 수리 및 아이템 제작을 수행합니다.</p>
           <button className="btn" onClick={() => setActiveTab('blacksmith')} style={{ marginTop: '10px' }}>
             입장하기
+          </button>
+        </motion.div>
+        
+        <motion.div className="stat-card glass-panel text-center">
+          <div className="stat-header" style={{ justifyContent: 'center', marginBottom: '15px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BookOpen size={20} className="text-secondary" /> 정보 상인</h3>
+          </div>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
+            500G를 내면 전설적인 영웅들의 전직 비밀을 알려줍니다.
+          </p>
+          <button className="btn" style={{ width: '100%', borderColor: 'var(--secondary)', color: 'var(--secondary)' }} onClick={() => dispatch({ type: 'BUY_HINT' })}>
+            힌트 듣기 (500G)
           </button>
         </motion.div>
       </div>
