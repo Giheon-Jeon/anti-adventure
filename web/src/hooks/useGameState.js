@@ -34,6 +34,9 @@ const initialState = {
     { id: 'field', name: '초심자의 들판', recLevel: 1, type: 'easy' },
     { id: 'forest', name: '어두운 숲', recLevel: 5, type: 'normal' },
     { id: 'cave', name: '고블린 동굴', recLevel: 10, type: 'hard' },
+    { id: 'ruins', name: '저주받은 폐허', recLevel: 15, type: 'hard' },
+    { id: 'abyss', name: '심연의 나락', recLevel: 20, type: 'expert' },
+    { id: 'dragon', name: '드래곤의 둥지', recLevel: 30, type: 'hell' },
   ],
 };
 
@@ -70,6 +73,59 @@ const evaluateJob = (player) => {
   if (stats.int >= 25) return { job: '마법사 (Common)', desc: '마력을 다루는 자', bonus: { int: 10 } };
   
   return { job: '백수 (Common)', desc: '아무것도 하지 않은 자', bonus: { luk: 5 } };
+};
+
+export const getJobSkills = (jobName) => {
+  const t1 = { level: 0, maxLevel: 5 };
+  const t2 = { level: 0, maxLevel: 5 };
+  const ult = { level: 0, maxLevel: 1 };
+  
+  if (jobName.includes('용사')) return [
+    { id: 'hero_t1', name: '빛의 검 (1차)', desc: '최종 피해량 +20', ...t1 },
+    { id: 'hero_t2', name: '신의 가호 (2차)', desc: '받는 피해량 -15', ...t2 },
+    { id: 'hero_ult', name: '초신성 (궁극기)', desc: '피해량 2배 폭증', ...ult }
+  ];
+  if (jobName.includes('타짜')) return [
+    { id: 'gambler_t1', name: '밑장 빼기 (1차)', desc: '추가 피해 +15', ...t1 },
+    { id: 'gambler_t2', name: '올인 (2차)', desc: '주사위 배율 +0.5배', ...t2 },
+    { id: 'gambler_ult', name: '잭팟 (궁극기)', desc: '피해량 3배 폭증, 방어 0', ...ult }
+  ];
+  if (jobName.includes('광전사')) return [
+    { id: 'berserk_t1', name: '분노의 일격 (1차)', desc: '추가 피해 +25', ...t1 },
+    { id: 'berserk_t2', name: '피의 굶주림 (2차)', desc: '적에게 가한 피해 일부 회복', ...t2 },
+    { id: 'berserk_ult', name: '불사 (궁극기)', desc: '받는 피해 대폭 감소', ...ult }
+  ];
+  if (jobName.includes('대도')) return [
+    { id: 'thief_t1', name: '동전 던지기 (1차)', desc: '피해량 +15', ...t1 },
+    { id: 'thief_t2', name: '회피 기동 (2차)', desc: '받는 피해량 -10', ...t2 },
+    { id: 'thief_ult', name: '그림자 분신 (궁극기)', desc: '피해량 1.5배 증폭', ...ult }
+  ];
+  if (jobName.includes('정령술사')) return [
+    { id: 'elem_t1', name: '정령 소환 (1차)', desc: '추가 피해 +18', ...t1 },
+    { id: 'elem_t2', name: '원소 방패 (2차)', desc: '받는 피해 -12', ...t2 },
+    { id: 'elem_ult', name: '정령의 분노 (궁극기)', desc: '피해량 2배 폭증', ...ult }
+  ];
+  if (jobName.includes('검투사') || jobName.includes('전사')) return [
+    { id: 'warrior_t1', name: '강타 (1차)', desc: '최종 피해량 +10', ...t1 },
+    { id: 'warrior_t2', name: '돌진 (2차)', desc: '주사위 눈금 합에 +5 보너스', ...t2 },
+    { id: 'warrior_ult', name: '회전베기 (궁극기)', desc: '최종 피해량 1.5배 증폭', ...ult }
+  ];
+  if (jobName.includes('암살자') || jobName.includes('도적')) return [
+    { id: 'rogue_t1', name: '급소 찌르기 (1차)', desc: '최종 피해량 +12', ...t1 },
+    { id: 'rogue_t2', name: '그림자 숨기 (2차)', desc: '받는 피해량 8 감소', ...t2 },
+    { id: 'rogue_ult', name: '암살 (궁극기)', desc: '주사위 배율 +0.5배', ...ult }
+  ];
+  if (jobName.includes('성기사') || jobName.includes('마법사')) return [
+    { id: 'mage_t1', name: '매직 클로 (1차)', desc: '최종 피해량 +15', ...t1 },
+    { id: 'mage_t2', name: '마력 방패 (2차)', desc: '받는 피해량 10 감소', ...t2 },
+    { id: 'mage_ult', name: '메테오 (궁극기)', desc: '모든 공격에 50 고정 피해', ...ult }
+  ];
+  
+  return [
+    { id: 'jobless_t1', name: '돌 던지기 (1차)', desc: '최종 피해량 +5', ...t1 },
+    { id: 'jobless_t2', name: '죽은 척하기 (2차)', desc: '받는 피해량 5 감소', ...t2 },
+    { id: 'jobless_ult', name: '대박 기원 (궁극기)', desc: '주사위 결과 무조건 +10 추가', ...ult }
+  ];
 };
 
 export const getUnionBonus = (state) => {
@@ -145,9 +201,12 @@ export function useGameState() {
           if (jobResult.bonus.maxHp) { player.maxHp += jobResult.bonus.maxHp; player.hp = player.maxHp + getUnionBonus(newState).maxHp; }
           if (jobResult.bonus.maxMp) { player.maxMp += jobResult.bonus.maxMp; player.mp = player.maxMp; }
           
+          const newSkills = getJobSkills(jobResult.job);
+          player.skills.push(...newSkills);
+          
           newState.logs = [
             `🎉 [전직 완료!] ${jobResult.desc}`,
-            `✨ 10레벨 달성! 새로운 직업 '${jobResult.job}'을(를) 얻었습니다!`, 
+            `✨ 10레벨 달성! 새로운 직업 '${jobResult.job}'을(를) 얻었습니다! (전용 스킬 3종 획득)`, 
             ...newState.logs
           ].slice(0, 50);
         }

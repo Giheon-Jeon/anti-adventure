@@ -95,12 +95,44 @@ export default function DungeonView({ state, dispatch }) {
     const luckyDiceLv = state.player.skills?.find(s => s.id === 'lucky_dice')?.level || 0;
     const unionBonus = state.unionBonus || { str: 0, dex: 0, int: 0, luk: 0 };
 
+    let extraFlatDmg = 0, extraDmgReduc = 0, extraDiceSum = 0, extraMult = 0, lifesteal = 0;
+    state.player.skills?.forEach(s => {
+      if (s.level === 0) return;
+      if (s.id === 'hero_t1') extraFlatDmg += 20 * s.level;
+      if (s.id === 'hero_t2') extraDmgReduc += 15 * s.level;
+      if (s.id === 'hero_ult') extraMult += 1.0 * s.level;
+      if (s.id === 'gambler_t1') extraFlatDmg += 15 * s.level;
+      if (s.id === 'gambler_t2') extraMult += 0.5 * s.level;
+      if (s.id === 'gambler_ult') { extraMult += 2.0 * s.level; extraDmgReduc -= 50; }
+      if (s.id === 'berserk_t1') extraFlatDmg += 25 * s.level;
+      if (s.id === 'berserk_t2') lifesteal += 0.1 * s.level;
+      if (s.id === 'berserk_ult') extraDmgReduc += 30 * s.level;
+      if (s.id === 'thief_t1') extraFlatDmg += 15 * s.level;
+      if (s.id === 'thief_t2') extraDmgReduc += 10 * s.level;
+      if (s.id === 'thief_ult') extraMult += 0.5 * s.level;
+      if (s.id === 'elem_t1') extraFlatDmg += 18 * s.level;
+      if (s.id === 'elem_t2') extraDmgReduc += 12 * s.level;
+      if (s.id === 'elem_ult') extraMult += 1.0 * s.level;
+      if (s.id === 'warrior_t1') extraFlatDmg += 10 * s.level;
+      if (s.id === 'warrior_t2') extraDiceSum += 5 * s.level;
+      if (s.id === 'warrior_ult') extraMult += 0.5 * s.level;
+      if (s.id === 'rogue_t1') extraFlatDmg += 12 * s.level;
+      if (s.id === 'rogue_t2') extraDmgReduc += 8 * s.level;
+      if (s.id === 'rogue_ult') extraMult += 0.5 * s.level;
+      if (s.id === 'mage_t1') extraFlatDmg += 15 * s.level;
+      if (s.id === 'mage_t2') extraDmgReduc += 10 * s.level;
+      if (s.id === 'mage_ult') extraFlatDmg += 50 * s.level;
+      if (s.id === 'jobless_t1') extraFlatDmg += 5 * s.level;
+      if (s.id === 'jobless_t2') extraDmgReduc += 5 * s.level;
+      if (s.id === 'jobless_ult') extraDiceSum += 10 * s.level;
+    });
+
     // Player 5 Dice
     const playerDiceArr = Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1 + luckyDiceLv);
     const playerEval = evaluateDice(playerDiceArr);
     
-    const basePlayerDmg = (state.player.stats.str + unionBonus.str) * 2 + playerEval.sum + (powerStrikeLv * 5);
-    const playerDamage = Math.floor(basePlayerDmg * playerEval.mult);
+    const basePlayerDmg = (state.player.stats.str + unionBonus.str) * 2 + playerEval.sum + extraDiceSum + (powerStrikeLv * 5) + extraFlatDmg;
+    const playerDamage = Math.floor(basePlayerDmg * (playerEval.mult + extraMult));
 
     // Monster 3 Dice
     const monsterDiceArr = Array.from({ length: 3 }, () => Math.floor(Math.random() * 6) + 1);
@@ -108,7 +140,7 @@ export default function DungeonView({ state, dispatch }) {
 
     const baseMonsterDmg = monster.attack + monsterEval.sum - Math.floor((state.player.stats.dex + unionBonus.dex) * 0.5);
     let monsterDamage = Math.floor(Math.max(1, baseMonsterDmg) * monsterEval.mult);
-    monsterDamage = Math.max(1, monsterDamage - (ironSkinLv * 3));
+    monsterDamage = Math.max(1, monsterDamage - (ironSkinLv * 3) - extraDmgReduc);
 
     setBattleResult({
       playerDiceArr,
@@ -123,30 +155,38 @@ export default function DungeonView({ state, dispatch }) {
     setTimeout(() => {
       setBattleResult(prev => ({ ...prev, phase: 'result' }));
       
-      const newMonsterHp = Math.max(0, monster.hp - playerDamage);
-      dispatch({ type: 'ADD_LOG', payload: `[${playerEval.name}] ${monster.name}에게 ${playerDamage}의 피해!` });
-
-      if (newMonsterHp === 0) {
+      // Monster attacks first
+      dispatch({ type: 'TAKE_DAMAGE', payload: monsterDamage });
+      dispatch({ type: 'ADD_LOG', payload: `${monster.name}의 [${monsterEval.name}] 선제 공격! ${monsterDamage}의 피해.` });
+      
+      if (state.player.hp - monsterDamage <= 0) {
+        dispatch({ type: 'ADD_LOG', payload: '체력이 0이 되어 눈앞이 깜깜해졌다... 마을로 돌아갑니다.' });
         setTimeout(() => {
-          const earnedGold = selectedDungeon.recLevel * 10 + Math.floor(Math.random() * 10);
-          const earnedExp = selectedDungeon.recLevel * 20;
-          
-          dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: monster.name } });
           setInCombat(false);
           setMonster(null);
           setIsRolling(false);
           setBattleResult(null);
         }, 2000);
-        return;
+        return; // Player died
       }
 
+      // Player attacks if survived
       setTimeout(() => {
-        dispatch({ type: 'TAKE_DAMAGE', payload: monsterDamage });
-        dispatch({ type: 'ADD_LOG', payload: `${monster.name}의 [${monsterEval.name}] 반격! ${monsterDamage}의 피해.` });
-        
-        if (state.player.hp - monsterDamage <= 0) {
-          dispatch({ type: 'ADD_LOG', payload: '체력이 0이 되어 눈앞이 깜깜해졌다... 마을로 돌아갑니다.' });
+        const newMonsterHp = Math.max(0, monster.hp - playerDamage);
+        dispatch({ type: 'ADD_LOG', payload: `[${playerEval.name}] 반격! ${monster.name}에게 ${playerDamage}의 피해!` });
+
+        if (lifesteal > 0) {
+           const healAmt = Math.floor(playerDamage * lifesteal);
+           dispatch({ type: 'TAKE_DAMAGE', payload: -healAmt });
+           dispatch({ type: 'ADD_LOG', payload: `피의 굶주림으로 ${healAmt}만큼 체력을 흡수했다!` });
+        }
+
+        if (newMonsterHp === 0) {
           setTimeout(() => {
+            const earnedGold = selectedDungeon.recLevel * 10 + Math.floor(Math.random() * 10);
+            const earnedExp = selectedDungeon.recLevel * 20;
+            
+            dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: monster.name } });
             setInCombat(false);
             setMonster(null);
             setIsRolling(false);
