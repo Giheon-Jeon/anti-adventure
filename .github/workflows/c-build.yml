@@ -1,4 +1,4 @@
-name: C and Python Build CI
+name: Web and Python Build CI
 
 on:
   push:
@@ -18,10 +18,10 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Set up Build Tools
-      run: |
-        sudo apt-get update 
-        sudo apt-get install -y build-essential doxygen graphviz
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
 
     - name: Install Python dependencies
       run: |
@@ -38,18 +38,12 @@ jobs:
         cd trpg
         python3 scripts/generate_data.py
 
-    - name: Build with Makefile
+    - name: Install Web dependencies
       run: |
-        cd trpg
-        make
+        cd web
+        npm install
 
-    - name: Generate Documentation (Doxygen)
+    - name: Build Web Application
       run: |
-        cd trpg
-        doxygen Doxyfile
-    
-    - name: Upload Documentation Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: api-documentation
-        path: trpg/docs/html
+        cd web
+        npm run build
