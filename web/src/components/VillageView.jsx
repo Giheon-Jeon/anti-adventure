@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Dumbbell, HeartPulse, Coins, Hammer } from 'lucide-react';
+import { Dumbbell, HeartPulse, Coins, Hammer, ShoppingCart } from 'lucide-react';
 
 export default function VillageView({ state, dispatch, setActiveTab }) {
+  const [isWorking, setIsWorking] = useState(false);
+
   const handleTrain = (stat) => {
     dispatch({ type: 'TRAIN', payload: stat });
   };
@@ -19,24 +22,14 @@ export default function VillageView({ state, dispatch, setActiveTab }) {
     }
   };
 
-  const handleJob = () => {
-    if (state.player.hp > 20) {
-      state.player.hp -= 20; // We mutate state here just to calculate, but better dispatch
-      // Actually we should dispatch an action for Job
-      dispatch({ type: 'TRAIN', payload: 'job' }); // Hacky: let's do a better way
-    }
-  };
-
-  // Improved job handling
   const workJob = () => {
-    if (state.player.hp > 20) {
-      dispatch({ type: 'EARN_GOLD', payload: 40 });
-      // To simulate HP loss we can dispatch a generic damage, but let's just train STR for now or add a custom action
-      // For simplicity, we just add gold. A real implementation would update useGameState.
-    } else {
-      dispatch({ type: 'ADD_LOG', payload: '체력이 부족하여 알바를 할 수 없습니다. (HP 20 필요)' });
-    }
-  }
+    if (isWorking) return;
+    setIsWorking(true);
+    dispatch({ type: 'WORK_JOB' });
+    setTimeout(() => {
+      setIsWorking(false);
+    }, 1000);
+  };
 
   return (
     <div className="village-view" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -71,19 +64,29 @@ export default function VillageView({ state, dispatch, setActiveTab }) {
           <div className="stat-header">
             <h3><Coins size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px', color: '#fbbf24' }}/>마을 알바</h3>
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>잡일을 도와주고 40G를 획득합니다.</p>
-          <button className="btn" style={{ marginTop: '10px', background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.3)' }} onClick={workJob}>
-            알바하기
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>잡일을 도와주고 약간의 골드를 획득합니다.</p>
+          <button className="btn" disabled={isWorking} style={{ marginTop: '10px', background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.3)', opacity: isWorking ? 0.5 : 1, cursor: isWorking ? 'not-allowed' : 'pointer' }} onClick={workJob}>
+            {isWorking ? '알바 중...' : '알바하기'}
+          </button>
+        </motion.div>
+
+        <motion.div className="stat-card glass-panel" whileHover={{ y: -5 }}>
+          <div className="stat-header">
+            <h3><ShoppingCart size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px', color: '#34d399' }}/>상점</h3>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>새로운 장비와 물약을 구매합니다.</p>
+          <button className="btn btn-primary" style={{ marginTop: '10px', background: 'rgba(52, 211, 153, 0.1)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)' }} onClick={() => setActiveTab('shop')}>
+            입장하기
           </button>
         </motion.div>
         
-        <motion.div className="stat-card glass-panel" style={{ opacity: 0.5 }}>
+        <motion.div className="stat-card glass-panel" whileHover={{ y: -5 }}>
           <div className="stat-header">
             <h3><Hammer size={20} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '8px' }}/>대장간</h3>
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>장비 제작 및 수리 시스템은 준비 중입니다.</p>
-          <button className="btn" disabled style={{ marginTop: '10px' }}>
-            공사 중
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>장비 수리 및 아이템 제작을 수행합니다.</p>
+          <button className="btn" onClick={() => setActiveTab('blacksmith')} style={{ marginTop: '10px' }}>
+            입장하기
           </button>
         </motion.div>
       </div>

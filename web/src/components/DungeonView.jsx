@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sword, Skull, ShieldAlert } from 'lucide-react';
+import { Sword, Skull, ShieldAlert, Dices } from 'lucide-react';
 
 export default function DungeonView({ state, dispatch }) {
   const [selectedDungeon, setSelectedDungeon] = useState(null);
   const [inCombat, setInCombat] = useState(false);
   const [monster, setMonster] = useState(null);
+  
+  const [isRolling, setIsRolling] = useState(false);
+  const [battleResult, setBattleResult] = useState(null);
 
   const startCombat = (dungeon) => {
     const monsters = {
@@ -26,49 +29,76 @@ export default function DungeonView({ state, dispatch }) {
     
     setSelectedDungeon(dungeon);
     setInCombat(true);
+    setBattleResult(null);
     dispatch({ type: 'ADD_LOG', payload: `${dungeon.name}에 진입했습니다. 야생의 ${randomMonster}이(가) 나타났다!` });
   };
 
   const attack = () => {
-    if (!monster) return;
+    if (!monster || isRolling) return;
+    setIsRolling(true);
 
-    // Player attacks
-    const damage = state.player.stats.str * 2 + Math.floor(Math.random() * 5);
-    const newMonsterHp = Math.max(0, monster.hp - damage);
-    
-    dispatch({ type: 'ADD_LOG', payload: `${monster.name}에게 ${damage}의 피해를 입혔습니다!` });
+    const playerDice = Math.floor(Math.random() * 6) + 1;
+    const playerDamage = state.player.stats.str * 2 + playerDice;
 
-    if (newMonsterHp === 0) {
-      // Monster defeated
-      const earnedGold = selectedDungeon.recLevel * 10 + Math.floor(Math.random() * 10);
-      const earnedExp = selectedDungeon.recLevel * 20;
+    const monsterDice = Math.floor(Math.random() * 6) + 1;
+    const monsterDamage = Math.max(1, monster.attack + monsterDice - Math.floor(state.player.stats.dex * 0.5));
+
+    setBattleResult({
+      playerDice,
+      playerDamage,
+      monsterDice,
+      monsterDamage,
+      phase: 'rolling'
+    });
+
+    // Roll animation delay
+    setTimeout(() => {
+      setBattleResult(prev => ({ ...prev, phase: 'result' }));
       
-      dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: monster.name } });
-      setInCombat(false);
-      setMonster(null);
-      return;
-    }
+      const newMonsterHp = Math.max(0, monster.hp - playerDamage);
+      dispatch({ type: 'ADD_LOG', payload: `주사위[${playerDice}]! ${monster.name}에게 ${playerDamage}의 피해를 입혔습니다!` });
 
-    // Monster attacks back
-    const monsterDamage = Math.max(1, monster.attack - Math.floor(state.player.stats.dex * 0.5));
-    // Hacky HP update directly for now, should use dispatch in real app
-    state.player.hp -= monsterDamage;
-    dispatch({ type: 'ADD_LOG', payload: `${monster.name}의 공격! ${monsterDamage}의 피해를 입었습니다.` });
-    
-    if (state.player.hp <= 0) {
-      state.player.hp = 1; // Don't die completely for demo
-      dispatch({ type: 'ADD_LOG', payload: '체력이 0이 되어 눈앞이 깜깜해졌다... 마을로 돌아갑니다.' });
-      setInCombat(false);
-      setMonster(null);
-    } else {
-      setMonster({ ...monster, hp: newMonsterHp });
-    }
+      if (newMonsterHp === 0) {
+        // Monster defeated
+        setTimeout(() => {
+          const earnedGold = selectedDungeon.recLevel * 10 + Math.floor(Math.random() * 10);
+          const earnedExp = selectedDungeon.recLevel * 20;
+          
+          dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: monster.name } });
+          setInCombat(false);
+          setMonster(null);
+          setIsRolling(false);
+          setBattleResult(null);
+        }, 1500);
+        return;
+      }
+
+      // Monster attacks back
+      setTimeout(() => {
+        dispatch({ type: 'TAKE_DAMAGE', payload: monsterDamage });
+        dispatch({ type: 'ADD_LOG', payload: `${monster.name}의 주사위[${monsterDice}] 반격! ${monsterDamage}의 피해를 입었습니다.` });
+        
+        if (state.player.hp - monsterDamage <= 0) {
+          dispatch({ type: 'ADD_LOG', payload: '체력이 0이 되어 눈앞이 깜깜해졌다... 마을로 돌아갑니다.' });
+          setTimeout(() => {
+            setInCombat(false);
+            setMonster(null);
+            setIsRolling(false);
+            setBattleResult(null);
+          }, 1500);
+        } else {
+          setMonster(prev => ({ ...prev, hp: newMonsterHp }));
+          setIsRolling(false);
+        }
+      }, 1000);
+    }, 1000);
   };
 
   const runAway = () => {
     dispatch({ type: 'ADD_LOG', payload: '무사히 도망쳤습니다!' });
     setInCombat(false);
     setMonster(null);
+    setBattleResult(null);
   };
 
   return (
@@ -110,11 +140,11 @@ export default function DungeonView({ state, dispatch }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             className="combat-arena glass-panel"
-            style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '30px', alignItems: 'center', justifyContent: 'center', gap: '30px' }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '20px', alignItems: 'center', justifyContent: 'center', gap: '20px', position: 'relative' }}
           >
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', width: '100%' }}>
               <h2 style={{ fontSize: '2rem', color: 'var(--danger)', marginBottom: '10px' }}>{monster.name}</h2>
-              <div style={{ width: '300px', margin: '0 auto' }}>
+              <div style={{ width: '100%', maxWidth: '300px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', marginBottom: '5px' }}>
                   <span>HP</span>
                   <span>{monster.hp} / {monster.maxHp}</span>
@@ -125,11 +155,50 @@ export default function DungeonView({ state, dispatch }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
-              <button className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '1.2rem' }} onClick={attack}>
-                <Sword size={24} /> 공격 (Enter)
+            {/* Battle Visuals Area */}
+            <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+              <AnimatePresence>
+                {battleResult && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', width: '100%' }}
+                  >
+                    {battleResult.phase === 'rolling' ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}
+                      >
+                        <Dices size={48} color="var(--primary)" />
+                      </motion.div>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', maxWidth: '400px' }}>
+                        {/* Player side */}
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ textAlign: 'center', background: 'rgba(52,211,153,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(52,211,153,0.3)' }}>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>내 주사위</div>
+                          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#34d399' }}>🎲 {battleResult.playerDice}</div>
+                          <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>피해: <strong style={{ color: 'var(--danger)' }}>{battleResult.playerDamage}</strong></div>
+                        </motion.div>
+                        
+                        {/* Monster side */}
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} style={{ textAlign: 'center', background: 'rgba(248,113,113,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.3)' }}>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>적 주사위</div>
+                          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f87171' }}>🎲 {battleResult.monsterDice}</div>
+                          <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>반격: <strong style={{ color: 'var(--danger)' }}>{battleResult.monsterDamage}</strong></div>
+                        </motion.div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div style={{ display: 'flex', gap: '20px', marginTop: 'auto' }}>
+              <button className="btn btn-primary" style={{ padding: '15px 30px', fontSize: '1.2rem', opacity: isRolling ? 0.5 : 1 }} onClick={attack} disabled={isRolling}>
+                <Sword size={24} /> {isRolling ? '전투 중...' : '공격 (Enter)'}
               </button>
-              <button className="btn" style={{ padding: '15px 30px', fontSize: '1.2rem' }} onClick={runAway}>
+              <button className="btn" style={{ padding: '15px 30px', fontSize: '1.2rem' }} onClick={runAway} disabled={isRolling}>
                 도망치기
               </button>
             </div>

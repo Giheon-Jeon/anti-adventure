@@ -179,6 +179,13 @@ export function useGameState() {
           }
           break;
 
+        case 'TAKE_DAMAGE':
+          newState.player.hp -= action.payload;
+          if (newState.player.hp <= 0) {
+            newState.player.hp = 1; // Don't die completely for demo
+          }
+          break;
+
         default:
           break;
       }
