@@ -21,6 +21,12 @@ const initialState = {
       int: 10,
       luk: 10,
     },
+    skill_points: 0,
+    skills: [
+      { id: 'power_strike', name: '파워 스트라이크', level: 0, maxLevel: 5, desc: '적에게 가하는 최종 피해량이 레벨당 5 증가합니다.' },
+      { id: 'iron_skin', name: '아이언 스킨', level: 0, maxLevel: 5, desc: '적에게 받는 최종 피해량이 레벨당 3 감소합니다.' },
+      { id: 'lucky_dice', name: '행운의 주사위', level: 0, maxLevel: 5, desc: '내 주사위 눈금이 레벨당 1씩 추가로 보정됩니다.' }
+    ],
     inventory: [],
   },
   logs: ['Welcome to Anti-Adventure Web!'],
@@ -36,7 +42,13 @@ export function useGameState() {
   const [gameState, setGameState] = useState(() => {
     const saved = localStorage.getItem('anti-adventure-save');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { return initialState; }
+      try { 
+        const parsed = JSON.parse(saved);
+        // Ensure skills exist for old saves
+        if (!parsed.player.skills) parsed.player.skills = initialState.player.skills;
+        if (parsed.player.skill_points === undefined) parsed.player.skill_points = 0;
+        return parsed;
+      } catch (e) { return initialState; }
     }
     return initialState;
   });
@@ -84,6 +96,8 @@ export function useGameState() {
             if (type === 'armor') newState.player.armor_tier = newTier;
             if (type === 'accessory') newState.player.accessory_tier = newTier;
             newState.logs = [`상점에서 장비를 구매했습니다! (-${cost}G)`, ...newState.logs].slice(0, 50);
+          } else {
+            newState.logs = [`장비를 구매할 골드가 부족합니다! (${cost}G 필요)`, ...newState.logs].slice(0, 50);
           }
           break;
 
@@ -146,10 +160,11 @@ export function useGameState() {
             newState.player.stats.dex += 2;
             newState.player.stats.int += 2;
             newState.player.stats.luk += 2;
+            newState.player.skill_points += 1;
             levelUp = true;
           }
           if (levelUp) {
-            newState.logs = [`레벨업! 현재 레벨: ${newState.player.level}`, ...newState.logs].slice(0, 50);
+            newState.logs = [`레벨업! 현재 레벨: ${newState.player.level} (+스킬포인트 1)`, ...newState.logs].slice(0, 50);
           }
           break;
           
@@ -170,10 +185,11 @@ export function useGameState() {
             newState.player.stats.dex += 2;
             newState.player.stats.int += 2;
             newState.player.stats.luk += 2;
+            newState.player.skill_points += 1;
             levelUpBattle = true;
           }
           if (levelUpBattle) {
-            newState.logs = [`레벨업! 현재 레벨: ${newState.player.level}`, ...newState.logs].slice(0, 50);
+            newState.logs = [`레벨업! 현재 레벨: ${newState.player.level} (+스킬포인트 1)`, ...newState.logs].slice(0, 50);
           }
           
           // Encyclopedia update
@@ -195,6 +211,22 @@ export function useGameState() {
           newState.player.hp -= action.payload;
           if (newState.player.hp <= 0) {
             newState.player.hp = 1; // Don't die completely for demo
+          }
+          break;
+          
+        case 'UPGRADE_SKILL':
+          const skillId = action.payload;
+          if (newState.player.skill_points > 0) {
+            const skill = newState.player.skills.find(s => s.id === skillId);
+            if (skill && skill.level < skill.maxLevel) {
+              skill.level += 1;
+              newState.player.skill_points -= 1;
+              newState.logs = [`${skill.name} 스킬이 레벨업 되었습니다! (Lv.${skill.level})`, ...newState.logs].slice(0, 50);
+            } else {
+              newState.logs = ['이미 마스터한 스킬이거나 스킬을 찾을 수 없습니다.', ...newState.logs].slice(0, 50);
+            }
+          } else {
+            newState.logs = ['스킬 포인트가 부족합니다.', ...newState.logs].slice(0, 50);
           }
           break;
 

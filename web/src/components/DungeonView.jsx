@@ -37,11 +37,18 @@ export default function DungeonView({ state, dispatch }) {
     if (!monster || isRolling) return;
     setIsRolling(true);
 
-    const playerDice = Math.floor(Math.random() * 6) + 1;
-    const playerDamage = state.player.stats.str * 2 + playerDice;
+    // Get skill levels
+    const powerStrikeLv = state.player.skills?.find(s => s.id === 'power_strike')?.level || 0;
+    const ironSkinLv = state.player.skills?.find(s => s.id === 'iron_skin')?.level || 0;
+    const luckyDiceLv = state.player.skills?.find(s => s.id === 'lucky_dice')?.level || 0;
+
+    const basePlayerDice = Math.floor(Math.random() * 6) + 1;
+    const playerDice = basePlayerDice + luckyDiceLv;
+    const playerDamage = state.player.stats.str * 2 + playerDice + (powerStrikeLv * 5);
 
     const monsterDice = Math.floor(Math.random() * 6) + 1;
-    const monsterDamage = Math.max(1, monster.attack + monsterDice - Math.floor(state.player.stats.dex * 0.5));
+    let monsterDamage = Math.max(1, monster.attack + monsterDice - Math.floor(state.player.stats.dex * 0.5));
+    monsterDamage = Math.max(1, monsterDamage - (ironSkinLv * 3));
 
     setBattleResult({
       playerDice,
