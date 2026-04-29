@@ -10,6 +10,7 @@ import BlacksmithView from './components/BlacksmithView';
 import DungeonView from './components/DungeonView';
 import CharacterView from './components/CharacterView';
 import EncyclopediaView from './components/EncyclopediaView';
+import SettingsView from './components/SettingsView';
 import TopBar from './components/TopBar';
 
 import { useGameState } from './hooks/useGameState';
@@ -23,6 +24,7 @@ function App() {
     { id: 'village', icon: <Home size={20} />, label: '마을' },
     { id: 'dungeon', icon: <Map size={20} />, label: '던전' },
     { id: 'encyclopedia', icon: <Book size={20} />, label: '도감' },
+    { id: 'settings', icon: <Settings size={20} />, label: '설정' },
   ];
 
   return (
@@ -45,6 +47,7 @@ function App() {
             {activeTab === 'blacksmith' && <BlacksmithView state={gameState} dispatch={dispatch} onBack={() => setActiveTab('village')} />}
             {activeTab === 'dungeon' && <DungeonView state={gameState} dispatch={dispatch} />}
             {activeTab === 'encyclopedia' && <EncyclopediaView state={gameState} dispatch={dispatch} />}
+            {activeTab === 'settings' && <SettingsView state={gameState} dispatch={dispatch} />}
           </motion.div>
         </AnimatePresence>
       </main>

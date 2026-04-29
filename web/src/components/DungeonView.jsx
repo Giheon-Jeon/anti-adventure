@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sword, Skull, ShieldAlert, Dices } from 'lucide-react';
+import { Sword, Skull, Dices } from 'lucide-react';
 
 export default function DungeonView({ state, dispatch }) {
   const [selectedDungeon, setSelectedDungeon] = useState(null);
@@ -40,9 +40,9 @@ export default function DungeonView({ state, dispatch }) {
 
     setMonster({
       name: randomMonster,
-      hp: dungeon.recLevel * 30,
-      maxHp: dungeon.recLevel * 30,
-      attack: dungeon.recLevel * 5
+      hp: dungeon.recLevel * 40, // Increased HP a bit for balance
+      maxHp: dungeon.recLevel * 40,
+      attack: dungeon.recLevel * 8 // Increased enemy base damage
     });
     
     setSelectedDungeon(dungeon);
@@ -51,40 +51,82 @@ export default function DungeonView({ state, dispatch }) {
     dispatch({ type: 'ADD_LOG', payload: `${dungeon.name}에 진입했습니다. 야생의 ${randomMonster}이(가) 나타났다!` });
   };
 
+  const evaluateDice = (diceArray) => {
+    const counts = {};
+    let sum = 0;
+    diceArray.forEach(d => {
+      counts[d] = (counts[d] || 0) + 1;
+      sum += d;
+    });
+    
+    const values = Object.values(counts).sort((a, b) => b - a);
+    const uniqueFaces = Object.keys(counts).map(Number).sort((a, b) => a - b);
+    
+    let isStraight = false;
+    if (diceArray.length === 5 && uniqueFaces.length === 5) {
+      if (uniqueFaces[4] - uniqueFaces[0] === 4) isStraight = true;
+    } else if (diceArray.length === 3 && uniqueFaces.length === 3) {
+      if (uniqueFaces[2] - uniqueFaces[0] === 2) isStraight = true;
+    }
+
+    if (diceArray.length === 5) {
+      if (values[0] === 5) return { name: '5 of a Kind!', mult: 5.0, sum };
+      if (isStraight) return { name: 'Straight!', mult: 2.5, sum };
+      if (values[0] === 4) return { name: '4 of a Kind!', mult: 3.0, sum };
+      if (values[0] === 3 && values[1] === 2) return { name: 'Full House!', mult: 2.5, sum };
+      if (values[0] === 3) return { name: '3 of a Kind!', mult: 2.0, sum };
+      if (values[0] === 2 && values[1] === 2) return { name: 'Two Pairs!', mult: 1.5, sum };
+      if (values[0] === 2) return { name: '1 Pair!', mult: 1.2, sum };
+      return { name: 'No Combo', mult: 1.0, sum };
+    } else {
+      if (values[0] === 3) return { name: '3 of a Kind!', mult: 3.0, sum };
+      if (isStraight) return { name: 'Straight!', mult: 2.0, sum };
+      if (values[0] === 2) return { name: '1 Pair!', mult: 1.5, sum };
+      return { name: 'No Combo', mult: 1.0, sum };
+    }
+  };
+
   const attack = () => {
     if (!monster || isRolling || monster.instantKilled) return;
     setIsRolling(true);
 
-    // Get skill levels
     const powerStrikeLv = state.player.skills?.find(s => s.id === 'power_strike')?.level || 0;
     const ironSkinLv = state.player.skills?.find(s => s.id === 'iron_skin')?.level || 0;
     const luckyDiceLv = state.player.skills?.find(s => s.id === 'lucky_dice')?.level || 0;
+    const unionBonus = state.unionBonus || { str: 0, dex: 0, int: 0, luk: 0 };
 
-    const basePlayerDice = Math.floor(Math.random() * 6) + 1;
-    const playerDice = basePlayerDice + luckyDiceLv;
-    const playerDamage = state.player.stats.str * 2 + playerDice + (powerStrikeLv * 5);
+    // Player 5 Dice
+    const playerDiceArr = Array.from({ length: 5 }, () => Math.floor(Math.random() * 6) + 1 + luckyDiceLv);
+    const playerEval = evaluateDice(playerDiceArr);
+    
+    const basePlayerDmg = (state.player.stats.str + unionBonus.str) * 2 + playerEval.sum + (powerStrikeLv * 5);
+    const playerDamage = Math.floor(basePlayerDmg * playerEval.mult);
 
-    const monsterDice = Math.floor(Math.random() * 6) + 1;
-    let monsterDamage = Math.max(1, monster.attack + monsterDice - Math.floor(state.player.stats.dex * 0.5));
+    // Monster 3 Dice
+    const monsterDiceArr = Array.from({ length: 3 }, () => Math.floor(Math.random() * 6) + 1);
+    const monsterEval = evaluateDice(monsterDiceArr);
+
+    const baseMonsterDmg = monster.attack + monsterEval.sum - Math.floor((state.player.stats.dex + unionBonus.dex) * 0.5);
+    let monsterDamage = Math.floor(Math.max(1, baseMonsterDmg) * monsterEval.mult);
     monsterDamage = Math.max(1, monsterDamage - (ironSkinLv * 3));
 
     setBattleResult({
-      playerDice,
+      playerDiceArr,
+      playerEval,
       playerDamage,
-      monsterDice,
+      monsterDiceArr,
+      monsterEval,
       monsterDamage,
       phase: 'rolling'
     });
 
-    // Roll animation delay
     setTimeout(() => {
       setBattleResult(prev => ({ ...prev, phase: 'result' }));
       
       const newMonsterHp = Math.max(0, monster.hp - playerDamage);
-      dispatch({ type: 'ADD_LOG', payload: `주사위[${playerDice}]! ${monster.name}에게 ${playerDamage}의 피해를 입혔습니다!` });
+      dispatch({ type: 'ADD_LOG', payload: `[${playerEval.name}] ${monster.name}에게 ${playerDamage}의 피해!` });
 
       if (newMonsterHp === 0) {
-        // Monster defeated
         setTimeout(() => {
           const earnedGold = selectedDungeon.recLevel * 10 + Math.floor(Math.random() * 10);
           const earnedExp = selectedDungeon.recLevel * 20;
@@ -94,14 +136,13 @@ export default function DungeonView({ state, dispatch }) {
           setMonster(null);
           setIsRolling(false);
           setBattleResult(null);
-        }, 1500);
+        }, 2000);
         return;
       }
 
-      // Monster attacks back
       setTimeout(() => {
         dispatch({ type: 'TAKE_DAMAGE', payload: monsterDamage });
-        dispatch({ type: 'ADD_LOG', payload: `${monster.name}의 주사위[${monsterDice}] 반격! ${monsterDamage}의 피해를 입었습니다.` });
+        dispatch({ type: 'ADD_LOG', payload: `${monster.name}의 [${monsterEval.name}] 반격! ${monsterDamage}의 피해.` });
         
         if (state.player.hp - monsterDamage <= 0) {
           dispatch({ type: 'ADD_LOG', payload: '체력이 0이 되어 눈앞이 깜깜해졌다... 마을로 돌아갑니다.' });
@@ -110,13 +151,13 @@ export default function DungeonView({ state, dispatch }) {
             setMonster(null);
             setIsRolling(false);
             setBattleResult(null);
-          }, 1500);
+          }, 2000);
         } else {
           setMonster(prev => ({ ...prev, hp: newMonsterHp }));
           setIsRolling(false);
         }
-      }, 1000);
-    }, 1000);
+      }, 1500);
+    }, 1500);
   };
 
   const runAway = () => {
@@ -124,6 +165,18 @@ export default function DungeonView({ state, dispatch }) {
     setInCombat(false);
     setMonster(null);
     setBattleResult(null);
+  };
+
+  const renderDice = (diceArr) => {
+    return (
+      <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        {diceArr.map((d, i) => (
+          <div key={i} style={{ width: '30px', height: '30px', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--border)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+            {d}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -186,10 +239,9 @@ export default function DungeonView({ state, dispatch }) {
               )}
             </div>
 
-            {/* Battle Visuals Area */}
             {!monster.instantKilled && (
               <>
-                <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                   <AnimatePresence>
                     {battleResult && (
                       <motion.div 
@@ -199,26 +251,25 @@ export default function DungeonView({ state, dispatch }) {
                         style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center', width: '100%' }}
                       >
                         {battleResult.phase === 'rolling' ? (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}
-                          >
+                          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }}>
                             <Dices size={48} color="var(--primary)" />
                           </motion.div>
                         ) : (
-                          <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', maxWidth: '400px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', gap: '10px' }}>
                             {/* Player side */}
-                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ textAlign: 'center', background: 'rgba(52,211,153,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(52,211,153,0.3)' }}>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>내 주사위</div>
-                              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#34d399' }}>🎲 {battleResult.playerDice}</div>
-                              <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>피해: <strong style={{ color: 'var(--danger)' }}>{battleResult.playerDamage}</strong></div>
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ flex: 1, textAlign: 'center', background: 'rgba(52,211,153,0.1)', padding: '15px 10px', borderRadius: '8px', border: '1px solid rgba(52,211,153,0.3)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>내 주사위 (5개)</div>
+                              {renderDice(battleResult.playerDiceArr)}
+                              <div style={{ fontSize: '0.8rem', color: '#34d399', marginTop: '8px', fontWeight: 'bold' }}>{battleResult.playerEval.name}</div>
+                              <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>총 피해: <strong style={{ color: 'var(--danger)', fontSize: '1.2rem' }}>{battleResult.playerDamage}</strong></div>
                             </motion.div>
                             
                             {/* Monster side */}
-                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} style={{ textAlign: 'center', background: 'rgba(248,113,113,0.1)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.3)' }}>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>적 주사위</div>
-                              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f87171' }}>🎲 {battleResult.monsterDice}</div>
-                              <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>반격: <strong style={{ color: 'var(--danger)' }}>{battleResult.monsterDamage}</strong></div>
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} style={{ flex: 1, textAlign: 'center', background: 'rgba(248,113,113,0.1)', padding: '15px 10px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.3)' }}>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>적 주사위 (3개)</div>
+                              {renderDice(battleResult.monsterDiceArr)}
+                              <div style={{ fontSize: '0.8rem', color: '#f87171', marginTop: '8px', fontWeight: 'bold' }}>{battleResult.monsterEval.name}</div>
+                              <div style={{ fontSize: '0.9rem', marginTop: '5px' }}>반격: <strong style={{ color: 'var(--danger)', fontSize: '1.2rem' }}>{battleResult.monsterDamage}</strong></div>
                             </motion.div>
                           </div>
                         )}
