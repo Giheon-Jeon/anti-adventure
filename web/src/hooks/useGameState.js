@@ -49,6 +49,11 @@ export const getUnionBonus = (state) => {
       bonus.int += levelBonus;
       bonus.luk += levelBonus;
       bonus.maxHp += char.level * 5;
+      
+      // Job specific bonuses
+      if (char.job === 'Novice') {
+         bonus.maxHp += 10; // Extra HP for novice
+      }
     }
   });
   return bonus;
@@ -97,7 +102,8 @@ export function useGameState() {
             
             player.gold += gold;
             player.hp -= hpLoss;
-            if (player.hp > player.maxHp) player.hp = player.maxHp;
+            const maxHpWithUnion = player.maxHp + getUnionBonus(newState).maxHp;
+            if (player.hp > maxHpWithUnion) player.hp = maxHpWithUnion;
             if (player.hp < 1) player.hp = 1;
             newState.logs = [msg, ...newState.logs].slice(0, 50);
           } else {
@@ -113,7 +119,10 @@ export function useGameState() {
             if (statIncreases.dex) player.stats.dex += statIncreases.dex;
             if (statIncreases.int) player.stats.int += statIncreases.int;
             if (statIncreases.luk) player.stats.luk += statIncreases.luk;
-            if (statIncreases.maxHp) { player.maxHp += statIncreases.maxHp; player.hp = player.maxHp; }
+            if (statIncreases.maxHp) { 
+              player.maxHp += statIncreases.maxHp; 
+              player.hp = player.maxHp + getUnionBonus(newState).maxHp; 
+            }
             if (statIncreases.maxMp) { player.maxMp += statIncreases.maxMp; player.mp = player.maxMp; }
             if (type === 'weapon') player.weapon_tier = newTier;
             if (type === 'armor') player.armor_tier = newTier;
@@ -128,7 +137,8 @@ export function useGameState() {
           if (player.gold >= 30) {
             player.gold -= 30;
             if (action.payload === 'hp') {
-              player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp / 2));
+              const maxHpWithUnion = player.maxHp + getUnionBonus(newState).maxHp;
+              player.hp = Math.min(maxHpWithUnion, player.hp + Math.floor(player.maxHp / 2));
               newState.logs = ['빨간 포션을 마셔 체력을 회복했습니다.', ...newState.logs].slice(0, 50);
             } else {
               player.mp = Math.min(player.maxMp, player.mp + Math.floor(player.maxMp / 2));
@@ -170,7 +180,8 @@ export function useGameState() {
           return prev;
 
         case 'HEAL':
-          player.hp = player.maxHp;
+          const maxHpWithUnion = player.maxHp + getUnionBonus(newState).maxHp;
+          player.hp = maxHpWithUnion;
           player.mp = player.maxMp;
           newState.logs = ['체력과 마나가 모두 회복되었습니다.', ...newState.logs].slice(0, 50);
           break;
@@ -183,7 +194,7 @@ export function useGameState() {
             player.exp -= player.maxExp;
             player.maxExp = Math.floor(player.maxExp * 1.5);
             player.maxHp += 20;
-            player.hp = player.maxHp;
+            player.hp = player.maxHp + getUnionBonus(newState).maxHp;
             player.stats.str += 2;
             player.stats.dex += 2;
             player.stats.int += 2;
@@ -208,7 +219,7 @@ export function useGameState() {
             player.exp -= player.maxExp;
             player.maxExp = Math.floor(player.maxExp * 1.5);
             player.maxHp += 20;
-            player.hp = player.maxHp;
+            player.hp = player.maxHp + getUnionBonus(newState).maxHp;
             player.stats.str += 2;
             player.stats.dex += 2;
             player.stats.int += 2;

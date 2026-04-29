@@ -29,7 +29,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <TopBar player={gameState.player} />
+      <TopBar player={gameState.player} unionBonus={gameState.unionBonus} />
       
       <main className="main-content">
         <AnimatePresence mode="wait">

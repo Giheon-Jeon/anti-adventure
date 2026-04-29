@@ -24,18 +24,41 @@ export default function CharacterView({ state, dispatch }) {
           transition={{ delay: 0.1 }}
         >
           <div className="stat-header">
-            <h3>전투 능력치</h3>
+            <h3>전투 능력치 <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 'normal' }}>(+유니온)</span></h3>
           </div>
-          <div className="stat-row"><span>힘 (STR)</span> <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{statIcons.str} {stats.str}</span></div>
-          <div className="stat-row"><span>민첩 (DEX)</span> <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{statIcons.dex} {stats.dex}</span></div>
-          <div className="stat-row"><span>지능 (INT)</span> <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{statIcons.int} {stats.int}</span></div>
-          <div className="stat-row"><span>행운 (LUK)</span> <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{statIcons.luk} {stats.luk}</span></div>
+          <div className="stat-row">
+            <span>힘 (STR)</span> 
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {statIcons.str} {stats.str} {state.unionBonus?.str > 0 && <span style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>+{state.unionBonus.str}</span>}
+            </span>
+          </div>
+          <div className="stat-row">
+            <span>민첩 (DEX)</span> 
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {statIcons.dex} {stats.dex} {state.unionBonus?.dex > 0 && <span style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>+{state.unionBonus.dex}</span>}
+            </span>
+          </div>
+          <div className="stat-row">
+            <span>지능 (INT)</span> 
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {statIcons.int} {stats.int} {state.unionBonus?.int > 0 && <span style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>+{state.unionBonus.int}</span>}
+            </span>
+          </div>
+          <div className="stat-row">
+            <span>행운 (LUK)</span> 
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {statIcons.luk} {stats.luk} {state.unionBonus?.luk > 0 && <span style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>+{state.unionBonus.luk}</span>}
+            </span>
+          </div>
           
           <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid var(--glass-border)' }}>
             <div className="stat-row">
               <span style={{ color: 'var(--text-muted)' }}>전투력 (CP)</span>
               <strong style={{ fontSize: '1.2rem', color: 'var(--accent)' }}>
-                {stats.str * 2 + stats.dex * 1.5 + stats.int * 1.5 + stats.luk}
+                {(stats.str + (state.unionBonus?.str || 0)) * 2 + 
+                 (stats.dex + (state.unionBonus?.dex || 0)) * 1.5 + 
+                 (stats.int + (state.unionBonus?.int || 0)) * 1.5 + 
+                 (stats.luk + (state.unionBonus?.luk || 0))}
               </strong>
             </div>
           </div>

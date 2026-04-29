@@ -1,8 +1,10 @@
 import { Coins } from 'lucide-react';
 
-export default function TopBar({ player }) {
+export default function TopBar({ player, unionBonus }) {
+  const unionHp = unionBonus ? unionBonus.maxHp : 0;
+  const realMaxHp = player.maxHp + unionHp;
   const expPercent = (player.exp / player.maxExp) * 100;
-  const hpPercent = (player.hp / player.maxHp) * 100;
+  const hpPercent = (player.hp / realMaxHp) * 100;
   const mpPercent = (player.mp / player.maxMp) * 100;
 
   return (
@@ -22,7 +24,7 @@ export default function TopBar({ player }) {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
               <span>HP</span>
-              <span>{player.hp}/{player.maxHp}</span>
+              <span>{player.hp}/{realMaxHp}</span>
             </div>
             <div className="progress-bar-bg">
               <div className="progress-bar-fill hp-fill" style={{ width: `${hpPercent}%` }} />
