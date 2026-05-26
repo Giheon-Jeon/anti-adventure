@@ -2,6 +2,41 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sword, Skull, Dices } from 'lucide-react';
 
+const monsterLootMap = {
+  // field
+  '슬라임': { name: '슬라임 방울', rate: 0.6 },
+  '주황버섯': { name: '버섯 갓', rate: 0.6 },
+  '스텀프': { name: '나뭇가지', rate: 0.6 },
+  // forest
+  '와일드보어': { name: '와일드보어의 송곳니', rate: 0.5 },
+  '다크스텀프': { name: '검은 나뭇가지', rate: 0.5 },
+  '루팡': { name: '루팡의 바나나', rate: 0.5 },
+  // cave
+  '뿔버섯': { name: '뿔버섯의 갓', rate: 0.4 },
+  '좀비버섯': { name: '부적', rate: 0.4 },
+  '이블아이': { name: '이블아이의 꼬리', rate: 0.4 },
+  // ruins
+  '해골 군인': { name: '해골 조각', rate: 0.4 },
+  '고스트': { name: '유령의 눈물', rate: 0.4 },
+  '사신': { name: '해골 조각', rate: 0.5 },
+  // abyss
+  '데몬': { name: '심연의 정수', rate: 0.3 },
+  '가고일': { name: '마계의 돌', rate: 0.3 },
+  '심연의 정령': { name: '심연의 정수', rate: 0.4 },
+  // dragon
+  '와이번': { name: '용의 비늘', rate: 0.3 },
+  '용의 파수꾼': { name: '용의 비늘', rate: 0.4 },
+  '레드 드래곤': { name: '드래곤의 심장', rate: 0.2 }
+};
+
+const getMonsterDrops = (monsterName) => {
+  const loot = monsterLootMap[monsterName];
+  if (loot && Math.random() < loot.rate) {
+    return [{ name: loot.name, count: 1 }];
+  }
+  return [];
+};
+
 export default function DungeonView({ state, dispatch }) {
   const [selectedDungeon, setSelectedDungeon] = useState(null);
   const [inCombat, setInCombat] = useState(false);
@@ -14,7 +49,10 @@ export default function DungeonView({ state, dispatch }) {
     const monsters = {
       'field': ['슬라임', '주황버섯', '스텀프'],
       'forest': ['와일드보어', '다크스텀프', '루팡'],
-      'cave': ['뿔버섯', '좀비버섯', '이블아이']
+      'cave': ['뿔버섯', '좀비버섯', '이블아이'],
+      'ruins': ['해골 군인', '고스트', '사신'],
+      'abyss': ['데몬', '가고일', '심연의 정령'],
+      'dragon': ['와이번', '용의 파수꾼', '레드 드래곤']
     };
     
     const possibleMonsters = monsters[dungeon.id] || monsters['field'];
@@ -24,8 +62,9 @@ export default function DungeonView({ state, dispatch }) {
     if (entry && entry.kills >= 30) {
       const earnedGold = dungeon.recLevel * 10 + Math.floor(Math.random() * 10);
       const earnedExp = dungeon.recLevel * 20;
+      const drops = getMonsterDrops(randomMonster);
       dispatch({ type: 'ADD_LOG', payload: `[도감 마스터] ${randomMonster}의 약점을 간파하여 즉시 처치했습니다! (+${earnedGold}G, +${earnedExp}EXP)` });
-      dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: randomMonster } });
+      dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: randomMonster, drops } });
       
       setSelectedDungeon(dungeon);
       setMonster({ name: randomMonster, instantKilled: true, hp: 0, maxHp: dungeon.recLevel * 30 });
@@ -185,8 +224,9 @@ export default function DungeonView({ state, dispatch }) {
           setTimeout(() => {
             const earnedGold = selectedDungeon.recLevel * 10 + Math.floor(Math.random() * 10);
             const earnedExp = selectedDungeon.recLevel * 20;
+            const drops = getMonsterDrops(monster.name);
             
-            dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: monster.name } });
+            dispatch({ type: 'COMBAT_WIN', payload: { gold: earnedGold, exp: earnedExp, monsterName: monster.name, drops } });
             setInCombat(false);
             setMonster(null);
             setIsRolling(false);

@@ -166,12 +166,16 @@ export function useGameState() {
           if (!oldPlayer.skills) oldPlayer.skills = getInitialPlayer().skills;
           if (oldPlayer.skill_points === undefined) oldPlayer.skill_points = 0;
           if (!oldPlayer.statistics) oldPlayer.statistics = { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 };
+          if (!oldPlayer.inventory) oldPlayer.inventory = [];
           parsed.characters = [oldPlayer, null, null];
           parsed.activeSlot = 0;
         } else {
           // Migrate old slots
           parsed.characters.forEach(char => {
-            if (char && !char.statistics) char.statistics = { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 };
+            if (char) {
+              if (!char.statistics) char.statistics = { monstersKilled: 0, timesWorked: 0, potionsUsed: 0, moneySpent: 0, lowestHpPercent: 100 };
+              if (!char.inventory) char.inventory = [];
+            }
           });
         }
         
@@ -361,11 +365,27 @@ export function useGameState() {
           break;
           
         case 'COMBAT_WIN':
-          const { gold, exp, monsterName } = action.payload;
+          const { gold, exp, monsterName, drops } = action.payload;
           player.gold += gold;
           player.exp += exp;
           player.statistics.monstersKilled += 1;
-          newState.logs = [`${monsterName} 처치! +${gold}G, +${exp}EXP`, ...newState.logs].slice(0, 50);
+          
+          let dropText = '';
+          if (drops && drops.length > 0) {
+            dropText = ` (전리품: ${drops.map(d => `${d.name} x${d.count}`).join(', ')})`;
+            
+            if (!player.inventory) player.inventory = [];
+            drops.forEach(drop => {
+              const existing = player.inventory.find(i => i.name === drop.name);
+              if (existing) {
+                existing.count += drop.count;
+              } else {
+                player.inventory.push({ name: drop.name, count: drop.count });
+              }
+            });
+          }
+          
+          newState.logs = [`${monsterName} 처치! +${gold}G, +${exp}EXP${dropText}`, ...newState.logs].slice(0, 50);
           
           let levelUpBattle = false;
           while (player.exp >= player.maxExp) {
@@ -392,6 +412,76 @@ export function useGameState() {
           } else {
             newState.encyclopedia.push({ name: monsterName, kills: 1 });
           }
+          break;
+
+        case 'CRAFT_ITEM':
+          const { recipe } = action.payload;
+          const { cost: craftCost, stat: craftStats, tier: craftTier, type: craftType, name: craftName, materials } = recipe;
+          
+          if (player.gold < craftCost) {
+            newState.logs = [`제작에 필요한 골드가 부족합니다! (${craftCost}G 필요)`, ...newState.logs].slice(0, 50);
+            break;
+          }
+          
+          // Verify materials
+          if (!player.inventory) player.inventory = [];
+          let hasAllMats = true;
+          materials.forEach(mat => {
+            const existing = player.inventory.find(i => i.name === mat.name);
+            if (!existing || existing.count < mat.count) {
+              hasAllMats = false;
+            }
+          });
+          
+          if (!hasAllMats) {
+            newState.logs = [`재료가 부족하여 [${craftName}]을(를) 제작할 수 없습니다.`, ...newState.logs].slice(0, 50);
+            break;
+          }
+          
+          // Prerequisite tier check
+          let currentCraftTier = 0;
+          if (craftType === 'weapon') currentCraftTier = player.weapon_tier || 0;
+          if (craftType === 'armor') currentCraftTier = player.armor_tier || 0;
+          if (craftType === 'accessory') currentCraftTier = player.accessory_tier || 0;
+          
+          if (craftTier !== currentCraftTier + 1) {
+            newState.logs = [`이전 단계의 장비가 필요하여 [${craftName}]을(를) 제작할 수 없습니다.`, ...newState.logs].slice(0, 50);
+            break;
+          }
+          
+          // Deduct cost and materials
+          player.gold -= craftCost;
+          player.statistics.moneySpent += craftCost;
+          
+          materials.forEach(mat => {
+            const existing = player.inventory.find(i => i.name === mat.name);
+            if (existing) {
+              existing.count -= mat.count;
+            }
+          });
+          
+          player.inventory = player.inventory.filter(i => i.count > 0);
+          
+          // Apply stats
+          if (craftStats.str) player.stats.str += craftStats.str;
+          if (craftStats.dex) player.stats.dex += craftStats.dex;
+          if (craftStats.int) player.stats.int += craftStats.int;
+          if (craftStats.luk) player.stats.luk += craftStats.luk;
+          if (craftStats.maxHp) {
+            player.maxHp += craftStats.maxHp;
+            player.hp = player.maxHp + getUnionBonus(newState).maxHp;
+          }
+          if (craftStats.maxMp) {
+            player.maxMp += craftStats.maxMp;
+            player.mp = player.maxMp;
+          }
+          
+          // Apply tier
+          if (craftType === 'weapon') player.weapon_tier = craftTier;
+          if (craftType === 'armor') player.armor_tier = craftTier;
+          if (craftType === 'accessory') player.accessory_tier = craftTier;
+          
+          newState.logs = [`🎉 [제작 성공] ${craftName} 제작을 완료했습니다! (-${craftCost}G)`, ...newState.logs].slice(0, 50);
           break;
           
         case 'TRAIN':

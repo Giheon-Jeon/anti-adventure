@@ -129,6 +129,34 @@ export default function CharacterView({ state, dispatch }) {
             ))}
           </div>
         </motion.div>
+
+        {/* Inventory Card */}
+        <motion.div 
+          className="stat-card glass-panel"
+          style={{ gridColumn: '1 / -1' }}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="stat-header">
+            <h3>🎒 가방 (인벤토리)</h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>보유한 전리품 재료</span>
+          </div>
+          {(!player.inventory || player.inventory.length === 0) ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '20px 0' }}>
+              비어 있음 (던전에서 몬스터를 처치하여 재료를 획득하세요!)
+            </p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
+              {player.inventory.map(item => (
+                <div key={item.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '10px 15px', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{item.name}</span>
+                  <strong style={{ color: 'var(--accent)', fontSize: '0.95rem' }}>{item.count}개</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
