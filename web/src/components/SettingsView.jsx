@@ -1,18 +1,40 @@
+/**
+ * SettingsView - 설정 및 유니온 화면
+ *
+ * 기능:
+ * - 유니온 보너스 현황 표시
+ * - 현재 캐릭터 이름 변경
+ * - 캐릭터 슬롯 전환 / 신규 생성 / 초기화
+ *
+ * 최소 권한 props:
+ * - characters:  전체 3슬롯 배열 (슬롯 카드 렌더링)
+ * - activeSlot:  현재 활성 슬롯 인덱스
+ * - playerName:  현재 캐릭터 이름 (이름 변경 폼)
+ * - unionBonus:  유니온 보너스 요약
+ * - dispatch
+ */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Trash2, Edit3, ShieldAlert } from 'lucide-react';
+import { User, Trash2, Edit3 } from 'lucide-react';
 
-export default function SettingsView({ state, dispatch }) {
-  const { characters, activeSlot, player, unionBonus } = state;
+/**
+ * @param {{
+ *   characters:  Array,
+ *   activeSlot:  number,
+ *   playerName:  string,
+ *   unionBonus:  Object,
+ *   dispatch:    Function
+ * }} props
+ */
+export default function SettingsView({ characters, activeSlot, playerName, unionBonus, dispatch }) {
   const [editingName, setEditingName] = useState(false);
-  const [newName, setNewName] = useState(player.name);
+  const [newName, setNewName]         = useState(playerName);
 
   const handleNameChange = (e) => {
     e.preventDefault();
-    if (newName.trim()) {
-      dispatch({ type: 'CHANGE_NAME', payload: newName.trim() });
-      setEditingName(false);
-    }
+    if (!newName.trim()) return;
+    dispatch({ type: 'CHANGE_NAME', payload: newName.trim() });
+    setEditingName(false);
   };
 
   const handleSwitch = (slotIndex) => {
@@ -33,11 +55,13 @@ export default function SettingsView({ state, dispatch }) {
       <p style={{ color: 'var(--text-muted)' }}>가문의 모든 캐릭터의 레벨 총합에 따라 부가 능력치 혜택을 얻습니다.</p>
 
       <div className="card-grid">
-        {/* Union Status */}
+        {/* ── 유니온 효과 요약 ──────────────────────────────────────────── */}
         <motion.div className="stat-card glass-panel" style={{ gridColumn: '1 / -1', border: '1px solid var(--primary)' }}>
           <div className="stat-header">
             <h3>🛡️ 유니온 효과</h3>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>총합 레벨: <strong style={{ color: 'var(--primary)' }}>{unionBonus.totalLevel}</strong></span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              총합 레벨: <strong style={{ color: 'var(--primary)' }}>{unionBonus.totalLevel}</strong>
+            </span>
           </div>
           <div style={{ marginTop: '10px', fontSize: '0.9rem', color: 'var(--text-main)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px' }}>
@@ -51,26 +75,27 @@ export default function SettingsView({ state, dispatch }) {
           </div>
         </motion.div>
 
-        {/* Current Character Name */}
+        {/* ── 이름 변경 ────────────────────────────────────────────────── */}
         <motion.div className="stat-card glass-panel" style={{ gridColumn: '1 / -1' }}>
           <div className="stat-header">
             <h3>현재 캐릭터 이름 변경</h3>
           </div>
           {editingName ? (
             <form onSubmit={handleNameChange} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <input 
-                type="text" 
-                value={newName} 
+              <input
+                type="text"
+                value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'rgba(0,0,0,0.3)', color: 'white' }}
                 maxLength={10}
+                autoFocus
               />
-              <button type="submit" className="btn btn-primary" style={{ padding: '0 20px' }}>저장</button>
-              <button type="button" className="btn" onClick={() => { setEditingName(false); setNewName(player.name); }}>취소</button>
+              <button type="submit"   className="btn btn-primary" style={{ padding: '0 20px' }}>저장</button>
+              <button type="button"   className="btn" onClick={() => { setEditingName(false); setNewName(playerName); }}>취소</button>
             </form>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '8px' }}>
-              <strong style={{ fontSize: '1.2rem' }}>{player.name}</strong>
+              <strong style={{ fontSize: '1.2rem' }}>{playerName}</strong>
               <button className="btn" style={{ padding: '8px 15px', display: 'flex', gap: '5px', alignItems: 'center' }} onClick={() => setEditingName(true)}>
                 <Edit3 size={16} /> 변경하기
               </button>
@@ -78,12 +103,23 @@ export default function SettingsView({ state, dispatch }) {
           )}
         </motion.div>
 
-        {/* Slots */}
-        {characters && characters.map((char, index) => (
-          <motion.div key={index} className="stat-card glass-panel" style={{ opacity: (!char && index !== activeSlot) ? 0.6 : 1, border: activeSlot === index ? '2px solid var(--accent)' : '1px solid var(--glass-border)' }}>
+        {/* ── 캐릭터 슬롯 목록 ─────────────────────────────────────────── */}
+        {characters?.map((char, index) => (
+          <motion.div
+            key={index}
+            className="stat-card glass-panel"
+            style={{
+              opacity: (!char && index !== activeSlot) ? 0.6 : 1,
+              border: activeSlot === index ? '2px solid var(--accent)' : '1px solid var(--glass-border)',
+            }}
+          >
             <div className="stat-header">
-              <h3>슬롯 {index + 1} {activeSlot === index && <span style={{ fontSize: '0.8rem', color: 'var(--accent)', marginLeft: '5px' }}>(접속 중)</span>}</h3>
+              <h3>
+                슬롯 {index + 1}
+                {activeSlot === index && <span style={{ fontSize: '0.8rem', color: 'var(--accent)', marginLeft: '5px' }}>(접속 중)</span>}
+              </h3>
             </div>
+
             {char ? (
               <div style={{ marginTop: '10px' }}>
                 <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{char.name}</div>
@@ -91,16 +127,21 @@ export default function SettingsView({ state, dispatch }) {
                 <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
                   {activeSlot !== index && (
                     <button className="btn btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => handleSwitch(index)}>
-                      <User size={16} style={{ marginRight: '5px', verticalAlign: 'middle' }}/> 접속
+                      <User size={16} style={{ marginRight: '5px', verticalAlign: 'middle' }} /> 접속
                     </button>
                   )}
-                  <button className="btn btn-danger" style={{ flex: activeSlot === index ? 1 : 0, padding: '8px', minWidth: '40px' }} onClick={() => handleReset(index)}>
-                    <Trash2 size={16} style={activeSlot === index ? { marginRight: '5px', verticalAlign: 'middle' } : { margin: '0 auto' }}/>
+                  <button
+                    className="btn btn-danger"
+                    style={{ flex: activeSlot === index ? 1 : 0, padding: '8px', minWidth: '40px' }}
+                    onClick={() => handleReset(index)}
+                  >
+                    <Trash2 size={16} style={activeSlot === index ? { marginRight: '5px', verticalAlign: 'middle' } : { margin: '0 auto' }} />
                     {activeSlot === index ? '캐릭터 삭제' : ''}
                   </button>
                 </div>
               </div>
             ) : (
+              /* 빈 슬롯 */
               <div style={{ marginTop: '10px', textAlign: 'center', padding: '10px 0' }}>
                 <div style={{ color: 'var(--text-muted)', marginBottom: '15px' }}>빈 슬롯</div>
                 <button className="btn btn-primary" style={{ width: '100%', padding: '8px' }} onClick={() => handleSwitch(index)}>
